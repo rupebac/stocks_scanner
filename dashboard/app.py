@@ -637,6 +637,11 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
             name=name, hovertext=hover, hoverinfo="text",
             marker=dict(size=size, color=color, opacity=op, line=dict(width=1, color="white")),
         ))
+    if not pts.empty:
+        pad = (pts["x"].max() - pts["x"].min()) * 0.05 or 0.1
+        x0, x1 = float(pts["x"].min() - pad), float(pts["x"].max() + pad)
+    else:
+        x0, x1 = -2.0, 2.0
     if selected and not pts.empty and (pts["ticker"] == selected).any():
         s = pts[pts["ticker"] == selected].iloc[0]
         star_c = "#e4572e" if selected in member else "#f28e2b"   # zone orange vs any-name amber
@@ -648,10 +653,23 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
             marker=dict(size=18, color=star_c, symbol="star",
                         line=dict(width=2, color="white")),
         ))
+    elif selected:
+        # scored but residual-less (e.g. ORCL under owner earnings: no ROIC, so the
+        # residual fit skips it) — height known, cheapness unknown. Hollow marker
+        # at the left edge instead of silently vanishing.
+        srow = metrics[metrics["ticker"] == selected]
+        if not srow.empty and pd.notna(srow.iloc[0].get("quality_score")):
+            fig.add_trace(go.Scatter(
+                x=[x0 + (x1 - x0) * 0.03], y=[float(srow.iloc[0]["quality_score"])],
+                mode="markers+text", text=[f"{selected} · no residual"], textposition="middle right",
+                textfont=dict(size=10, color="#f28e2b"),
+                showlegend=False,
+                hovertext=f"{selected} — quality known, cheapness unknown (no ROIC → no residual)",
+                marker=dict(size=14, color="rgba(0,0,0,0)", symbol="diamond",
+                            line=dict(width=2, color="#f28e2b")),
+            ))
     thr = floor if floor is not None else cfg.get("quality_floor_threshold")
     if not pts.empty:
-        pad = (pts["x"].max() - pts["x"].min()) * 0.05 or 0.1
-        x0, x1 = float(pts["x"].min() - pad), float(pts["x"].max() + pad)
         if thr is not None and pd.notna(thr):
             fig.add_hline(y=thr, line_dash="dot", line_color="#666",
                           annotation_text=f"quality floor — ≥{thr:.0f}")
@@ -674,7 +692,8 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
         "Grey = scored names with a residual; the shaded region is the hunt zone under the "
         "ACTIVE cuts (floor + residual + ROIC + EV/FCF — adjust them in the sidebar). "
         "Orange is the tighter highlights list: cash-cheap and viable, not just under-priced "
-        "vs peers. Those names continue below, most negative residual first."
+        "vs peers. A hollow ◇ at the left edge = quality known but cheapness unknown "
+        "(no ROIC → no residual). Those names continue below, most negative residual first."
     )
 
 
