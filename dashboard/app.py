@@ -1001,20 +1001,29 @@ def ideas_page():
                   placeholder="Type a ticker or name — e.g. ORCL, Oracle…")
     q = str(st.session_state.get("idea_search") or "").strip().upper()
     if q:
-        hits = [t for t in options if q in t or q in uname_of.get(t, "")]
+        # autocomplete: prefix matches first (ticker, then name), then substrings
+        hits = ([t for t in options if t.startswith(q)]
+                + [t for t in options if not t.startswith(q) and q in t]
+                + [t for t in options if not t.startswith(q) and q not in t and q in uname_of.get(t, "")])
+        hits = list(dict.fromkeys(hits))  # dedupe, keep order
         exact = [t for t in options if t == q]
         if exact:
             st.session_state["idea_pick"] = exact[0]
         elif len(hits) == 1:
             st.session_state["idea_pick"] = hits[0]
-        if len(hits) > 1:
+        if hits:
             chips = st.columns(min(len(hits), 6))
             for c, t in list(zip(chips, hits[:6])):
-                if c.button(t, key=f"idea_hit_{t}", use_container_width=True):
+                picked_now = t == st.session_state.get("idea_pick")
+                if c.button(("▸ " if picked_now else "") + t,
+                            key=f"idea_hit_{t}", use_container_width=True,
+                            type="primary" if picked_now else "secondary"):
                     st.session_state["idea_pick"] = t
                     st.rerun()
             if len(hits) > 6:
                 st.caption(f"{len(hits) - 6} more matches — keep typing to narrow.")
+        else:
+            st.caption(f"No company matches “{q}”.")
     sel = st.session_state.get("idea_pick")
     suffix = " · unscored" if sel in unscored_set else ""
     st.caption(f"→ inspecting **{sel}** — {name_of.get(sel, '')}{suffix}")
