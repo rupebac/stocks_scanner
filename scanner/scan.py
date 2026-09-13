@@ -265,7 +265,7 @@ def run_scan(
     ov_df = pd.DataFrame()
     if not skip_options and len(floor_list):
         try:
-            ov_df = OV.build_overlay(floor_list.head(config.OVERLAY_TOP_N), asof)
+            ov_df = OV.build_overlay(floor_list.head(config.OVERLAY_TOP_N), asof, rate=gs10 or 0.0)
         except Exception as e:
             print(f"[scan] overlay failed ({type(e).__name__}: {e}) — continuing without it")
             ov_df = pd.DataFrame()

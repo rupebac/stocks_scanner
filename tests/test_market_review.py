@@ -402,7 +402,7 @@ def _patch_market(monkeypatch, ned=dt.date(2026, 9, 18), hv=0.25,
     def fake_ned(t, today=None):
         return ned
 
-    def fake_opt(t, spot, today=None):
+    def fake_opt(t, spot, today=None, **kwargs):
         if t in opt_exc_for:
             raise RuntimeError("chain blowup")
         return opt
@@ -410,6 +410,7 @@ def _patch_market(monkeypatch, ned=dt.date(2026, 9, 18), hv=0.25,
     monkeypatch.setattr(md, "next_earnings_date", fake_ned)
     monkeypatch.setattr(md, "hv_30d", lambda t: hv)
     monkeypatch.setattr(md, "options_atm", fake_opt)
+    monkeypatch.setattr(md, "dividend_yield", lambda t: 0.0)
 
 
 def test_overlay_strike_yield_math_and_columns(monkeypatch):
@@ -483,3 +484,28 @@ def test_overlay_per_name_isolation(monkeypatch):
     assert bool(good["gate_pass"]) and good["fcf_yield_strike_95"] == pytest.approx(0.04)
     nofund = out[out["ticker"] == "NOFUND"].iloc[0]
     assert "fcf_yield_strike_95" not in out.columns or pd.isna(nofund.get("fcf_yield_strike_95"))
+
+
+def test_overlay_assignment_probability_columns(monkeypatch):
+    """Real Prob-OTM at the 95/90 strikes rides alongside the FCF yield test,
+    each using its own strike's IV — not present unless options_atm returns
+    an "assignment" block (best-effort: absent chain -> no columns, no crash)."""
+    opt = {
+        "iv": {"iv_atm": 0.30, "iv_expiry": "2026-10-16"},
+        "gate": {"gate_oi": 5000.0, "gate_spread_pct": 0.04, "gate_pass": True},
+        "assignment": {
+            "95": {"strike": 95.0, "iv": 0.32, "prob_otm": 0.71, "prob_assigned": 0.29},
+            "90": {"strike": 90.0, "iv": 0.35, "prob_otm": 0.80, "prob_assigned": 0.20},
+        },
+    }
+    _patch_market(monkeypatch, opt=opt)
+    out = ov.build_overlay(_flagship(), TODAY)
+    r = out.iloc[0]
+    assert r["prob_assigned_95"] == pytest.approx(0.29)
+    assert r["prob_assigned_90"] == pytest.approx(0.20)
+    assert r["assign_iv_95"] == pytest.approx(0.32) and r["assign_iv_90"] == pytest.approx(0.35)
+
+    # no "assignment" key at all (e.g. nothing listed in the 30-45 DTE window) -> no crash, no columns
+    _patch_market(monkeypatch, opt={"iv": opt["iv"], "gate": opt["gate"]})
+    out = ov.build_overlay(_flagship(), TODAY)
+    assert "prob_assigned_95" not in out.columns

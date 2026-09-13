@@ -1,0 +1,329 @@
+diff --git a/dashboard/app.py b/dashboard/app.py
+index 34303b9..cc8b522 100644
+--- a/dashboard/app.py
++++ b/dashboard/app.py
+@@ -108,6 +108,11 @@ def _next_earnings(ticker: str, today: str) -> str | None:
+     return d.isoformat() if d else None
+ 
+ 
++@st.cache_data(ttl=3600, show_spinner=False)
++def _dividend_yield(ticker: str) -> float:
++    return MD.dividend_yield(ticker)
++
++
+ def _chain_frames(ticker: str, expiry: str) -> tuple[pd.DataFrame, pd.DataFrame, str | None]:
+     raw = _live_chain(ticker, expiry)
+     if not raw:
+@@ -284,6 +289,7 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
+     stats = MD.contract_analytics(
+         "put" if side == "Puts" else "call",
+         spot, float(crow["strike"]), prem, dte, MD._n(crow.get("iv")), rate=rate,
++        div_yield=_dividend_yield(sel),
+     )
+ 
+     kind = side[:-1].lower()
+@@ -403,9 +409,11 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
+         g2.metric("Gamma", _fmt(stats.get("gamma"), "{:.3f}"))
+         g3.metric("Theta / day", _fmt(stats.get("theta"), "{:.3f}"))
+         g4.metric("Vega", _fmt(stats.get("vega"), "{:.3f}"))
++        div_y = _dividend_yield(sel)
+         st.caption(
+             f"Strike vs spot {_fmt(stats.get('strike_vs_spot'), '{:.1%}')} · "
+-            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}."
++            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}"
++            + (f" · div yield {div_y:.1%} (Merton adjustment applied)" if div_y > 0 else " · no dividend")
+         )
+ 
+ 
+diff --git a/scanner/market_data.py b/scanner/market_data.py
+index 45fc0e4..45ba478 100644
+--- a/scanner/market_data.py
++++ b/scanner/market_data.py
+@@ -156,6 +156,32 @@ def shares_outstanding(ticker: str) -> float | None:
+         return None
+ 
+ 
++def dividend_yield(ticker: str) -> float:
++    """Trailing dividend yield as a decimal (0.017 = 1.7%), for the continuous-yield
++    term `q` in Black-Scholes. yfinance has changed the units of `dividendYield`
++    across versions (fraction vs. percent point), so this sanity-checks the raw
++    value instead of trusting its scale blindly. Best-effort: 0.0 (no adjustment,
++    the old behavior) on any failure or implausible value — never raises, never
++    returns None, so callers can use it directly as `q` without an extra check."""
++    try:
++        info = yf.Ticker(ticker).get_info()
++        for key in ("dividendYield", "trailingAnnualDividendYield"):
++            v = info.get(key)
++            if v is None:
++                continue
++            v = float(v)
++            if v <= 0:
++                continue
++            # yfinance has shipped both 0.017 and 1.7 for "1.7%" depending on
++            # version/endpoint — treat anything above 1.0 as already a percent.
++            v = v / 100.0 if v > 1.0 else v
++            if 0.0 < v < 0.20:  # sanity band; a >20% "yield" is a units bug, not a stock
++                return v
++        return 0.0
++    except Exception:
++        return 0.0
++
++
+ def hv_30d(ticker: str, months: int = 3) -> float | None:
+     """Annualized 30d realized vol: log-return std x sqrt(252) on the last 30
+     daily closes (auto_adjust=True, consistent with the weekly grid). None on
+@@ -243,12 +269,23 @@ def _atm_strike(strikes, spot: float) -> float | None:
+     return min(ks, key=lambda s: abs(s - spot)) if ks else None
+ 
+ 
+-def options_atm(ticker: str, spot: float, today: dt.date | None = None) -> dict | None:
++def options_atm(ticker: str, spot: float, today: dt.date | None = None,
++                rate: float = 0.0, div_yield: float = 0.0,
++                assignment_strikes: tuple = ()) -> dict | None:
+     """ATM IV row (nearest expiry >= OPTIONS_MIN_DTE (21), strike closest to
+     spot, IV = mean of the put and call IV at that strike) + liquidity gate on
+     the ~35 DTE expiry (OI >= 500, (ask-bid)/mid <= 10%). Best-effort; None on
+     failure. The two rows are extracted independently so one bad chain leg
+-    doesn't kill the other. Doc 08 §4."""
++    doesn't kill the other. Doc 08 §4.
++
++    `assignment_strikes` (e.g. config.OVERLAY_STRIKES): if given, also returns
++    real assignment probabilities at each price × pct, reusing the same ~35
++    DTE chain already fetched for the gate (no extra network call). Each
++    strike gets ITS OWN listed IV (skew-aware) — a flat ATM IV would misstate
++    this by several points on a skewed name. Probability = N(d2) that the
++    stock finishes above the strike (put OTM), Merton dividend-adjusted;
++    assignment probability is 1 - that. This is the same lognormal N(d2)
++    construction validated against TOS's own Prob OTM."""
+     today = today or dt.date.today()
+     if spot is None or not (float(spot) > 0):
+         return None
+@@ -308,6 +345,33 @@ def options_atm(ticker: str, spot: float, today: dt.date | None = None) -> dict
+                         and spread <= config.OPTIONS_GATE_MAX_SPREAD
+                     ),
+                 }
++
++            if assignment_strikes and near35 is not None:
++                dte35 = (near35 - today).days
++                T = max(dte35, 1) / 365.0
++                assign: dict = {}
++                for pct in assignment_strikes:
++                    target = float(spot) * float(pct)
++                    ks = _atm_strike(oc35.puts["strike"].tolist(), target)
++                    if ks is None:
++                        continue
++                    row = oc35.puts[oc35.puts["strike"] == ks].iloc[0]
++                    iv = float(row["impliedVolatility"]) if pd.notna(row["impliedVolatility"]) else None
++                    if iv is None or iv <= 0:
++                        continue
++                    sqrtT = math.sqrt(T)
++                    try:
++                        d1 = (math.log(float(spot) / ks) + (rate - div_yield + 0.5 * iv * iv) * T) / (iv * sqrtT)
++                    except (ValueError, ZeroDivisionError):
++                        continue
++                    d2 = d1 - iv * sqrtT
++                    prob_otm = _norm_cdf(d2)          # P(finishes above this strike) -> put stays worthless
++                    assign[f"{round(pct * 100)}"] = {
++                        "strike": float(ks), "iv": iv,
++                        "prob_otm": prob_otm, "prob_assigned": 1.0 - prob_otm,
++                    }
++                if assign:
++                    out["assignment"] = assign
+         except Exception:
+             pass
+ 
+@@ -494,36 +558,50 @@ def _norm_pdf(x: float) -> float:
+ 
+ 
+ def black_scholes_greeks(side: str, spot: float, strike: float, dte: int,
+-                         iv: float | None, rate: float = 0.0) -> dict:
+-    """Long-option greeks from listed IV. Theta is per calendar day. Empty dict
+-    if IV/spot/strike unusable. 0 DTE uses T = 1/365 so the formula doesn't blow up."""
++                         iv: float | None, rate: float = 0.0, div_yield: float = 0.0) -> dict:
++    """Long-option greeks from listed IV, with a continuous dividend yield `q`
++    (Merton 1973). Without `q`, delta/assignment_risk is biased toward "less
++    likely assigned" on dividend payers — validated against the residual found
++    comparing flat-model Prob-OTM to TOS's own number on a dividend name (the
++    gap tracked the stock's yield almost exactly). `q=0.0` reproduces the old
++    undiscounted formula exactly, so this is a pure extension, not a behavior
++    change for non-payers (e.g. ADBE, which pays no dividend).
++
++    Theta is per calendar day. Empty dict if IV/spot/strike unusable. 0 DTE
++    uses T = 1/365 so the formula doesn't blow up."""
+     if side not in ("put", "call"):
+         return {}
+     if any(v is None or not (float(v) > 0) for v in (spot, strike, iv)):
+         return {}
+     T = max(int(dte), 0) / 365.0 or (1.0 / 365.0)
+     sig = float(iv)
++    q = float(div_yield or 0.0)
+     sqrtT = math.sqrt(T)
+     try:
+-        d1 = (math.log(float(spot) / float(strike)) + (rate + 0.5 * sig * sig) * T) / (sig * sqrtT)
++        d1 = (math.log(float(spot) / float(strike)) + (rate - q + 0.5 * sig * sig) * T) / (sig * sqrtT)
+     except (ValueError, ZeroDivisionError):
+         return {}
+     d2 = d1 - sig * sqrtT
+     nd1, npd1 = _norm_cdf(d1), _norm_pdf(d1)
+-    disc = math.exp(-rate * T)
++    disc_r, disc_q = math.exp(-rate * T), math.exp(-q * T)
+     if side == "call":
+-        delta = nd1
+-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) - rate * float(strike) * disc * _norm_cdf(d2)
++        delta = disc_q * nd1
++        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
++                    - rate * float(strike) * disc_r * _norm_cdf(d2)
++                    + q * float(spot) * disc_q * nd1)
+     else:
+-        delta = nd1 - 1.0
+-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) + rate * float(strike) * disc * _norm_cdf(-d2)
+-    gamma = npd1 / (float(spot) * sig * sqrtT)
+-    vega = float(spot) * npd1 * sqrtT / 100.0   # per 1 vol point
++        delta = disc_q * (nd1 - 1.0)
++        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
++                    + rate * float(strike) * disc_r * _norm_cdf(-d2)
++                    - q * float(spot) * disc_q * _norm_cdf(-d1))
++    gamma = disc_q * npd1 / (float(spot) * sig * sqrtT)
++    vega = float(spot) * disc_q * npd1 * sqrtT / 100.0   # per 1 vol point
+     return {"delta": delta, "gamma": gamma, "theta": theta_yr / 365.0, "vega": vega}
+ 
+ 
+ def contract_analytics(side: str, spot: float, strike: float, premium: float | None,
+-                       dte: int, iv: float | None, rate: float = 0.0) -> dict:
++                       dte: int, iv: float | None, rate: float = 0.0,
++                       div_yield: float = 0.0) -> dict:
+     """Breakeven + CSP lens + long greeks for one listed put or call. Short-option
+     P&L is the opposite sign of long delta; breakeven is the same number (K±premium).
+ 
+@@ -549,7 +627,7 @@ def contract_analytics(side: str, spot: float, strike: float, premium: float | N
+                                   else (out["breakeven"] - float(spot)) / float(spot))
+             if out["cushion_pct"] > 0:
+                 out["pay_vs_cushion"] = float(premium) / (out["cushion_pct"] * 100.0)
+-    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0))
++    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0, div_yield=div_yield or 0.0))
+     if "delta" in out:
+         out["assignment_risk"] = abs(out["delta"])
+     # comparable income lens: cash % of strike (posted), and that income per unit
+diff --git a/scanner/overlay.py b/scanner/overlay.py
+index 9308d2e..219707b 100644
+--- a/scanner/overlay.py
++++ b/scanner/overlay.py
+@@ -11,22 +11,25 @@ import pandas as pd
+ from . import config, market_data
+ 
+ 
+-def build_overlay(flagship: pd.DataFrame, today: dt.date | None = None) -> pd.DataFrame:
++def build_overlay(flagship: pd.DataFrame, today: dt.date | None = None,
++                  rate: float = 0.0) -> pd.DataFrame:
+     """Overlay rows for the flagship list. Per-name isolation: one bad options
+     chain / earnings lookup degrades that row only (doc 07: the overlay never
+-    blocks or ranks anything)."""
++    blocks or ranks anything). `rate` (the 10Y, gs10) feeds the assignment
++    probability's risk-neutral drift term — same rate used everywhere else in
++    the scan, so the overlay isn't silently assuming 0%."""
+     today = today or dt.date.today()
+     rows = []
+     for _, r in flagship.iterrows():
+         try:
+-            rows.append(_overlay_row(r, today))
++            rows.append(_overlay_row(r, today, rate))
+         except Exception as e:
+             rows.append({"ticker": r["ticker"], "price": r.get("price"),
+                          "overlay_error": f"{type(e).__name__}: {e}"})
+     return pd.DataFrame(rows)
+ 
+ 
+-def _overlay_row(r: pd.Series, today: dt.date) -> dict:
++def _overlay_row(r: pd.Series, today: dt.date, rate: float = 0.0) -> dict:
+     row = {"ticker": r["ticker"], "price": r["price"]}
+     ned = market_data.next_earnings_date(r["ticker"], today)
+     dte = (ned - today).days if ned else None
+@@ -56,7 +59,12 @@ def _overlay_row(r: pd.Series, today: dt.date) -> dict:
+ 
+     hv = market_data.hv_30d(r["ticker"])
+     row["hv_30d"] = hv
+-    opt = market_data.options_atm(r["ticker"], float(r["price"]), today)
++    div_y = market_data.dividend_yield(r["ticker"])
++    opt = market_data.options_atm(
++        r["ticker"], float(r["price"]), today,
++        rate=rate or 0.0, div_yield=div_y,
++        assignment_strikes=config.OVERLAY_STRIKES,
++    )
+     if opt:
+         if "iv" in opt:
+             row["iv_atm"] = opt["iv"]["iv_atm"]
+@@ -69,4 +77,11 @@ def _overlay_row(r: pd.Series, today: dt.date) -> dict:
+             row["gate_oi"] = opt["gate"]["gate_oi"]
+             row["gate_spread_pct"] = opt["gate"]["gate_spread_pct"]
+             row["gate_pass"] = opt["gate"]["gate_pass"]  # doc 07 overlay liquidity gate
++        # real assignment probability at the same 95%/90% strikes as the FCF
++        # yield test above — each strike's OWN listed IV (skew-aware), not a
++        # flat ATM number; the FCF yield answers "is this a price I'd want to
++        # own it at", this answers "how likely am I to actually get there".
++        for pct_key, a in (opt.get("assignment") or {}).items():
++            row[f"assign_iv_{pct_key}"] = a["iv"]
++            row[f"prob_assigned_{pct_key}"] = a["prob_assigned"]
+     return row
+diff --git a/scanner/scan.py b/scanner/scan.py
+index c9404b9..8028e81 100644
+--- a/scanner/scan.py
++++ b/scanner/scan.py
+@@ -265,7 +265,7 @@ def run_scan(
+     ov_df = pd.DataFrame()
+     if not skip_options and len(floor_list):
+         try:
+-            ov_df = OV.build_overlay(floor_list.head(config.OVERLAY_TOP_N), asof)
++            ov_df = OV.build_overlay(floor_list.head(config.OVERLAY_TOP_N), asof, rate=gs10 or 0.0)
+         except Exception as e:
+             print(f"[scan] overlay failed ({type(e).__name__}: {e}) — continuing without it")
+             ov_df = pd.DataFrame()
+diff --git a/tests/test_market_review.py b/tests/test_market_review.py
+index c790b47..b182a53 100644
+--- a/tests/test_market_review.py
++++ b/tests/test_market_review.py
+@@ -402,7 +402,7 @@ def _patch_market(monkeypatch, ned=dt.date(2026, 9, 18), hv=0.25,
+     def fake_ned(t, today=None):
+         return ned
+ 
+-    def fake_opt(t, spot, today=None):
++    def fake_opt(t, spot, today=None, **kwargs):
+         if t in opt_exc_for:
+             raise RuntimeError("chain blowup")
+         return opt
+@@ -410,6 +410,7 @@ def _patch_market(monkeypatch, ned=dt.date(2026, 9, 18), hv=0.25,
+     monkeypatch.setattr(md, "next_earnings_date", fake_ned)
+     monkeypatch.setattr(md, "hv_30d", lambda t: hv)
+     monkeypatch.setattr(md, "options_atm", fake_opt)
++    monkeypatch.setattr(md, "dividend_yield", lambda t: 0.0)
+ 
+ 
+ def test_overlay_strike_yield_math_and_columns(monkeypatch):
+@@ -483,3 +484,28 @@ def test_overlay_per_name_isolation(monkeypatch):
+     assert bool(good["gate_pass"]) and good["fcf_yield_strike_95"] == pytest.approx(0.04)
+     nofund = out[out["ticker"] == "NOFUND"].iloc[0]
+     assert "fcf_yield_strike_95" not in out.columns or pd.isna(nofund.get("fcf_yield_strike_95"))
++
++
++def test_overlay_assignment_probability_columns(monkeypatch):
++    """Real Prob-OTM at the 95/90 strikes rides alongside the FCF yield test,
++    each using its own strike's IV — not present unless options_atm returns
++    an "assignment" block (best-effort: absent chain -> no columns, no crash)."""
++    opt = {
++        "iv": {"iv_atm": 0.30, "iv_expiry": "2026-10-16"},
++        "gate": {"gate_oi": 5000.0, "gate_spread_pct": 0.04, "gate_pass": True},
++        "assignment": {
++            "95": {"strike": 95.0, "iv": 0.32, "prob_otm": 0.71, "prob_assigned": 0.29},
++            "90": {"strike": 90.0, "iv": 0.35, "prob_otm": 0.80, "prob_assigned": 0.20},
++        },
++    }
++    _patch_market(monkeypatch, opt=opt)
++    out = ov.build_overlay(_flagship(), TODAY)
++    r = out.iloc[0]
++    assert r["prob_assigned_95"] == pytest.approx(0.29)
++    assert r["prob_assigned_90"] == pytest.approx(0.20)
++    assert r["assign_iv_95"] == pytest.approx(0.32) and r["assign_iv_90"] == pytest.approx(0.35)
++
++    # no "assignment" key at all (e.g. nothing listed in the 30-45 DTE window) -> no crash, no columns
++    _patch_market(monkeypatch, opt={"iv": opt["iv"], "gate": opt["gate"]})
++    out = ov.build_overlay(_flagship(), TODAY)
++    assert "prob_assigned_95" not in out.columns

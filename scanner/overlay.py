@@ -11,22 +11,25 @@ import pandas as pd
 from . import config, market_data
 
 
-def build_overlay(flagship: pd.DataFrame, today: dt.date | None = None) -> pd.DataFrame:
+def build_overlay(flagship: pd.DataFrame, today: dt.date | None = None,
+                  rate: float = 0.0) -> pd.DataFrame:
     """Overlay rows for the flagship list. Per-name isolation: one bad options
     chain / earnings lookup degrades that row only (doc 07: the overlay never
-    blocks or ranks anything)."""
+    blocks or ranks anything). `rate` (the 10Y, gs10) feeds the assignment
+    probability's risk-neutral drift term — same rate used everywhere else in
+    the scan, so the overlay isn't silently assuming 0%."""
     today = today or dt.date.today()
     rows = []
     for _, r in flagship.iterrows():
         try:
-            rows.append(_overlay_row(r, today))
+            rows.append(_overlay_row(r, today, rate))
         except Exception as e:
             rows.append({"ticker": r["ticker"], "price": r.get("price"),
                          "overlay_error": f"{type(e).__name__}: {e}"})
     return pd.DataFrame(rows)
 
 
-def _overlay_row(r: pd.Series, today: dt.date) -> dict:
+def _overlay_row(r: pd.Series, today: dt.date, rate: float = 0.0) -> dict:
     row = {"ticker": r["ticker"], "price": r["price"]}
     ned = market_data.next_earnings_date(r["ticker"], today)
     dte = (ned - today).days if ned else None
@@ -56,7 +59,12 @@ def _overlay_row(r: pd.Series, today: dt.date) -> dict:
 
     hv = market_data.hv_30d(r["ticker"])
     row["hv_30d"] = hv
-    opt = market_data.options_atm(r["ticker"], float(r["price"]), today)
+    div_y = market_data.dividend_yield(r["ticker"])
+    opt = market_data.options_atm(
+        r["ticker"], float(r["price"]), today,
+        rate=rate or 0.0, div_yield=div_y,
+        assignment_strikes=config.OVERLAY_STRIKES,
+    )
     if opt:
         if "iv" in opt:
             row["iv_atm"] = opt["iv"]["iv_atm"]
@@ -69,4 +77,11 @@ def _overlay_row(r: pd.Series, today: dt.date) -> dict:
             row["gate_oi"] = opt["gate"]["gate_oi"]
             row["gate_spread_pct"] = opt["gate"]["gate_spread_pct"]
             row["gate_pass"] = opt["gate"]["gate_pass"]  # doc 07 overlay liquidity gate
+        # real assignment probability at the same 95%/90% strikes as the FCF
+        # yield test above — each strike's OWN listed IV (skew-aware), not a
+        # flat ATM number; the FCF yield answers "is this a price I'd want to
+        # own it at", this answers "how likely am I to actually get there".
+        for pct_key, a in (opt.get("assignment") or {}).items():
+            row[f"assign_iv_{pct_key}"] = a["iv"]
+            row[f"prob_assigned_{pct_key}"] = a["prob_assigned"]
     return row

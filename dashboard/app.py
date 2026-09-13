@@ -108,6 +108,11 @@ def _next_earnings(ticker: str, today: str) -> str | None:
     return d.isoformat() if d else None
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _dividend_yield(ticker: str) -> float:
+    return MD.dividend_yield(ticker)
+
+
 def _chain_frames(ticker: str, expiry: str) -> tuple[pd.DataFrame, pd.DataFrame, str | None]:
     raw = _live_chain(ticker, expiry)
     if not raw:
@@ -284,6 +289,7 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
     stats = MD.contract_analytics(
         "put" if side == "Puts" else "call",
         spot, float(crow["strike"]), prem, dte, MD._n(crow.get("iv")), rate=rate,
+        div_yield=_dividend_yield(sel),
     )
 
     kind = side[:-1].lower()
@@ -403,9 +409,11 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
         g2.metric("Gamma", _fmt(stats.get("gamma"), "{:.3f}"))
         g3.metric("Theta / day", _fmt(stats.get("theta"), "{:.3f}"))
         g4.metric("Vega", _fmt(stats.get("vega"), "{:.3f}"))
+        div_y = _dividend_yield(sel)
         st.caption(
             f"Strike vs spot {_fmt(stats.get('strike_vs_spot'), '{:.1%}')} · "
-            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}."
+            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}"
+            + (f" · div yield {div_y:.1%} (Merton adjustment applied)" if div_y > 0 else " · no dividend")
         )
 
 

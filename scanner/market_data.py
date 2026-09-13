@@ -156,6 +156,32 @@ def shares_outstanding(ticker: str) -> float | None:
         return None
 
 
+def dividend_yield(ticker: str) -> float:
+    """Trailing dividend yield as a decimal (0.017 = 1.7%), for the continuous-yield
+    term `q` in Black-Scholes. yfinance has changed the units of `dividendYield`
+    across versions (fraction vs. percent point), so this sanity-checks the raw
+    value instead of trusting its scale blindly. Best-effort: 0.0 (no adjustment,
+    the old behavior) on any failure or implausible value — never raises, never
+    returns None, so callers can use it directly as `q` without an extra check."""
+    try:
+        info = yf.Ticker(ticker).get_info()
+        for key in ("dividendYield", "trailingAnnualDividendYield"):
+            v = info.get(key)
+            if v is None:
+                continue
+            v = float(v)
+            if v <= 0:
+                continue
+            # yfinance has shipped both 0.017 and 1.7 for "1.7%" depending on
+            # version/endpoint — treat anything above 1.0 as already a percent.
+            v = v / 100.0 if v > 1.0 else v
+            if 0.0 < v < 0.20:  # sanity band; a >20% "yield" is a units bug, not a stock
+                return v
+        return 0.0
+    except Exception:
+        return 0.0
+
+
 def hv_30d(ticker: str, months: int = 3) -> float | None:
     """Annualized 30d realized vol: log-return std x sqrt(252) on the last 30
     daily closes (auto_adjust=True, consistent with the weekly grid). None on
@@ -243,12 +269,23 @@ def _atm_strike(strikes, spot: float) -> float | None:
     return min(ks, key=lambda s: abs(s - spot)) if ks else None
 
 
-def options_atm(ticker: str, spot: float, today: dt.date | None = None) -> dict | None:
+def options_atm(ticker: str, spot: float, today: dt.date | None = None,
+                rate: float = 0.0, div_yield: float = 0.0,
+                assignment_strikes: tuple = ()) -> dict | None:
     """ATM IV row (nearest expiry >= OPTIONS_MIN_DTE (21), strike closest to
     spot, IV = mean of the put and call IV at that strike) + liquidity gate on
     the ~35 DTE expiry (OI >= 500, (ask-bid)/mid <= 10%). Best-effort; None on
     failure. The two rows are extracted independently so one bad chain leg
-    doesn't kill the other. Doc 08 §4."""
+    doesn't kill the other. Doc 08 §4.
+
+    `assignment_strikes` (e.g. config.OVERLAY_STRIKES): if given, also returns
+    real assignment probabilities at each price × pct, reusing the same ~35
+    DTE chain already fetched for the gate (no extra network call). Each
+    strike gets ITS OWN listed IV (skew-aware) — a flat ATM IV would misstate
+    this by several points on a skewed name. Probability = N(d2) that the
+    stock finishes above the strike (put OTM), Merton dividend-adjusted;
+    assignment probability is 1 - that. This is the same lognormal N(d2)
+    construction validated against TOS's own Prob OTM."""
     today = today or dt.date.today()
     if spot is None or not (float(spot) > 0):
         return None
@@ -308,6 +345,33 @@ def options_atm(ticker: str, spot: float, today: dt.date | None = None) -> dict 
                         and spread <= config.OPTIONS_GATE_MAX_SPREAD
                     ),
                 }
+
+            if assignment_strikes and near35 is not None:
+                dte35 = (near35 - today).days
+                T = max(dte35, 1) / 365.0
+                assign: dict = {}
+                for pct in assignment_strikes:
+                    target = float(spot) * float(pct)
+                    ks = _atm_strike(oc35.puts["strike"].tolist(), target)
+                    if ks is None:
+                        continue
+                    row = oc35.puts[oc35.puts["strike"] == ks].iloc[0]
+                    iv = float(row["impliedVolatility"]) if pd.notna(row["impliedVolatility"]) else None
+                    if iv is None or iv <= 0:
+                        continue
+                    sqrtT = math.sqrt(T)
+                    try:
+                        d1 = (math.log(float(spot) / ks) + (rate - div_yield + 0.5 * iv * iv) * T) / (iv * sqrtT)
+                    except (ValueError, ZeroDivisionError):
+                        continue
+                    d2 = d1 - iv * sqrtT
+                    prob_otm = _norm_cdf(d2)          # P(finishes above this strike) -> put stays worthless
+                    assign[f"{round(pct * 100)}"] = {
+                        "strike": float(ks), "iv": iv,
+                        "prob_otm": prob_otm, "prob_assigned": 1.0 - prob_otm,
+                    }
+                if assign:
+                    out["assignment"] = assign
         except Exception:
             pass
 
@@ -494,36 +558,50 @@ def _norm_pdf(x: float) -> float:
 
 
 def black_scholes_greeks(side: str, spot: float, strike: float, dte: int,
-                         iv: float | None, rate: float = 0.0) -> dict:
-    """Long-option greeks from listed IV. Theta is per calendar day. Empty dict
-    if IV/spot/strike unusable. 0 DTE uses T = 1/365 so the formula doesn't blow up."""
+                         iv: float | None, rate: float = 0.0, div_yield: float = 0.0) -> dict:
+    """Long-option greeks from listed IV, with a continuous dividend yield `q`
+    (Merton 1973). Without `q`, delta/assignment_risk is biased toward "less
+    likely assigned" on dividend payers — validated against the residual found
+    comparing flat-model Prob-OTM to TOS's own number on a dividend name (the
+    gap tracked the stock's yield almost exactly). `q=0.0` reproduces the old
+    undiscounted formula exactly, so this is a pure extension, not a behavior
+    change for non-payers (e.g. ADBE, which pays no dividend).
+
+    Theta is per calendar day. Empty dict if IV/spot/strike unusable. 0 DTE
+    uses T = 1/365 so the formula doesn't blow up."""
     if side not in ("put", "call"):
         return {}
     if any(v is None or not (float(v) > 0) for v in (spot, strike, iv)):
         return {}
     T = max(int(dte), 0) / 365.0 or (1.0 / 365.0)
     sig = float(iv)
+    q = float(div_yield or 0.0)
     sqrtT = math.sqrt(T)
     try:
-        d1 = (math.log(float(spot) / float(strike)) + (rate + 0.5 * sig * sig) * T) / (sig * sqrtT)
+        d1 = (math.log(float(spot) / float(strike)) + (rate - q + 0.5 * sig * sig) * T) / (sig * sqrtT)
     except (ValueError, ZeroDivisionError):
         return {}
     d2 = d1 - sig * sqrtT
     nd1, npd1 = _norm_cdf(d1), _norm_pdf(d1)
-    disc = math.exp(-rate * T)
+    disc_r, disc_q = math.exp(-rate * T), math.exp(-q * T)
     if side == "call":
-        delta = nd1
-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) - rate * float(strike) * disc * _norm_cdf(d2)
+        delta = disc_q * nd1
+        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
+                    - rate * float(strike) * disc_r * _norm_cdf(d2)
+                    + q * float(spot) * disc_q * nd1)
     else:
-        delta = nd1 - 1.0
-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) + rate * float(strike) * disc * _norm_cdf(-d2)
-    gamma = npd1 / (float(spot) * sig * sqrtT)
-    vega = float(spot) * npd1 * sqrtT / 100.0   # per 1 vol point
+        delta = disc_q * (nd1 - 1.0)
+        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
+                    + rate * float(strike) * disc_r * _norm_cdf(-d2)
+                    - q * float(spot) * disc_q * _norm_cdf(-d1))
+    gamma = disc_q * npd1 / (float(spot) * sig * sqrtT)
+    vega = float(spot) * disc_q * npd1 * sqrtT / 100.0   # per 1 vol point
     return {"delta": delta, "gamma": gamma, "theta": theta_yr / 365.0, "vega": vega}
 
 
 def contract_analytics(side: str, spot: float, strike: float, premium: float | None,
-                       dte: int, iv: float | None, rate: float = 0.0) -> dict:
+                       dte: int, iv: float | None, rate: float = 0.0,
+                       div_yield: float = 0.0) -> dict:
     """Breakeven + CSP lens + long greeks for one listed put or call. Short-option
     P&L is the opposite sign of long delta; breakeven is the same number (K±premium).
 
@@ -549,7 +627,7 @@ def contract_analytics(side: str, spot: float, strike: float, premium: float | N
                                   else (out["breakeven"] - float(spot)) / float(spot))
             if out["cushion_pct"] > 0:
                 out["pay_vs_cushion"] = float(premium) / (out["cushion_pct"] * 100.0)
-    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0))
+    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0, div_yield=div_yield or 0.0))
     if "delta" in out:
         out["assignment_risk"] = abs(out["delta"])
     # comparable income lens: cash % of strike (posted), and that income per unit

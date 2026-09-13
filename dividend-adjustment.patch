@@ -1,0 +1,146 @@
+diff --git a/dashboard/app.py b/dashboard/app.py
+index 34303b9..cc8b522 100644
+--- a/dashboard/app.py
++++ b/dashboard/app.py
+@@ -108,6 +108,11 @@ def _next_earnings(ticker: str, today: str) -> str | None:
+     return d.isoformat() if d else None
+ 
+ 
++@st.cache_data(ttl=3600, show_spinner=False)
++def _dividend_yield(ticker: str) -> float:
++    return MD.dividend_yield(ticker)
++
++
+ def _chain_frames(ticker: str, expiry: str) -> tuple[pd.DataFrame, pd.DataFrame, str | None]:
+     raw = _live_chain(ticker, expiry)
+     if not raw:
+@@ -284,6 +289,7 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
+     stats = MD.contract_analytics(
+         "put" if side == "Puts" else "call",
+         spot, float(crow["strike"]), prem, dte, MD._n(crow.get("iv")), rate=rate,
++        div_yield=_dividend_yield(sel),
+     )
+ 
+     kind = side[:-1].lower()
+@@ -403,9 +409,11 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
+         g2.metric("Gamma", _fmt(stats.get("gamma"), "{:.3f}"))
+         g3.metric("Theta / day", _fmt(stats.get("theta"), "{:.3f}"))
+         g4.metric("Vega", _fmt(stats.get("vega"), "{:.3f}"))
++        div_y = _dividend_yield(sel)
+         st.caption(
+             f"Strike vs spot {_fmt(stats.get('strike_vs_spot'), '{:.1%}')} · "
+-            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}."
++            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}"
++            + (f" · div yield {div_y:.1%} (Merton adjustment applied)" if div_y > 0 else " · no dividend")
+         )
+ 
+ 
+diff --git a/scanner/market_data.py b/scanner/market_data.py
+index 45fc0e4..bf7f867 100644
+--- a/scanner/market_data.py
++++ b/scanner/market_data.py
+@@ -156,6 +156,32 @@ def shares_outstanding(ticker: str) -> float | None:
+         return None
+ 
+ 
++def dividend_yield(ticker: str) -> float:
++    """Trailing dividend yield as a decimal (0.017 = 1.7%), for the continuous-yield
++    term `q` in Black-Scholes. yfinance has changed the units of `dividendYield`
++    across versions (fraction vs. percent point), so this sanity-checks the raw
++    value instead of trusting its scale blindly. Best-effort: 0.0 (no adjustment,
++    the old behavior) on any failure or implausible value — never raises, never
++    returns None, so callers can use it directly as `q` without an extra check."""
++    try:
++        info = yf.Ticker(ticker).get_info()
++        for key in ("dividendYield", "trailingAnnualDividendYield"):
++            v = info.get(key)
++            if v is None:
++                continue
++            v = float(v)
++            if v <= 0:
++                continue
++            # yfinance has shipped both 0.017 and 1.7 for "1.7%" depending on
++            # version/endpoint — treat anything above 1.0 as already a percent.
++            v = v / 100.0 if v > 1.0 else v
++            if 0.0 < v < 0.20:  # sanity band; a >20% "yield" is a units bug, not a stock
++                return v
++        return 0.0
++    except Exception:
++        return 0.0
++
++
+ def hv_30d(ticker: str, months: int = 3) -> float | None:
+     """Annualized 30d realized vol: log-return std x sqrt(252) on the last 30
+     daily closes (auto_adjust=True, consistent with the weekly grid). None on
+@@ -494,36 +520,50 @@ def _norm_pdf(x: float) -> float:
+ 
+ 
+ def black_scholes_greeks(side: str, spot: float, strike: float, dte: int,
+-                         iv: float | None, rate: float = 0.0) -> dict:
+-    """Long-option greeks from listed IV. Theta is per calendar day. Empty dict
+-    if IV/spot/strike unusable. 0 DTE uses T = 1/365 so the formula doesn't blow up."""
++                         iv: float | None, rate: float = 0.0, div_yield: float = 0.0) -> dict:
++    """Long-option greeks from listed IV, with a continuous dividend yield `q`
++    (Merton 1973). Without `q`, delta/assignment_risk is biased toward "less
++    likely assigned" on dividend payers — validated against the residual found
++    comparing flat-model Prob-OTM to TOS's own number on a dividend name (the
++    gap tracked the stock's yield almost exactly). `q=0.0` reproduces the old
++    undiscounted formula exactly, so this is a pure extension, not a behavior
++    change for non-payers (e.g. ADBE, which pays no dividend).
++
++    Theta is per calendar day. Empty dict if IV/spot/strike unusable. 0 DTE
++    uses T = 1/365 so the formula doesn't blow up."""
+     if side not in ("put", "call"):
+         return {}
+     if any(v is None or not (float(v) > 0) for v in (spot, strike, iv)):
+         return {}
+     T = max(int(dte), 0) / 365.0 or (1.0 / 365.0)
+     sig = float(iv)
++    q = float(div_yield or 0.0)
+     sqrtT = math.sqrt(T)
+     try:
+-        d1 = (math.log(float(spot) / float(strike)) + (rate + 0.5 * sig * sig) * T) / (sig * sqrtT)
++        d1 = (math.log(float(spot) / float(strike)) + (rate - q + 0.5 * sig * sig) * T) / (sig * sqrtT)
+     except (ValueError, ZeroDivisionError):
+         return {}
+     d2 = d1 - sig * sqrtT
+     nd1, npd1 = _norm_cdf(d1), _norm_pdf(d1)
+-    disc = math.exp(-rate * T)
++    disc_r, disc_q = math.exp(-rate * T), math.exp(-q * T)
+     if side == "call":
+-        delta = nd1
+-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) - rate * float(strike) * disc * _norm_cdf(d2)
++        delta = disc_q * nd1
++        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
++                    - rate * float(strike) * disc_r * _norm_cdf(d2)
++                    + q * float(spot) * disc_q * nd1)
+     else:
+-        delta = nd1 - 1.0
+-        theta_yr = -float(spot) * npd1 * sig / (2 * sqrtT) + rate * float(strike) * disc * _norm_cdf(-d2)
+-    gamma = npd1 / (float(spot) * sig * sqrtT)
+-    vega = float(spot) * npd1 * sqrtT / 100.0   # per 1 vol point
++        delta = disc_q * (nd1 - 1.0)
++        theta_yr = (-float(spot) * disc_q * npd1 * sig / (2 * sqrtT)
++                    + rate * float(strike) * disc_r * _norm_cdf(-d2)
++                    - q * float(spot) * disc_q * _norm_cdf(-d1))
++    gamma = disc_q * npd1 / (float(spot) * sig * sqrtT)
++    vega = float(spot) * disc_q * npd1 * sqrtT / 100.0   # per 1 vol point
+     return {"delta": delta, "gamma": gamma, "theta": theta_yr / 365.0, "vega": vega}
+ 
+ 
+ def contract_analytics(side: str, spot: float, strike: float, premium: float | None,
+-                       dte: int, iv: float | None, rate: float = 0.0) -> dict:
++                       dte: int, iv: float | None, rate: float = 0.0,
++                       div_yield: float = 0.0) -> dict:
+     """Breakeven + CSP lens + long greeks for one listed put or call. Short-option
+     P&L is the opposite sign of long delta; breakeven is the same number (K±premium).
+ 
+@@ -549,7 +589,7 @@ def contract_analytics(side: str, spot: float, strike: float, premium: float | N
+                                   else (out["breakeven"] - float(spot)) / float(spot))
+             if out["cushion_pct"] > 0:
+                 out["pay_vs_cushion"] = float(premium) / (out["cushion_pct"] * 100.0)
+-    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0))
++    out.update(black_scholes_greeks(side, spot, strike, dte, iv, rate=rate or 0.0, div_yield=div_yield or 0.0))
+     if "delta" in out:
+         out["assignment_risk"] = abs(out["delta"])
+     # comparable income lens: cash % of strike (posted), and that income per unit
