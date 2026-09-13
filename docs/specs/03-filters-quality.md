@@ -6,11 +6,13 @@ Business-quality filters. These answer: *"is the company actually good?"* — **
 never an input to anything in this doc.** That separation is deliberate: quality is
 measured blind, then compared against price in doc 05.
 
-Scoring basis: 5-year lookback (10y where noted). **QualityScore (v0.5.8) is on fixed
+Scoring basis: 5-year lookback (10y where noted). **QualityScore (v0.5.9) is on fixed
 economic bars**, not peer percentiles — see doc 05 §2.1. Cheapness still uses the
 **peer ladder** for multiples: GICS industry group when it has ≥ 8 standard-group names,
 else sector, else market. FCF basis is split by use (Q8, v0.3): margins and multiples on
 `fcf_adj` (valuation honesty); positivity counts and CAGR gates on plain `fcf`.
+Ideas **owner-earnings** mode (v0.5.11) remaps the FCF-CAGR gate and QualityScore FCF
+sleeves onto `fcf_owner` = CFO − D&A − SBC; positivity counts stay on plain `fcf`.
 Formulas: doc 06 §7 / §9.
 
 ## 3.1 Profitability
@@ -120,7 +122,7 @@ levels-not-acceleration: a decelerating-but-healthy Adobe can print a 6 and fail
 
 ## Caveats
 
-- **Quality is absolute; cheapness still uses the industry-group ladder (v0.5.8 / v0.3)**:
+- **Quality is absolute; cheapness still uses the industry-group ladder (v0.5.9 / v0.3)**:
   QualityScore is fixed economic bars × path stability, never a peer percentile. Multiples
   still score at GICS industry group when it has ≥ 8 standard-group names, else sector,
   else market — the output states which peer set produced each cheapness percentile.

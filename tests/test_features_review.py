@@ -272,7 +272,15 @@ def test_build_features_end_to_end_columns_and_values():
     assert feat.get("fcf_cov") is not None
     assert feat["rev_yoy_n"] >= 9
     assert feat["rev_pos_years"] == feat["rev_yoy_n"]   # flat synthetic is always up or flat?
-
+    # owner earnings = CFO − D&A − SBC (growth capex does not zero the cash engine)
+    assert feat["fcf_owner_ttm"] == pytest.approx((25 - 2 - 3) * 4)   # 80
+    assert feat["fcf_owner_margin"] == pytest.approx(80 / 400)
+    assert feat["fcf_owner_margin_ttm"] == pytest.approx(80 / 400)
+    assert feat["fcf_owner_yield"] == pytest.approx(feat["fcf_owner_ttm"] / feat["ev"])
+    assert feat["ev_fcf_owner"] == pytest.approx(feat["ev"] / 80)
+    assert feat["ev_fcf_owner_self_n"] == feat["ev_fcf_self_n"]
+    assert "fcf_owner_ttm" in hist.columns
+    assert last["fcf_owner_ttm"] == pytest.approx(80)
 
 
 def test_build_features_kmi_style_missing_sbc_and_gross_profit():
@@ -283,6 +291,8 @@ def test_build_features_kmi_style_missing_sbc_and_gross_profit():
     assert feat["fcf_adj_ttm"] == pytest.approx(80)
     assert "sbc_unreported" in (feat.get("dq_flags") or "")
     assert feat["fcf_ttm"] == pytest.approx(80)   # plain fcf still alive
+    # untagged SBC counts as zero for owner earnings too (same honesty as fcf_adj)
+    assert feat["fcf_owner_ttm"] == pytest.approx((25 - 2) * 4)   # 92
     assert feat.get("gm") is None and feat.get("gm_ttm") is None   # no gross profit AND no cost tags
     assert feat["brake_gm"] is None
 

@@ -60,6 +60,16 @@ def fcf_adj(cfo, capex, sbc) -> float | None:
     return None if base is None or sbc is None else float(base - sbc)
 
 
+def owner_fcf(cfo, dna, sbc=None) -> float | None:
+    """Owner earnings proxy: CFO − D&A − SBC. Untagged SBC counts as zero (same
+    honesty as fcf_adj). D&A stands in for maintenance capex so growth buildouts
+    do not zero the operating cash engine."""
+    if cfo is None or dna is None or not np.isfinite(cfo) or not np.isfinite(dna):
+        return None
+    s = 0.0 if sbc is None or not np.isfinite(sbc) else float(sbc)
+    return float(cfo) - float(dna) - s
+
+
 def ebitda(ebit_val, dna) -> float | None:
     if ebit_val is None or dna is None:
         return None
@@ -160,6 +170,14 @@ def conservative_level(median=None, ttm=None, mean=None) -> float | None:
     return float(mean) if _finite(mean) else None
 
 
+def holdability_roic(roic=None, ttm=None, median=None) -> float | None:
+    """Ideas holdability ROIC: 5y average when present; otherwise conservative
+    min(TTM, 5y median). Missing both is missing — not a pass."""
+    if _finite(roic):
+        return float(roic)
+    return conservative_level(median=median, ttm=ttm, mean=None)
+
+
 def nd_ebitda_score(nd) -> float | None:
     """Net cash (≤ 0) = 100; 3.0× EBITDA = 0; linear between."""
     if not _finite(nd):
@@ -182,6 +200,20 @@ def cov_to_score(cov, *, zero_at: float) -> float | None:
     if not _finite(cov) or zero_at <= 0:
         return None
     return float(np.clip(1.0 - float(cov) / zero_at, 0.0, 1.0) * 100.0)
+
+
+def weighted_available_mean(parts: pd.DataFrame, weights: dict[str, float]) -> pd.Series:
+    """Weighted mean over present columns; remaining keep their relative stated weights.
+
+    Missing slots drop out (doc 06 §10: never a silent fill). A 50/25/25 mix with
+    the 25% column missing is 2/3 and 1/3, not a 50/50 equal mean of leftovers.
+    """
+    w = pd.Series({c: float(weights[c]) for c in parts.columns})
+    used = parts.notna().mul(w, axis=1).sum(axis=1)
+    return (
+        (parts.mul(w, axis=1).fillna(0.0).sum(axis=1) / used.replace(0, np.nan))
+        .where(used > 0)
+    )
 
 
 def coeff_var(s: pd.Series, *, require_positive_mean: bool = False) -> float | None:
@@ -246,6 +278,12 @@ def fy_window_quality(F: pd.DataFrame, cur_rev: float | None = None) -> dict:
         out["roic_median_5y"] = float(r.median())
     if "fcf" in W5:
         out["fcf_cov"] = coeff_var(W5["fcf"], require_positive_mean=True)
+    if "fcf_owner_margin" in W5 and W5["fcf_owner_margin"].notna().sum() >= 3:
+        om = W5["fcf_owner_margin"].dropna()
+        out["fcf_owner_margin"] = float(om.mean())
+        out["fcf_owner_margin_median_5y"] = float(om.median())
+    if "fcf_owner" in W5:
+        out["fcf_owner_cov"] = coeff_var(W5["fcf_owner"], require_positive_mean=True)
     if "revenue" in W10:
         pos, n = rev_up_years(W10["revenue"])
         out["rev_pos_years"] = pos
@@ -257,6 +295,10 @@ def fy_window_quality(F: pd.DataFrame, cur_rev: float | None = None) -> dict:
         val, fb = cagr5_from_series(F["fcf"].dropna(), cur_rev=cur_rev, fallback=True)
         out["fcf_cagr5"] = val
         out["fcf_cagr5_base_fallback"] = bool(fb)
+    if "fcf_owner" in F:
+        oval, ofb = cagr5_from_series(F["fcf_owner"].dropna(), cur_rev=cur_rev, fallback=True)
+        out["fcf_owner_cagr5"] = oval
+        out["fcf_owner_cagr5_base_fallback"] = bool(ofb)
     return out
 
 

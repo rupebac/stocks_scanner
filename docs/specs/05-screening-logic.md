@@ -1,8 +1,9 @@
 # 05 — Screening Logic: Gates → Scores → Flags → Screens
 
-Version 0.5.8 (2026-09-13). QualityScore rewritten as absolute bars × path stability
-(owner); CheapnessScore / residual / flags otherwise as v0.4. v0.5: input-availability
-pointer added (doc 08 §5).
+Version 0.5.11 (2026-09-14). QualityScore absolute bars × path stability (v0.5.8),
+path weights + ROIC band on the floor (v0.5.9/v0.5.10). Named owner-earnings cash
+setting (v0.5.11). CheapnessScore / residual / flags otherwise as v0.4. v0.5:
+input-availability pointer added (doc 08 §5).
 
 How the filter catalog becomes a search. Four layers:
 
@@ -21,8 +22,9 @@ of scores. Default gates (docs 02–04):
 
 - universe membership (standard sector group, doc 01)
 - `adv_usd` ≥ $20M · `mktcap` ≥ $10B · `index_tenure` ≥ 1y
-- growth floors (levels, plain `fcf`): `rev_cagr5` ≥ 0 · `fcf_cagr5` ≥ −0.05 — tolerant
-  of Adobe-style deceleration
+- growth floors (levels, plain `fcf` by default): `rev_cagr5` ≥ 0 · `fcf_cagr5` ≥ −0.05 —
+  tolerant of Adobe-style deceleration. Ideas **owner-earnings** mode remaps `fcf_cagr5`
+  onto `CFO − D&A − SBC` (doc 06 §7) and re-evaluates this gate; revenue CAGR is unchanged.
 - data coverage: stock must have ≥ 80% of MVP score inputs, else unscored (listed separately)
 
 Gates exist to remove noise, never to express the thesis. The thesis lives in scores and
@@ -49,8 +51,8 @@ Direction normalized so 100 = best.
 
 ### 2.1 QualityScore — "is the business good?" (no price inputs)
 
-v0.5.8: **absolute bars, not peer percentiles.** A 20% ROIC is good whether peers are
-software or nitrogen. Peer-ladder percentiles remain for CheapnessScore (`ev_ebit`)
+v0.5.8/v0.5.9: **absolute bars, not peer percentiles.** A 20% ROIC is good whether peers
+are software or nitrogen. Peer-ladder percentiles remain for CheapnessScore (`ev_ebit`)
 and the `beaten_but_delivering` momentum arm only.
 
 ```
@@ -68,7 +70,7 @@ A jumpy path cannot average its way to a high score. `fcf_ni` / `gm` *level* /
 | Profitability | 40% | Conservative level = min(TTM, 5y **median**; 5y mean only if both missing). ROIC clip(0, 20%)/20%. FCF margin clip(0, 25%)/25%. Equal mix. No gross-margin *level* (sector-structural). |
 | Growth | 30% | `rev_cagr5` and `fcf_cagr5` each clip(0, 12%)/12% — **12% CAGR is full marks**; 40% is not better. Equal mix; one missing → the other. The §1 gates (`rev ≥ 0`, `FCF CAGR ≥ −5%`) still apply separately. |
 | Balance | 30% | `nd_ebitda`: net cash (≤ 0) = 100; 3.0× = 0; linear between. |
-| Stability (multiplier) | — | Mean of: GM CoV (`gm_stability`) with 25% CoV → 0; FCF CoV (`fcf_cov`) with 50% CoV → 0 (cash is lumpier); share of last-10y YoY revenue years that **did not fall** (`rev_pos_years` / `rev_yoy_n`; flat counts as stable). |
+| Stability (multiplier) | — | Weighted path (v0.5.9): revenue-up-year share 50% (`rev_pos_years` / `rev_yoy_n`; flat counts as stable); GM CoV (`gm_stability`) 25%, with 25% CoV → 0; FCF CoV (`fcf_cov`) 25%, with 50% CoV → 0 (cash is lumpier). Missing slots renormalize — a missing GM tag cannot promote FCF CoV to half the multiplier. |
 
 Growth stays a **gate and a capped score**, never a maximizer: that is what keeps EQT-style
 volume spikes from outranking a steady 8% compounder. Stability is what drops CF-style
@@ -102,9 +104,15 @@ layer's job.
 ### 2.3 Quality floor, ranking key, composite
 
 - **Quality floor — a gate, not a ranker.** `QualityScore ≥ 60` on the absolute scale
-  (v0.5.8). Replaces the v0.4 top-20% cut: a fixed numeral so a name's candidacy does not
-  flicker with tonight's cohort, and so Materials peers cannot lift a cyclical to “high
-  quality.” Threshold is stored on the scan artifact as `quality_floor_threshold`.
+  (v0.5.8) **and** conservative ROIC in **[10%, 100%]** when ROIC is computable
+  (`min(TTM, 5y median)`; v0.5.9/v0.5.10). Missing ROIC does not fail. A collapsed
+  current ROIC cannot average past the floor via growth + cash + FCF margin. A
+  *computed* ROIC > 100% (NOPAT > invested capital) is a tiny-IC artifact and **fails**
+  — that is not the same as “we could not compute ROIC.” 80–85% with a real denominator
+  (buybacks) still passes. Replaces the v0.4 top-20% cut: a fixed numeral so a name's
+  candidacy does not flicker with tonight's cohort, and so Materials peers cannot lift a
+  cyclical to “high quality.” Threshold is stored on the scan artifact as
+  `quality_floor_threshold`.
 - **Flagship rank key: the valuation residual.** Per scan date, fit
   `log(EV/FCF) ~ log(ROIC) + industry-group dummies` — **on the full standard-group
   cross-section** with valid EV/FCF and ROIC (ROIC floored at 1% for the log; ROIC ≤ 0
@@ -121,7 +129,19 @@ layer's job.
   Flagship lists are never ranked by it: quality is the gate, cheapness (residual) is the
   rank, sentiment is the flag.
 
-## 3. Divergence flags
+**Cash definition (v0.5.11, Ideas setting).** Default FCF for QualityScore sleeves,
+the residual, the FCF-CAGR gate, and the Ideas yield bar is **reported** `fcf_adj`
+(CFO − capex − SBC). A named **owner earnings** switch remaps those slots onto
+`CFO − D&A − SBC` and rescores — D&A stands in for maintenance capex so growth
+buildouts do not zero the operating cash engine. Overlay strike yields stay on
+reported FCF. The two series are never averaged. Scan artifacts keep both columns;
+old scans without owner columns stay reported.
+
+**Ideas highlights holdability ROIC (v0.5.11).** Membership still requires the quality
+floor, residual < 0, ROIC ≥ 10%, and FCF yield ≥ max(4%, GS10). The ROIC used is the
+5y average when present, else conservative `min(TTM, 5y median)`. Missing both fails.
+Options never rank, hide, or change membership except via the quality-floor /
+membership rules above.
 
 Named, inspectable detections. Each flag stores its evidence (triggering metrics + values)
 so the UI can always answer *"why is this name on the list?"*.

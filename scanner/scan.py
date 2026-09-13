@@ -297,7 +297,9 @@ def run_scan(
             k: getattr(config, k) for k in [
                 "GATE_ADV_USD", "GATE_MKTCAP_USD", "GATE_REV_CAGR5_MIN", "GATE_FCF_CAGR5_MIN",
                 "MIN_INDEX_TENURE_YEARS", "MIN_SCORE_INPUT_COVERAGE",
-                "QUALITY_FLOOR_MIN", "FLAG_SELF_PCT", "FLAG_SELF_Z", "FLAG_MEDIAN_RATIO",
+                "QUALITY_FLOOR_MIN", "QUALITY_FLOOR_ROIC_MIN", "QUALITY_FLOOR_ROIC_MAX",
+                "QUALITY_STABILITY_WEIGHTS",
+                "FLAG_SELF_PCT", "FLAG_SELF_Z", "FLAG_MEDIAN_RATIO",
                 "FLAG_YIELD_FLOOR", "FLAG_RESIDUAL_PCT", "FLAG_BRAKE_GM", "FLAG_BRAKE_FCF_MARGIN",
                 "FLAG_BRAKE_ROIC",
             ]

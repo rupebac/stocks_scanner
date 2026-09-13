@@ -7,7 +7,8 @@ from scanner import config
 from scanner.metrics import (
     cagr, cagr5_from_series, cagr_score, clip_scale, coeff_var, conservative_level,
     cov_to_score, ev, fixed_scale_yield, fy_window_quality, invested_capital,
-    nd_ebitda_score, rev_up_years, self_stats, t_eff_winsorized, winsor_pct_rank,
+    nd_ebitda_score, rev_up_years, self_stats, t_eff_winsorized,
+    weighted_available_mean, winsor_pct_rank,
 )
 
 
@@ -197,6 +198,21 @@ def test_cov_to_score_zero_at_threshold():
     assert cov_to_score(None, zero_at=0.25) is None
 
 
+def test_weighted_available_mean_renormalizes_stated_weights():
+    """Missing slots drop out; remaining keep their *relative* stated weights.
+
+    Revenue 50 / GM 25 / FCF 25 with GM missing → revenue 2/3, FCF 1/3,
+    not a 50/50 equal mean of whatever is present.
+    """
+    parts = pd.DataFrame({"revenue": [100.0, 100.0], "gm": [np.nan, 100.0], "fcf": [40.0, 40.0]})
+    w = {"revenue": 0.50, "gm": 0.25, "fcf": 0.25}
+    out = weighted_available_mean(parts, w)
+    assert out.iloc[0] == pytest.approx((0.50 * 100 + 0.25 * 40) / 0.75)  # 80
+    assert out.iloc[1] == pytest.approx(0.50 * 100 + 0.25 * 100 + 0.25 * 40)  # 85
+    all_missing = pd.DataFrame({"revenue": [np.nan], "gm": [np.nan], "fcf": [np.nan]})
+    assert pd.isna(weighted_available_mean(all_missing, w).iloc[0])
+
+
 def test_coeff_var_needs_three_points_and_positive_mean():
     assert coeff_var(pd.Series([1.0, 1.0])) is None
     assert coeff_var(pd.Series([-1.0, -2.0, -3.0]), require_positive_mean=True) is None
@@ -224,8 +240,10 @@ def test_fy_window_quality_medians_and_path():
     roic = [0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.35, 0.18, 0.17, 0.16]
     rev = [100, 110, 120, 130, 140, 150, 280, 160, 170, 180]
     F = pd.DataFrame({"fcf": fcf, "gm": gm, "roic": roic, "revenue": rev,
-                      "fcf_margin": [a / b for a, b in zip(fcf, rev)]},
+                      "fcf_margin": [a / b for a, b in zip(fcf, rev)],
+                      "fcf_owner": [1.2, 1.3, 1.4, 1.5, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]},
                      index=idx)
+    F["fcf_owner_margin"] = F["fcf_owner"] / F["revenue"]
     out = fy_window_quality(F)
     assert out["roic_years"] == 9                       # 2016 ROIC = 10% is not > 10%
     assert out["fcf_pos_years"] == 10
@@ -234,3 +252,25 @@ def test_fy_window_quality_medians_and_path():
     assert out["gm_stability"] == pytest.approx(0.0, abs=1e-9)
     assert out["rev_yoy_n"] == 9
     assert out["rev_pos_years"] == 8                    # only 2023 is a down year
+    assert out["fcf_owner_cov"] is not None
+    assert out["fcf_owner_cov"] < out["fcf_cov"]        # owner path ignores the capex boom
+    assert out["fcf_owner_cagr5"] is not None
+    assert out["fcf_owner_margin_median_5y"] == pytest.approx(
+        float(F["fcf_owner_margin"].iloc[-5:].median()), rel=1e-6)
+
+
+def test_owner_fcf_is_cfo_minus_dna_minus_sbc():
+    from scanner.metrics import owner_fcf
+    assert owner_fcf(50, 10, 5) == 35
+    assert owner_fcf(50, 10, None) == 40   # untagged SBC = 0, same as fcf_adj
+    assert owner_fcf(None, 10, 5) is None
+    assert owner_fcf(50, None, 5) is None
+
+
+def test_holdability_roic_uses_five_year_when_present():
+    """Ideas holdability: 5y avg wins; TTM/conservative only if the 5y avg is missing."""
+    from scanner.metrics import holdability_roic
+    assert holdability_roic(roic=0.08, ttm=0.21, median=0.12) == pytest.approx(0.08)
+    assert holdability_roic(roic=None, ttm=0.21, median=None) == pytest.approx(0.21)
+    assert holdability_roic(roic=None, ttm=0.21, median=0.14) == pytest.approx(0.14)
+    assert holdability_roic(None, None, None) is None

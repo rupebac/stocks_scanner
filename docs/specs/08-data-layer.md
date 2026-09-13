@@ -122,8 +122,12 @@ implemented inputs, and the renormalization is stated in scan output.
 | Sentiment/gates | `mom_12_1`, `rs_12m`, `dd_52w`, `adv_usd`, `mktcap`, `index_tenure`, `days_to_earnings` | `eps_rev_breadth_3m` (proxy, §4), short interest |
 | Overlay (07) | strike yields, DTE badge, IV/HV display, option gate | — (complete, display-only) |
 
-QualityScore (v0.5.8): core = profitability 40% / growth 30% / balance 30% (renormalize
-over present sleeves), then × stability/100. Floor = 60. See doc 05 §2.1.
+QualityScore (v0.5.9): core = profitability 40% / growth 30% / balance 30% (renormalize
+over present sleeves), then × stability/100. Stability weights: revenue 50% / GM 25% /
+FCF 25% (renormalize if a slot is missing). Floor = Quality ≥ 60 and conservative ROIC
+in [10%, 100%] when ROIC is known (>100% fails; missing does not). See doc 05 §2.1.
+Scan rows also ship `fcf_owner_*` / `ev_fcf_owner*` (CFO − D&A − SBC) so Ideas can remap
+the FCF sleeves, residual, FCF-CAGR gate, and yield bar without a silent blend (v0.5.11).
 
 ## 6. Data-quality hooks (extends doc 01)
 

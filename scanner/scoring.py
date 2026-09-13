@@ -1,8 +1,10 @@
 """Scoring: peer ladder percentiles (cheapness / momentum only), QualityScore
 (absolute bars × path stability), CheapnessScore, quality floor, valuation
-residual, composite. Doc 05 §2 (v0.5.8 quality) + doc 06 §9 mechanics.
+residual, composite. Doc 05 §2 (v0.5.9 quality) + doc 06 §9 mechanics.
 """
 from __future__ import annotations
+
+import ast
 
 import numpy as np
 import pandas as pd
@@ -10,7 +12,8 @@ import pandas as pd
 from . import config
 from .metrics import (
     cagr_score, clip_scale, conservative_level, cov_to_score,
-    fixed_scale_yield, nd_ebitda_score, winsor_pct_rank,
+    fixed_scale_yield, holdability_roic, nd_ebitda_score,
+    weighted_available_mean, winsor_pct_rank,
 )
 
 _PCT_COLS = {
@@ -95,7 +98,7 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         df["pct_mom_sector"] = df.groupby("sector")["mom_12_1"].transform(
             winsor_pct_rank, higher_better=True)
 
-    # --- QualityScore (doc 05 §2.1 v0.5.8): absolute bars × path stability ------
+    # --- QualityScore (doc 05 §2.1 v0.5.9): absolute bars × path stability ------
     def _levels(median_col, ttm_col, mean_col):
         return pd.Series(
             [conservative_level(m, t, n) for m, t, n in zip(
@@ -103,7 +106,8 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
             index=df.index,
         )
 
-    roic_s = _levels("roic_median_5y", "roic_ttm", "roic").map(
+    roic_level = _levels("roic_median_5y", "roic_ttm", "roic")
+    roic_s = roic_level.map(
         lambda v: clip_scale(v, 0.0, config.QUALITY_ROIC_CAP))
     fcf_s = _levels("fcf_margin_median_5y", "fcf_margin_ttm", "fcf_margin").map(
         lambda v: clip_scale(v, 0.0, config.QUALITY_FCF_MARGIN_CAP))
@@ -124,7 +128,10 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
     rev_s = pd.Series(np.nan, index=df.index, dtype="float64")
     ok = rev_n.gt(0)
     rev_s.loc[ok] = (rev_pos.loc[ok] / rev_n.loc[ok] * 100.0).clip(0.0, 100.0)
-    stability = pd.concat([gm_s, fcf_path, rev_s], axis=1).mean(axis=1, skipna=True)
+    stability = weighted_available_mean(
+        pd.DataFrame({"revenue": rev_s, "gm": gm_s, "fcf": fcf_path}, index=df.index),
+        config.QUALITY_STABILITY_WEIGHTS,
+    )
 
     comp = pd.DataFrame(
         {"profitability": profit, "growth": growth, "balance": balance},
@@ -165,9 +172,17 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         + parts["abs"] * wc["absolute"]
     ).where(parts.notna().all(axis=1))
 
-    # --- quality floor: absolute bar (doc 05 §2.3, v0.5.8) ------------------------
+    # --- quality floor: absolute bar + conservative ROIC band (doc 05 §2.3) ------
     thr = float(config.QUALITY_FLOOR_MIN)
-    df["quality_floor_pass"] = df["quality_score"].notna() & (df["quality_score"] >= thr)
+    # missing ROIC does not fail; a computed value must sit in [10%, 100%].
+    # >100% (NOPAT > invested capital) is a tiny-IC artifact, not holdability.
+    roic_ok = roic_level.isna() | (
+        (roic_level >= config.QUALITY_FLOOR_ROIC_MIN)
+        & (roic_level <= config.QUALITY_FLOOR_ROIC_MAX)
+    )
+    df["quality_floor_pass"] = (
+        df["quality_score"].notna() & (df["quality_score"] >= thr) & roic_ok
+    )
 
     # --- valuation residual (doc 05 §2.3) ------------------------------------------
     # Fit on ALL gated rows with valid ev_fcf > 0 and ROIC > 0 (ROIC <= 0 excluded
@@ -231,3 +246,158 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
     df.attrs["quality_floor_threshold"] = thr
     df.attrs["residual_fit"] = fit_stats
     return df
+
+
+# --- named cash setting (v0.5.11) ----------------------------------------------
+# Default remains reported FCF (CFO − capex − SBC). Owner earnings (CFO − D&A −
+# SBC) is a named switch, never a blend: D&A stands in for maintenance capex so
+# growth buildouts do not zero the operating cash engine. Overlay strike yields
+# stay on reported FCF.
+
+_OWNER_TO_ACTIVE = {
+    "fcf_margin": "fcf_owner_margin",
+    "fcf_margin_ttm": "fcf_owner_margin_ttm",
+    "fcf_margin_median_5y": "fcf_owner_margin_median_5y",
+    "fcf_cagr5": "fcf_owner_cagr5",
+    "fcf_cagr5_base_fallback": "fcf_owner_cagr5_base_fallback",
+    "fcf_cov": "fcf_owner_cov",
+    "fcf_yield": "fcf_owner_yield",
+    "ev_fcf": "ev_fcf_owner",
+    "ev_fcf_self_pct": "ev_fcf_owner_self_pct",
+    "ev_fcf_self_z": "ev_fcf_owner_self_z",
+    "ev_fcf_self_ratio": "ev_fcf_owner_self_ratio",
+    "ev_fcf_self_n": "ev_fcf_owner_self_n",
+    "brake_fcf_margin": "brake_fcf_owner_margin",
+}
+
+_OWNER_SOURCE_COLS = (
+    "fcf_owner_cagr5", "fcf_owner_yield", "fcf_owner_ttm", "fcf_owner_margin",
+)
+
+
+def owner_cash_available(df: pd.DataFrame) -> bool:
+    return any(c in df.columns for c in _OWNER_SOURCE_COLS)
+
+
+def _reasons_list(val) -> list:
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return []
+    if isinstance(val, (list, tuple)):
+        return [str(x) for x in val]
+    s = str(val).strip()
+    if not s or s.lower() in ("[]", "nan", "none"):
+        return []
+    try:
+        parsed = ast.literal_eval(s)
+        if isinstance(parsed, (list, tuple)):
+            return [str(x) for x in parsed]
+    except (ValueError, SyntaxError):
+        pass
+    return [s]
+
+
+def _refresh_fcf_cagr_gate(df: pd.DataFrame) -> pd.DataFrame:
+    """Re-evaluate only the FCF-CAGR gate after a cash-series swap. Size/tenure
+    columns missing in unit tests must not invent 'adv n/a' failures.
+    Stale `coverage<80%` tags (stamped after gates at scan time) are stripped
+    here; coverage is re-applied after the mapped SELF slot is known."""
+    if "gate_fail_reasons" not in df.columns:
+        return df
+
+    def refresh(row):
+        reasons = [r for r in _reasons_list(row.get("gate_fail_reasons"))
+                   if r not in ("fcf_cagr5 gate", "coverage<80%")]
+        fc = row.get("fcf_cagr5")
+        if fc is None or pd.isna(fc) or fc < config.GATE_FCF_CAGR5_MIN:
+            reasons.append("fcf_cagr5 gate")
+        return reasons
+
+    df["gate_fail_reasons"] = df.apply(refresh, axis=1)
+    df["gates_pass"] = df["gate_fail_reasons"].map(lambda r: len(r) == 0)
+    return df
+
+
+def _stamp_coverage_reason(df: pd.DataFrame) -> pd.DataFrame:
+    if "input_coverage" not in df.columns or "gate_fail_reasons" not in df.columns:
+        return df
+
+    def stamp(row):
+        reasons = [r for r in _reasons_list(row.get("gate_fail_reasons"))
+                   if r != "coverage<80%"]
+        cov = row.get("input_coverage")
+        if cov is None or pd.isna(cov) or cov < config.MIN_SCORE_INPUT_COVERAGE:
+            reasons.append("coverage<80%")
+        return reasons
+
+    df["gate_fail_reasons"] = df.apply(stamp, axis=1)
+    return df
+
+
+def apply_cash_definition(df: pd.DataFrame, mode: str = "reported") -> pd.DataFrame:
+    """Map owner-earnings columns onto the active FCF slots and rescore, or leave
+    reported FCF alone. Old scans without owner columns stay reported.
+    After the swap, only coverage-passers are rescored (same rule as the scan)."""
+    out = df.copy()
+    out.attrs.update(getattr(df, "attrs", {}))
+    if mode != "owner" or not owner_cash_available(out):
+        out.attrs["cash_definition"] = "reported"
+        return out
+    for dest, src in _OWNER_TO_ACTIVE.items():
+        if src in out.columns:
+            out[dest] = out[src]
+    out = _refresh_fcf_cagr_gate(out)
+    cov_cols = [c for c in config.MVP_SCORE_INPUTS if c in out.columns]
+    if cov_cols:
+        out["input_coverage"] = out[cov_cols].notna().mean(axis=1)
+        out = _stamp_coverage_reason(out)
+    drop = [c for c in (
+        "residual", "residual_fitted", "residual_pct",
+        "quality_score", "quality_floor_pass", "cheapness_score", "composite",
+        "quality_weight_used", "quality_component_values",
+    ) if c in out.columns]
+    if drop:
+        out = out.drop(columns=drop)
+    if "input_coverage" in out.columns:
+        scoreable = out[out["input_coverage"] >= config.MIN_SCORE_INPUT_COVERAGE].copy()
+    else:
+        scoreable = out.copy()
+    if scoreable.empty:
+        out.attrs["cash_definition"] = "owner"
+        return out
+    scored = compute_scores(scoreable)
+    if "ticker" in out.columns:
+        rest = out[~out["ticker"].isin(scored["ticker"])].reindex(columns=scored.columns)
+        out = pd.concat([scored, rest], ignore_index=True)
+    else:
+        out = scored
+    out.attrs["cash_definition"] = "owner"
+    return out
+
+
+def highlighted(df: pd.DataFrame, gs10: float | None = None,
+                yield_floor: float = 0.04) -> pd.DataFrame:
+    """Ideas highlights: gated + quality floor + residual < 0 + holdability.
+    Holdability ROIC is the 5y average when present, else conservative
+    min(TTM, 5y median). Missing both fails. Yield uses the active cash series."""
+    bar = max(yield_floor, gs10 or 0)
+    if df.empty or "quality_score" not in df.columns:
+        return df.iloc[0:0].copy()
+    g = df[
+        df["quality_score"].notna()
+        & df["gates_pass"].fillna(False)
+        & (df["input_coverage"] >= config.MIN_SCORE_INPUT_COVERAGE)
+    ].copy()
+    if g.empty:
+        return g
+    roic_h = pd.Series(
+        [holdability_roic(r.get("roic"), r.get("roic_ttm"), r.get("roic_median_5y"))
+         for _, r in g.iterrows()],
+        index=g.index,
+    )
+    hi = g[
+        g["quality_floor_pass"].fillna(False)
+        & g["residual"].notna() & (g["residual"] < 0)
+        & roic_h.notna() & (roic_h >= config.ROIC_THRESHOLD)
+        & g["fcf_yield"].notna() & (g["fcf_yield"] >= bar)
+    ]
+    return hi.sort_values("residual", ascending=True)

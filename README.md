@@ -16,7 +16,10 @@ cheaper-than-quality to the right), tagged cards for the highlights — quality
 floor + residual < 0 + ROIC ≥ 10% + FCF yield ≥ max(4%, 10Y), most negative
 residual first, with FCF yield now and at −5% — a compact table, and a company
 detail that appears under the cards once you pick a ticker (assignment test,
-price/EV-FCF/FCF-yield/cash charts, margin snapshot). **Data manager**
+price/EV-FCF/FCF-yield/cash charts, margin snapshot). A **cash setting** chooses
+reported FCF (CFO − capex − SBC, default) or owner earnings (CFO − D&A − SBC)
+for the FCF-CAGR gate, QualityScore FCF sleeves, residual, and the yield bar;
+overlay strike yields stay reported. **Data manager**
 re-downloads everything and re-scans, shows the caches and the data-source
 inventory. Every number is display-only — the scanner ranks, the human decides.
 
@@ -78,8 +81,10 @@ Each run writes scan artifacts to `data/scans/<date>/` (doc 05 §4b): `config.js
 ## What it computes (spec summary — full detail in docs/specs/)
 
 - **Quality is the gate**: QualityScore is absolute (profitability × capped growth ×
-  low debt, multiplied by path stability). Floor is Quality ≥ 60. No price inputs.
-  Peer-ladder percentiles are not used for quality.
+  low debt, multiplied by path stability). Floor is Quality ≥ 60 and conservative
+  ROIC in [10%, 100%] when ROIC is known (>100% fails; missing does not). No price inputs.
+  Peer-ladder percentiles are not used for quality. Ideas can remap the FCF sleeves
+  onto owner earnings (CFO − D&A − SBC) via a named setting; default stays reported FCF.
 - **Cheapness is the rank**: CheapnessScore (EV/FCF vs own 5y history, EV/EBIT vs
   industry-group peers, FCF yield on a fixed 0–10% scale) and the flagship rank key —
   the valuation residual `log(EV/FCF) ~ log(ROIC) + industry group`.

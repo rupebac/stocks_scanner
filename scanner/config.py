@@ -49,7 +49,7 @@ CAGR5_FALLBACK_YEARS_LO = 3.5   # FCF only: nearest valid year if the 5y base is
 GOODWILL_IC_PCT = 0.40          # roic_exgoodwill variant trigger (P1, doc 03 §3.1)
 
 # --- Scoring (doc 05 §2) ------------------------------------------------------
-QUALITY_WEIGHTS = {             # doc 05 §2.1 v0.5.8; core sleeves, then × stability
+QUALITY_WEIGHTS = {             # doc 05 §2.1 v0.5.9; core sleeves, then × stability
     "profitability": 0.40,
     "growth": 0.30,
     "balance": 0.30,
@@ -60,7 +60,14 @@ QUALITY_CAGR_CAP = 0.12         # 12% CAGR = 100; faster is not better
 QUALITY_ND_EBITDA_ZERO = 3.0    # 3× net debt/EBITDA = 0; ≤0 (net cash) = 100
 QUALITY_GM_COV_ZERO = 0.25      # GM CoV 25% → stability sleeve 0
 QUALITY_FCF_COV_ZERO = 0.50     # FCF path is lumpier than GM
+QUALITY_STABILITY_WEIGHTS = {   # path smoothness; FCF CoV is a minority check
+    "revenue": 0.50,            # share of last-10y YoY revenue years that did not fall
+    "gm": 0.25,
+    "fcf": 0.25,
+}
 QUALITY_FLOOR_MIN = 60.0        # absolute quality floor (replaces top-20% cut)
+QUALITY_FLOOR_ROIC_MIN = ROIC_THRESHOLD  # conservative ROIC when present; missing does not fail
+QUALITY_FLOOR_ROIC_MAX = 1.0    # >100% = tiny-IC artifact; computed nonsense fails the floor
 CHEAPNESS_WEIGHTS = {           # doc 05 §2.2
     "self_history": 0.40,       # ev_fcf SELF percentile-of-lowness
     "cross_section": 0.30,      # ev_ebit SECT on the peer ladder

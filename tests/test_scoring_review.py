@@ -107,7 +107,7 @@ def test_quality_weights_are_core_sleeves():
 def test_quality_is_core_times_stability():
     """Jumpy path cannot average away: stability is a multiplier, not a 25% sleeve."""
     df = _frame(n_igb=0)
-    # same core inputs; A00 smooth, A01 CF-like FCF path
+    # same core inputs; A00 smooth, A01 jumpy FCF only (GM + revenue still fine)
     for t in ("A00", "A01"):
         df.loc[df["ticker"] == t, ["roic", "fcf_margin", "nd_ebitda"]] = [0.22, 0.30, 0.5]
         df.loc[df["ticker"] == t, ["rev_cagr5", "fcf_cagr5"]] = [0.11, 0.14]
@@ -121,10 +121,101 @@ def test_quality_is_core_times_stability():
     assert c0["balance"] == c1["balance"]
     assert c0["stability"] > c1["stability"]
     # A01's score is core × (stability/100), not a blend that still lands in the 70s
-    assert s.loc["A01", "quality_score"] < 60
     assert s.loc["A00", "quality_score"] > s.loc["A01", "quality_score"] + 15
     assert s.loc["A00", "quality_floor_pass"]
-    assert not s.loc["A01", "quality_floor_pass"]
+
+
+def test_stability_weights_revenue_half_gm_fcf_quarter():
+    """Path = operating-business smoothness; FCF CoV is a minority check, not an equal vote."""
+    assert config.QUALITY_STABILITY_WEIGHTS == {
+        "revenue": 0.50, "gm": 0.25, "fcf": 0.25,
+    }
+
+
+def test_stability_missing_gm_does_not_double_fcf_vote():
+    """A missing GM slot must not promote FCF CoV to 50% of the path (equal-mean trap)."""
+    df = _frame(n_igb=0)
+    for t in ("A00", "A01"):
+        df.loc[df["ticker"] == t, ["roic", "fcf_margin", "nd_ebitda"]] = [0.20, 0.25, 0.0]
+        df.loc[df["ticker"] == t, ["rev_cagr5", "fcf_cagr5"]] = [0.12, 0.12]
+        df.loc[df["ticker"] == t, ["rev_pos_years", "rev_yoy_n"]] = [9, 9]
+        df.loc[df["ticker"] == t, "gm_stability"] = np.nan
+    df.loc[df["ticker"] == "A00", "fcf_cov"] = 0.30  # lumpy cash, every revenue year up
+    df.loc[df["ticker"] == "A01", "fcf_cov"] = 0.0
+    s = SC.compute_scores(df).set_index("ticker")
+    # rev=100; A00 FCF CoV 30% → 40; missing GM → (0.50*100 + 0.25*40) / 0.75 = 80
+    # equal-mean of present would have been 70 and often dump this class under 60
+    assert s.loc["A00", "quality_component_values"]["stability"] == pytest.approx(80.0, abs=0.6)
+    assert s.loc["A01", "quality_component_values"]["stability"] == pytest.approx(100.0, abs=0.6)
+    assert s.loc["A00", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert s.loc["A00", "quality_floor_pass"]
+
+
+def test_stability_jumpy_on_all_three_slots_still_fails_floor():
+    """Boom/bust on GM + FCF + revenue declines still fails. Minority FCF weight is not amnesty."""
+    df = _frame(n_igb=0)
+    df.loc[df["ticker"] == "A00", ["roic", "fcf_margin", "nd_ebitda"]] = [0.22, 0.30, 0.0]
+    df.loc[df["ticker"] == "A00", ["rev_cagr5", "fcf_cagr5"]] = [0.11, 0.14]
+    df.loc[df["ticker"] == "A00", ["gm_stability", "fcf_cov", "rev_pos_years", "rev_yoy_n"]] = [
+        0.16, 0.26, 6, 9]
+    s = SC.compute_scores(df).set_index("ticker")
+    assert s.loc["A00", "quality_score"] < config.QUALITY_FLOOR_MIN
+    assert not s.loc["A00", "quality_floor_pass"]
+
+
+def test_floor_requires_conservative_roic_when_present():
+    """Collapsed current ROIC cannot average past the floor via growth + cash + FCF margin.
+
+    Same 10% holdability bar as Ideas / roic_years, applied to min(TTM, 5y median).
+    """
+    df = _frame(n_igb=0)
+    df.loc[df["ticker"] == "A00",
+           ["fcf_margin", "fcf_margin_ttm", "fcf_margin_median_5y"]] = [0.21, 0.21, 0.21]
+    df.loc[df["ticker"] == "A00", ["rev_cagr5", "fcf_cagr5", "nd_ebitda"]] = [0.12, 0.12, -1.0]
+    df.loc[df["ticker"] == "A00", ["gm_stability", "fcf_cov", "rev_pos_years", "rev_yoy_n"]] = [
+        0.0, 0.0, 9, 9]
+    df.loc[df["ticker"] == "A00", ["roic", "roic_ttm", "roic_median_5y"]] = [0.106, 0.019, 0.113]
+    s = SC.compute_scores(df).set_index("ticker")
+    assert s.loc["A00", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert not s.loc["A00", "quality_floor_pass"]
+
+
+def test_floor_missing_roic_does_not_fail():
+    """Null ROIC is not a silent fail — same honesty rule as the rest of the floor."""
+    df = _frame(n_igb=0)
+    df.loc[df["ticker"] == "A00", ["roic", "fcf_margin", "nd_ebitda"]] = [np.nan, 0.25, 0.0]
+    df.loc[df["ticker"] == "A00",
+           ["roic_ttm", "roic_median_5y", "fcf_margin_ttm", "fcf_margin_median_5y"]] = [
+        np.nan, np.nan, 0.25, 0.25]
+    df.loc[df["ticker"] == "A00", ["rev_cagr5", "fcf_cagr5"]] = [0.12, 0.12]
+    df.loc[df["ticker"] == "A00", ["gm_stability", "fcf_cov", "rev_pos_years", "rev_yoy_n"]] = [
+        0.0, 0.0, 9, 9]
+    s = SC.compute_scores(df).set_index("ticker")
+    assert s.loc["A00", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert s.loc["A00", "quality_floor_pass"]
+
+
+def test_floor_roic_above_100pct_is_unreliable():
+    """NOPAT > invested capital is not a 10% holdability pass — tiny-IC artifact.
+
+    Missing ROIC still does not fail; a *computed* 250% does. 82–85% (buyback-
+    shrunk IC that is still a real denominator) stays eligible.
+    """
+    df = _frame(n_igb=0)
+    for t in ("A00", "A01"):
+        df.loc[df["ticker"] == t,
+               ["fcf_margin", "fcf_margin_ttm", "fcf_margin_median_5y"]] = [0.25, 0.25, 0.25]
+        df.loc[df["ticker"] == t, ["rev_cagr5", "fcf_cagr5", "nd_ebitda"]] = [0.12, 0.12, -1.0]
+        df.loc[df["ticker"] == t, ["gm_stability", "fcf_cov", "rev_pos_years", "rev_yoy_n"]] = [
+            0.0, 0.0, 9, 9]
+    df.loc[df["ticker"] == "A00", ["roic", "roic_ttm", "roic_median_5y"]] = [2.13, 3.55, 2.58]
+    df.loc[df["ticker"] == "A01", ["roic", "roic_ttm", "roic_median_5y"]] = [0.84, 0.91, 0.82]
+    s = SC.compute_scores(df).set_index("ticker")
+    assert s.loc["A00", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert not s.loc["A00", "quality_floor_pass"]
+    assert s.loc["A01", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert s.loc["A01", "quality_floor_pass"]
+    assert config.QUALITY_FLOOR_ROIC_MAX == pytest.approx(1.0)
 
 
 def test_quality_renormalizes_over_available_core_sleeves():

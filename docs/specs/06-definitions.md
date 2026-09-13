@@ -1,6 +1,6 @@
 # 06 — Canonical Definitions (Formula Appendix)
 
-Version 0.5 (2026-09-11). v0.5: EBITDA defined; FX source pinned; field-level rules live in the doc 08 fetch contract.
+Version 0.5 (2026-09-11). v0.5.11: `fcf_owner` (CFO − D&A − SBC) as a named Ideas cash setting; default remains `fcf_adj`. v0.5: EBITDA defined; FX source pinned; field-level rules live in the doc 08 fetch contract.
 
 Single source of truth for every computed quantity. Docs 02–05 reference these formulas;
 any implementation must match this doc or link to it. The classic failure mode of this
@@ -77,8 +77,9 @@ t_eff = TTM income tax provision / TTM pre-tax income
 
 | ID | Formula | Use |
 |---|---|---|
-| `fcf` | CFO − capex | **positivity counts** (`fcf_pos_years`), **CAGR gates** (`fcf_cagr5`), display |
-| `fcf_adj` | CFO − capex − stock-based compensation | **multiples and margins** (`ev_fcf`, `fcf_yield`, `fcf_margin`, `fcf_margin_ttm`) |
+| `fcf` | CFO − capex | **positivity counts** (`fcf_pos_years`), **CAGR gates** (`fcf_cagr5`) on the default (reported) series, display |
+| `fcf_adj` | CFO − capex − stock-based compensation | **default** multiples and margins (`ev_fcf`, `fcf_yield`, `fcf_margin`, `fcf_margin_ttm`) |
+| `fcf_owner` | CFO − D&A − SBC (untagged SBC = 0, same honesty as `fcf_adj`) | **named Ideas setting** (v0.5.11): FCF-CAGR gate, QualityScore FCF sleeves, residual EV/FCF, Ideas yield bar. D&A is the maintenance-capex proxy. Never blended with `fcf_adj`. |
 
 Rationale: SBC is a real economic cost that happens to be non-cash; plain FCF flatters
 heavy-SBC companies — precisely our target universe (large-cap tech). Buybacks that only
@@ -111,9 +112,12 @@ badge covers it.
 - **Fixed-scale mapping (ABS yields)**: `fcf_yield` → `clip(y, 0, 10%) / 10%` → 0–100.
   Absolute metrics are **never cross-sectionally ranked**: ranking a yield against peers
   reproduces the inverted multiple's ranking and cancels the anchor (the v0.2 bug).
-- **QualityScore fixed bars (v0.5.8)**: ROIC clip(0, 20%)/20%; FCF margin clip(0, 25%)/25%;
+- **QualityScore fixed bars (v0.5.9)**: ROIC clip(0, 20%)/20%; FCF margin clip(0, 25%)/25%;
   CAGR clip(0, 12%)/12%; `nd_ebitda` ≤ 0 → 100, 3.0× → 0; CoV 0 → 100, CoV at the
-  sleeve zero (GM 25%, FCF 50%) → 0. Quality is **never** peer-percentile ranked.
+  sleeve zero (GM 25%, FCF 50%) → 0. Path stability weights: revenue-up-year share 50%,
+  GM CoV 25%, FCF CoV 25%, renormalized over present slots. Floor also requires
+  conservative ROIC in [10%, 100%] when ROIC is known (>100% is a tiny-IC artifact and
+  fails the floor; missing still does not fail). Quality is **never** peer-percentile ranked.
   Profitability uses min(TTM, 5y median), not the 5y mean.
 - **SELF z-score**: (current − 5y **median**) / 5y std — median-centered (v0.4): a
   bubble tail drags both the mean and the std, which was exactly the failure the

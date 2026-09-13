@@ -109,6 +109,11 @@ def _ttm_timeline(facts: dict, asof: dt.date) -> pd.DataFrame:
             # treated as zero, dq-flagged downstream (owner-approved v0.5.2)
             tl["fcf_adj"] = tl["fcf"]
             tl["qend_fcf_adj"] = tl["qend_fcf"]
+    if {"cfo", "dna"} <= set(tl.columns):
+        sbc_s = tl["sbc"] if "sbc" in tl.columns else 0.0
+        tl["fcf_owner"] = tl["cfo"] - tl["dna"] - sbc_s
+        qends = [c for c in ("qend_cfo", "qend_dna", "qend_sbc") if c in tl.columns]
+        tl["qend_fcf_owner"] = tl[qends].max(axis=1).where(tl["fcf_owner"].notna())
     if {"ebit", "dna"} <= set(tl.columns):
         tl["ebitda"] = tl["ebit"] + tl["dna"]
         tl["qend_ebitda"] = tl[["qend_ebit", "qend_dna"]].max(axis=1).where(tl["ebitda"].notna())
@@ -216,6 +221,10 @@ def _fy_features(facts: dict, asof: dt.date) -> tuple[pd.DataFrame, dict]:
             F["fcf_adj"] = F["fcf"] - F["sbc"]
         else:
             F["fcf_adj"] = F["fcf"]  # SBC untagged -> zero, dq-flagged (v0.5.2)
+    if {"cfo", "dna"} <= set(F.columns):
+        sbc_s = F["sbc"].fillna(0.0) if "sbc" in F.columns else 0.0
+        F["fcf_owner"] = F["cfo"] - F["dna"] - sbc_s
+        F["fcf_owner_margin"] = F["fcf_owner"] / F["revenue"]
     if "gross_profit" in F.columns:
         F["gm"] = F["gross_profit"] / F["revenue"]
     elif {"revenue", "cost_revenue"} <= set(F.columns):
@@ -357,6 +366,7 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     fcf_t = M.fcf(cfo, capex)
     # SBC untagged -> treated as zero (owner-approved v0.5.2), dq-flagged below
     fcf_adj_t = M.fcf_adj(cfo, capex, sbc) if sbc is not None else fcf_t
+    fcf_owner_t = M.owner_fcf(cfo, dna, sbc)
     ebitda_t = M.ebitda(ebit, dna)
     t3y = None
     if F is not None and "t_eff" in F.columns and F["t_eff"].notna().any():
@@ -372,6 +382,8 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     ev_ebit = M.safe_div(ev_now, ebit) if ebit and ebit > 0 else None
     ev_fcf = M.safe_div(ev_now, fcf_adj_t) if fcf_adj_t and fcf_adj_t > 0 else None
     fcf_yield = M.safe_div(fcf_adj_t, ev_now)
+    ev_fcf_owner = M.safe_div(ev_now, fcf_owner_t) if fcf_owner_t and fcf_owner_t > 0 else None
+    fcf_owner_yield = M.safe_div(fcf_owner_t, ev_now)
     pe_ttm = M.safe_div(mktcap, ni) if ni and ni > 0 else None
     fcf_ni = M.safe_div(fcf_t, ni) if ni and ni > 0 else None
     # net debt excludes preferred and minority interest (doc 03 §3.5 / doc 06 §4):
@@ -390,10 +402,16 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
         cr_ratio = M.safe_div(t("cost_revenue"), rev)
         gm_ttm = (1.0 - cr_ratio) if cr_ratio is not None else None
     fcf_margin_ttm = M.safe_div(fcf_adj_t, rev)
+    fcf_owner_margin_ttm = M.safe_div(fcf_owner_t, rev)
     out["gm_ttm"] = gm_ttm
     out["fcf_margin_ttm"] = fcf_margin_ttm
+    out["fcf_owner_margin_ttm"] = fcf_owner_margin_ttm
     out["brake_gm"] = M.safe_div(gm_ttm, out.get("gm")) if out.get("gm") not in (None, 0) else None
     out["brake_fcf_margin"] = M.safe_div(fcf_margin_ttm, out.get("fcf_margin")) if out.get("fcf_margin") not in (None, 0) else None
+    out["brake_fcf_owner_margin"] = (
+        M.safe_div(fcf_owner_margin_ttm, out.get("fcf_owner_margin"))
+        if out.get("fcf_owner_margin") not in (None, 0) else None
+    )
     out["brake_roic"] = M.safe_div(roic_ttm, out.get("roic")) if out.get("roic") not in (None, 0) else None
 
     # --- SELF weekly timeline (5y window, as-known fundamentals) -----------------
@@ -410,7 +428,8 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     else:
         hist_parts.append(pd.DataFrame({"shares": np.nan}, index=win.index))
     hist_parts.append(_asof_step(win, stack, "stack").to_frame())
-    for col, name in (("fcf_adj", "fcf_adj_ttm"), ("net_income", "ni_ttm")):
+    for col, name in (("fcf_adj", "fcf_adj_ttm"), ("fcf_owner", "fcf_owner_ttm"),
+                      ("net_income", "ni_ttm")):
         if col in tl.columns:
             steps = tl[tl[col].notna()][["effective", col]].rename(columns={col: "val"})
             steps["effective"] = pd.to_datetime(steps["effective"])
@@ -421,6 +440,7 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     hist["mktcap"] = hist["price"] * hist["shares"]
     hist["ev"] = hist["mktcap"] + hist["stack"]
     hist["ev_fcf"] = hist["ev"] / hist["fcf_adj_ttm"].where(hist["fcf_adj_ttm"] > 0)
+    hist["ev_fcf_owner"] = hist["ev"] / hist["fcf_owner_ttm"].where(hist["fcf_owner_ttm"] > 0)
     # SELF validity (docs 02/06 §9): >=60% of the WINDOW weeks valid, not just >=3y
     # of valid observations — the old tail-of-valid-drops silently passed 60%-invalid
     # windows that happened to clear the 3y minimum.
@@ -439,6 +459,18 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
         out["ev_fcf_self_z"] = self["z"]
         out["ev_fcf_self_ratio"] = self["median_ratio"]
         out["ev_fcf_self_n"] = self["n_valid"]
+
+    owner_valid = recent["ev_fcf_owner"].dropna()
+    owner_self = (
+        M.self_stats(recent["ev_fcf_owner"])
+        if len(recent) and len(owner_valid) / len(recent) >= config.SELF_MIN_VALID_FRAC
+        else None
+    )
+    if owner_self:
+        out["ev_fcf_owner_self_pct"] = owner_self["pct"]
+        out["ev_fcf_owner_self_z"] = owner_self["z"]
+        out["ev_fcf_owner_self_ratio"] = owner_self["median_ratio"]
+        out["ev_fcf_owner_self_n"] = owner_self["n_valid"]
 
     # --- data-quality flags (doc 08 §6, minimal set: flag, never silently poison) --
     dq = []
@@ -467,14 +499,20 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
         "price": price_now, "shares_cover": shares_now, "mktcap": mktcap,
         "ev": ev_now, "ic": ic_now, "stack": stack_now,
         "revenue_ttm": rev, "ebit_ttm": ebit, "fcf_ttm": fcf_t, "fcf_adj_ttm": fcf_adj_t,
+        "fcf_owner_ttm": fcf_owner_t,
         "ebitda_ttm": ebitda_t, "ni_ttm": ni, "nopat_ttm": nopat_t, "t_eff": t_eff,
         "roic_ttm": roic_ttm,
         "ev_ebit": ev_ebit, "ev_fcf": ev_fcf, "fcf_yield": fcf_yield,
+        "ev_fcf_owner": ev_fcf_owner, "fcf_owner_yield": fcf_owner_yield,
         "pe_ttm": pe_ttm, "fcf_ni": fcf_ni, "nd_ebitda": nd_ebitda,
         "goodwill": gw, "intangibles": intan,
     })
     if equity is not None and ic_now:
         out["goodwill_share_ic"] = M.safe_div((gw or 0) + (intan or 0), ic_now)
-    history = hist[["week", "price", "mktcap", "ev", "fcf_adj_ttm", "ni_ttm", "ev_fcf"]].copy()
+    hist_cols = ["week", "price", "mktcap", "ev", "fcf_adj_ttm", "ni_ttm", "ev_fcf"]
+    for extra in ("fcf_owner_ttm", "ev_fcf_owner"):
+        if extra in hist.columns:
+            hist_cols.append(extra)
+    history = hist[hist_cols].copy()
     history.insert(0, "asof", pd.Timestamp(asof))
     return {**out, "history": history}

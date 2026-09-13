@@ -88,8 +88,11 @@ def test_quality_floor_is_absolute_60():
     assert scored["quality_floor_pass"].sum() >= 1
     assert (scored.loc[scored["quality_floor_pass"], "quality_score"]
             >= config.QUALITY_FLOOR_MIN).all()
-    below = scored[(~scored["quality_floor_pass"]) & scored["quality_score"].notna()]
-    assert (below["quality_score"] < config.QUALITY_FLOOR_MIN).all()
+    # score < 60 never passes; score ≥ 60 can still fail the conservative-ROIC bar
+    assert not scored.loc[
+        scored["quality_score"].notna() & (scored["quality_score"] < config.QUALITY_FLOOR_MIN),
+        "quality_floor_pass",
+    ].any()
 
 
 def test_quality_floor_tiny_sample_still_uses_absolute_bar():
