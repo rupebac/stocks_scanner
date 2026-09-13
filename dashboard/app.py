@@ -973,20 +973,32 @@ def ideas_page():
         st.session_state["idea_pick"] = picked
     if st.session_state.get("idea_pick") not in options:
         st.session_state["idea_pick"] = tickers[0]
-    # ~360 names: Streamlit's selectbox has no search, so deep entries (ORCL…)
-    # are unreachable by mouse. A filter box narrows the list; with one match it
-    # selects it directly.
-    st.text_input("Search company", value="", key="idea_filter",
-                  placeholder="Type a ticker or name — e.g. ORCL, Oracle…",
-                  label_visibility="collapsed")
-    q = str(st.session_state.get("idea_filter") or "").strip().upper()
-    name_of = {r["ticker"]: str(r.get("name") or "").upper() for _, r in metrics.iterrows()}
-    pool = [t for t in options if not q or q in t or q in name_of.get(t, "")] or options
-    sel = st.selectbox(
-        "Inspect a company — highlights first, then every scored name (unscored marked)",
-        pool, key="idea_pick",
-        format_func=lambda t: f"{t} · unscored" if t in unscored_set else t,
-    )
+    # ~360 names: one searchable picker (the selectbox popup can't search and
+    # can't be scrolled that far). Exact ticker or a unique match selects
+    # directly; ambiguous matches become clickable chips under the box.
+    name_of = {r["ticker"]: str(r.get("name") or "") for _, r in metrics.iterrows()}
+    uname_of = {t: n.upper() for t, n in name_of.items()}
+    st.text_input("Inspect a company", key="idea_search",
+                  placeholder="Type a ticker or name — e.g. ORCL, Oracle…")
+    q = str(st.session_state.get("idea_search") or "").strip().upper()
+    if q:
+        hits = [t for t in options if q in t or q in uname_of.get(t, "")]
+        exact = [t for t in options if t == q]
+        if exact:
+            st.session_state["idea_pick"] = exact[0]
+        elif len(hits) == 1:
+            st.session_state["idea_pick"] = hits[0]
+        if len(hits) > 1:
+            chips = st.columns(min(len(hits), 6))
+            for c, t in list(zip(chips, hits[:6])):
+                if c.button(t, key=f"idea_hit_{t}", use_container_width=True):
+                    st.session_state["idea_pick"] = t
+                    st.rerun()
+            if len(hits) > 6:
+                st.caption(f"{len(hits) - 6} more matches — keep typing to narrow.")
+    sel = st.session_state.get("idea_pick")
+    suffix = " · unscored" if sel in unscored_set else ""
+    st.caption(f"→ inspecting **{sel}** — {name_of.get(sel, '')}{suffix}")
 
     # the map renders BEFORE this selector, and session_state only reflects a
     # widget's new value once the widget re-instantiates — so the star lags one
