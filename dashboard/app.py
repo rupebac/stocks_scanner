@@ -973,9 +973,18 @@ def ideas_page():
         st.session_state["idea_pick"] = picked
     if st.session_state.get("idea_pick") not in options:
         st.session_state["idea_pick"] = tickers[0]
+    # ~360 names: Streamlit's selectbox has no search, so deep entries (ORCL…)
+    # are unreachable by mouse. A filter box narrows the list; with one match it
+    # selects it directly.
+    st.text_input("Search company", value="", key="idea_filter",
+                  placeholder="Type a ticker or name — e.g. ORCL, Oracle…",
+                  label_visibility="collapsed")
+    q = str(st.session_state.get("idea_filter") or "").strip().upper()
+    name_of = {r["ticker"]: str(r.get("name") or "").upper() for _, r in metrics.iterrows()}
+    pool = [t for t in options if not q or q in t or q in name_of.get(t, "")] or options
     sel = st.selectbox(
         "Inspect a company — highlights first, then every scored name (unscored marked)",
-        options, key="idea_pick",
+        pool, key="idea_pick",
         format_func=lambda t: f"{t} · unscored" if t in unscored_set else t,
     )
 
