@@ -53,11 +53,11 @@ do_start() {
   fi
   if [ -z "$(ls -A data/scans 2>/dev/null)" ]; then
     echo "[control] no scans on disk — running the first full scan (one-time, ~20-40 min)..."
-    "$PY" -m scanner.scan --no-fmp
+    "$PY" -m scanner.scan 
   fi
 
   mkdir -p data/logs
-  setsid nohup "$PY" -m streamlit run dashboard/app.py \
+  nohup "$PY" -m streamlit run dashboard/app.py \
     --server.port "${PORT}" --server.headless true >> "$LOG" 2>&1 &
   echo $! > "$PIDFILE"
   for _ in $(seq 1 30); do
