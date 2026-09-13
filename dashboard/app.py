@@ -979,6 +979,13 @@ def ideas_page():
         format_func=lambda t: f"{t} · unscored" if t in unscored_set else t,
     )
 
+    # the map renders BEFORE this selector, and session_state only reflects a
+    # widget's new value once the widget re-instantiates — so the star lags one
+    # rerun. Redraw once when the pick changed (covers selectbox AND table clicks).
+    if st.session_state.get("idea_pick_drawn") != sel:
+        st.session_state["idea_pick_drawn"] = sel
+        st.rerun()
+
     # 3 — the detail, under everything, only once a name is picked
     row = metrics[metrics["ticker"] == sel].iloc[0]
     st.divider()
