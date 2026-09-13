@@ -602,12 +602,13 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
         ))
     if selected and not pts.empty and (pts["ticker"] == selected).any():
         s = pts[pts["ticker"] == selected].iloc[0]
+        star_c = "#e4572e" if selected in member else "#f28e2b"   # zone orange vs any-name amber
         fig.add_trace(go.Scatter(
             x=[s["x"]], y=[s["quality_score"]],
             mode="markers+text", text=[selected], textposition="bottom center",
-            textfont=dict(size=11, color="#e4572e"),
+            textfont=dict(size=11, color=star_c),
             showlegend=False, hoverinfo="skip",
-            marker=dict(size=18, color="#e4572e", symbol="star",
+            marker=dict(size=18, color=star_c, symbol="star",
                         line=dict(width=2, color="white")),
         ))
     thr = cfg.get("quality_floor_threshold")
@@ -866,14 +867,18 @@ def ideas_page():
     except Exception:
         picked = None
     tickers = table["ticker"].tolist()
+    # the inspector reaches beyond the highlights: every scored name is selectable
+    # (highlights first in residual order, then the rest alphabetically)
+    others = sorted(set(metrics.loc[metrics["quality_score"].notna(), "ticker"]) - set(tickers))
     if picked in tickers:
         st.session_state["idea_pick"] = picked
-    if st.session_state.get("idea_pick") not in tickers:
+    if st.session_state.get("idea_pick") not in tickers + others:
         st.session_state["idea_pick"] = tickers[0]
-    sel = st.selectbox("Inspect a company", tickers, key="idea_pick")
+    sel = st.selectbox("Inspect a company — highlights first, then every scored name",
+                       tickers + others, key="idea_pick")
 
     # 3 — the detail, under everything, only once a name is picked
-    row = table[table["ticker"] == sel].iloc[0]
+    row = metrics[metrics["ticker"] == sel].iloc[0]
     st.divider()
     st.subheader(f"{sel} — {row.get('name') or ''}")
     _company_detail(sel, metrics[metrics["ticker"] == sel].iloc[0], hist, overlay, ov_by_t,
