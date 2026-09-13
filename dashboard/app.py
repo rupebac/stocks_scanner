@@ -8,7 +8,8 @@ The company pane has two tabs: **Financials** (scores, assignment FCF, history
 charts, margins) and **Options** (live chain — pick a put or call for
 breakeven and greeks). Cheapness on this page means the valuation residual: log(EV/FCF) minus the
 multiple this ROIC/industry usually gets; the highlights require the quality
-floor, residual < 0, ROIC ≥ 10% and FCF yield ≥ max(4%, 10Y). SELF (vs own 5y
+floor, residual < 0, ROIC ≥ 10% and EV/FCF low enough to beat max(4%, 10Y) in
+cash. SELF (vs own 5y
 history) stays a chart, never a rank. Every number is display-only — the
 scanner ranks, the human decides.
 
@@ -61,7 +62,6 @@ COLUMN_DOCS = {
         "(regression fit). More negative = cheaper than the quality deserves. "
         "The zone cut is residual < 0."
     ),
-    "fcf_yield": "TTM adjusted FCF ÷ enterprise value — the cash you'd earn if you owned it.",
     "ev_fcf": "EV / TTM adjusted FCF (SBC-expensed).",
     "price": "Last weekly close.",
     "yield at −5%": "FCF yield you'd lock in if put the stock at −5% (from the options chain).",
@@ -429,7 +429,9 @@ def _gated(metrics: pd.DataFrame) -> pd.DataFrame:
 
 def _highlighted(metrics: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     """The highlights: gated + quality floor + residual < 0 + absolute holdability —
-    ROIC ≥ 10% (5y avg) and FCF yield ≥ max(4%, 10Y). Missing ROIC or yield fails.
+    ROIC ≥ 10% (5y avg) and EV/FCF low enough that the cash return clears
+    max(4%, 10Y) (implemented as fcf_yield ≥ bar — same number, inverse form).
+    Missing ROIC or yield fails.
     Ranked by residual ascending: most under-priced vs its quality first."""
     gs10 = cfg.get("gs10") if cfg.get("gs10") is not None else 0.0
     bar = max(0.04, gs10 or 0)
@@ -531,11 +533,10 @@ def _name_cards(df: pd.DataFrame, hist: pd.DataFrame, ov_by_t: pd.DataFrame,
         med = float(pd.Series(y).median()) if y else None
         price = r.get("price")
         price_s = f"${price:,.0f}" if pd.notna(price) else "—"
-        fy = r.get("fcf_yield")
-        fy_col = ("#2e7d32" if pd.notna(fy) and fy >= 0.05
-                  else "#b07d2b" if pd.notna(fy) and fy >= 0.03 else "#888888")
-        fy_s = f"{fy:.1%}" if pd.notna(fy) else "—"
         ev = r.get("ev_fcf")
+        # payback-color the multiple: ≤20x pays ≥5%/yr, ≤30x ≥3.3% (inverse of the old yield bands)
+        ev_col = ("#2e7d32" if pd.notna(ev) and ev <= 20
+                  else "#b07d2b" if pd.notna(ev) and ev <= 30 else "#888888")
         ev_s = f"{ev:.1f}x" if pd.notna(ev) else "—"
         med_s = f" · 5y median {med:.1f}x" if med else ""
         res = r.get("residual")
@@ -557,8 +558,8 @@ def _name_cards(df: pd.DataFrame, hist: pd.DataFrame, ov_by_t: pd.DataFrame,
             f"{_spark_svg(y)}"
             f"<div style='margin-top:6px'>{_score_bar('Quality', r.get('quality_score'), '#59a14f')}</div>"
             f"<div style='font-size:.75em;margin-top:6px'>"
-            f"<span style='color:{fy_col};font-weight:600'>FCF yield {fy_s}</span>"
-            f"<span style='opacity:.7'> · {res_s} · EV/FCF {ev_s}{med_s}{assign}</span></div>"
+            f"<span style='color:{ev_col};font-weight:600'>EV/FCF {ev_s}</span>"
+            f"<span style='opacity:.7'>{med_s} · {res_s}{assign}</span></div>"
             f"</div>"
         )
     st.markdown(
@@ -572,7 +573,7 @@ def _name_cards(df: pd.DataFrame, hist: pd.DataFrame, ov_by_t: pd.DataFrame,
 def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str | None) -> None:
     """Quality (y) × residual (x, plotted as −residual so cheaper sits RIGHT): grey =
     scored names with a residual, orange = the highlights (floor + residual < 0
-    + ROIC ≥ 10% + FCF yield ≥ max(4%, 10Y)). The selected ticker is starred.
+    + ROIC ≥ 10% + EV/FCF below the max(4%, 10Y) bar). The selected ticker is starred.
     The selected ticker is starred."""
     pts = metrics[metrics["quality_score"].notna() & metrics["residual"].notna()].copy()
     pts["x"] = -pts["residual"]          # cheaper (more negative residual) -> right
@@ -630,7 +631,7 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
     st.caption(
         "Grey = scored names with a residual; the shaded region is residual < 0 above the "
         "quality floor. Orange is the tighter highlights list: floor + residual < 0 + "
-        "ROIC ≥ 10% + FCF yield ≥ max(4%, 10Y) — cash-cheap and viable, not just "
+        "ROIC ≥ 10% + EV/FCF under the max(4%, 10Y) bar — cash-cheap and viable, not just "
         "under-priced vs peers. Those names continue below, most negative residual first."
     )
 
@@ -675,29 +676,14 @@ def _detail_charts(h: pd.DataFrame, sel: str) -> None:
             st.plotly_chart(fig, width="stretch")
         else:
             st.caption("No valid EV/FCF history for this name.")
-    g3, g4 = st.columns(2)
-    with g3:
-        fy = (h["fcf_adj_ttm"] / h["ev"]).where(h["ev"] > 0).dropna()
-        if not fy.empty:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=h.loc[fy.index, "week"], y=fy, name="FCF yield",
-                                     line=dict(color="#59a14f")))
-            fig.add_hline(y=float(fy.iloc[-1]), line_dash="dot", line_color="#666",
-                          annotation_text=f"now {fy.iloc[-1]:.1%}")
-            fig.update_layout(height=300, title="FCF yield over time (TTM FCF ÷ EV)",
-                              yaxis_tickformat=".0%")
-            st.plotly_chart(fig, width="stretch")
-        else:
-            st.caption("No FCF-yield history for this name.")
-    with g4:
-        if h["fcf_adj_ttm"].notna().any():
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=h["week"], y=h["fcf_adj_ttm"] / 1e9, name="FCF (adj, TTM)"))
-            fig.add_trace(go.Scatter(x=h["week"], y=h["ni_ttm"] / 1e9, name="Net income (TTM)"))
-            fig.update_layout(height=300, title="Cash vs earnings (as-known TTM)", yaxis_title="$B")
-            st.plotly_chart(fig, width="stretch")
-        else:
-            st.caption("No cash-flow history for this name.")
+    if h["fcf_adj_ttm"].notna().any():
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=h["week"], y=h["fcf_adj_ttm"] / 1e9, name="FCF (adj, TTM)"))
+        fig.add_trace(go.Scatter(x=h["week"], y=h["ni_ttm"] / 1e9, name="Net income (TTM)"))
+        fig.update_layout(height=300, title="Cash vs earnings (as-known TTM)", yaxis_title="$B")
+        st.plotly_chart(fig, width="stretch")
+    else:
+        st.caption("No cash-flow history for this name.")
 
 
 def _margin_snapshot(row) -> None:
@@ -742,10 +728,12 @@ def _company_detail(sel: str, row, hist: pd.DataFrame, overlay: pd.DataFrame,
                   help="Is the stock cheap for this quality? Negative means it trades "
                        "below the multiple that this ROIC and industry usually get. "
                        "More negative = more of a discount. This is what ranks the highlights.")
-        m3.metric("FCF yield", _fmt(row.get("fcf_yield"), "{:.2%}"),
-                  help="Cash the business generates, as a percent of the whole firm "
-                       "(free cash flow ÷ enterprise value). The highlights require this "
-                       "to beat the higher of 4% and the 10-year Treasury.")
+        m3.metric("EV/FCF", _fmt(row.get("ev_fcf"), "{:.1f}×"),
+                  "years of current FCF to buy the business",
+                  help="The price of the whole business (equity + debt − cash) divided by "
+                       "its current free cash flow — how many years of today's FCF pay it "
+                       "back. The highlights require this low enough that the cash return "
+                       "beats the higher of 4% and the 10-year Treasury (≈ ≤20× today).")
         m4.metric("EV/FCF vs own history", _fmt(row.get("ev_fcf_self_pct"), "{:.0f}"),
                   "0 = cheapest ever — chart, not a score",
                   help="Where today's valuation sits in this company's own last 5 years. "
@@ -832,14 +820,15 @@ def ideas_page():
     if hi.empty:
         st.info(
             "No names clear the highlights bar in this scan — quality floor, residual < 0, "
-            "ROIC ≥ 10% and FCF yield ≥ max(4%, 10Y). Run a fresh scan from the Data manager page."
+            "ROIC ≥ 10% and EV/FCF under the max(4%, 10Y) bar. Run a fresh scan from the Data manager page."
         )
         return
 
     # 2 — the cards + the compact table (the browse surface)
     st.markdown(
         f"**The highlights, cheapest for their quality first** — {len(hi)} names "
-        "(quality floor · residual < 0 · ROIC ≥ 10% · FCF yield ≥ max(4%, 10Y)). "
+        "(quality floor · residual < 0 · ROIC ≥ 10% · EV/FCF low enough to beat the "
+        "higher of 4% and the 10Y). "
         "`beaten` = sector-laggard price action with analyst support · "
         "`⚠ margins` = a margin ratio slipped below its floor · "
         "`⚠ ROIC < 10%` = thin returns in absolute terms · "
@@ -851,14 +840,14 @@ def ideas_page():
 
     table = hi.reset_index(drop=True)
     show = table[["ticker", "name", "sector", "price", "quality_score",
-                  "residual", "fcf_yield", "ev_fcf"]].copy()
+                  "residual", "ev_fcf"]].copy()
     show["yield at −5%"] = table["ticker"].map(
         lambda t: f"{ov_by_t.loc[t, 'fcf_yield_strike_95']:.1%}"
         if (not ov_by_t.empty and t in ov_by_t.index
             and pd.notna(ov_by_t.loc[t, "fcf_yield_strike_95"])) else "—")
     show["tags"] = table["ticker"].map(lambda t: " · ".join(x for x, _ in tags.get(t, [])) or "—")
     for c, f in {"price": "{:.2f}", "quality_score": "{:.0f}", "residual": "{:.2f}",
-                 "fcf_yield": "{:.2%}", "ev_fcf": "{:.1f}"}.items():
+                 "ev_fcf": "{:.1f}"}.items():
         show[c] = show[c].map(lambda v, f=f: f.format(v) if pd.notna(v) else "—")
     col_cfg = {c: st.column_config.Column(label=c, help=COLUMN_DOCS.get(c)) for c in show.columns}
     event = st.dataframe(show, column_config=col_cfg, width="stretch", height=300,
