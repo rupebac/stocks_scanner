@@ -654,11 +654,11 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
                         line=dict(width=2, color="white")),
         ))
     elif selected:
-        # scored but residual-less (e.g. ORCL under owner earnings: no ROIC, so the
-        # residual fit skips it) — height known, cheapness unknown. Hollow marker
-        # at the left edge instead of silently vanishing.
         srow = metrics[metrics["ticker"] == selected]
         if not srow.empty and pd.notna(srow.iloc[0].get("quality_score")):
+            # scored but residual-less (e.g. ORCL under owner earnings: no ROIC, so
+            # the residual fit skips it) — height known, cheapness unknown. Hollow
+            # marker at the left edge instead of silently vanishing.
             fig.add_trace(go.Scatter(
                 x=[x0 + (x1 - x0) * 0.03], y=[float(srow.iloc[0]["quality_score"])],
                 mode="markers+text", text=[f"{selected} · no residual"], textposition="middle right",
@@ -667,6 +667,20 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
                 hovertext=f"{selected} — quality known, cheapness unknown (no ROIC → no residual)",
                 marker=dict(size=14, color="rgba(0,0,0,0)", symbol="diamond",
                             line=dict(width=2, color="#f28e2b")),
+            ))
+        elif not srow.empty:
+            # fully unscored (e.g. ORCL under reported FCF) — no coordinates at
+            # all. Grey hollow diamond in the bottom corner, hover shows why.
+            reasons = srow.iloc[0].get("gate_fail_reasons")
+            why = "; ".join(map(str, reasons)) if isinstance(reasons, list) and reasons else "insufficient data"
+            fig.add_trace(go.Scatter(
+                x=[x0 + (x1 - x0) * 0.03], y=[2.5],
+                mode="markers+text", text=[f"{selected} · unscored"], textposition="middle right",
+                textfont=dict(size=10, color="#8ea0b5"),
+                showlegend=False,
+                hovertext=f"{selected} — unscored ({why})",
+                marker=dict(size=14, color="rgba(0,0,0,0)", symbol="diamond",
+                            line=dict(width=2, color="#8ea0b5")),
             ))
     thr = floor if floor is not None else cfg.get("quality_floor_threshold")
     if not pts.empty:
@@ -692,8 +706,9 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
         "Grey = scored names with a residual; the shaded region is the hunt zone under the "
         "ACTIVE cuts (floor + residual + ROIC + EV/FCF — adjust them in the sidebar). "
         "Orange is the tighter highlights list: cash-cheap and viable, not just under-priced "
-        "vs peers. A hollow ◇ at the left edge = quality known but cheapness unknown "
-        "(no ROIC → no residual). Those names continue below, most negative residual first."
+        "vs peers. Selected but incomplete: amber ◇ at the left edge = quality known, "
+        "cheapness unknown (no residual); grey ◇ in the bottom corner = unscored "
+        "(hover either for the reason). Those names continue below, most negative residual first."
     )
 
 
