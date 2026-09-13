@@ -445,6 +445,23 @@ def _gated(metrics: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
+def _no_residual_reason(row) -> str | None:
+    """Why a scored name has no residual — the fit (scoring.py §residual) needs
+    EV/FCF > 0 AND ROIC > 0; the first failing input is the reason. None when the
+    residual exists or the name is unscored (that case has gate reasons)."""
+    if pd.isna(row.get("residual")) is False:
+        return None
+    if pd.isna(row.get("quality_score")):
+        return None
+    ev = row.get("ev_fcf")
+    if pd.isna(ev) or float(ev) <= 0:
+        return "EV/FCF is missing or negative (no positive FCF) — the residual fit needs EV/FCF > 0"
+    roic = row.get("roic")
+    if pd.isna(roic) or float(roic) <= 0:
+        return "ROIC is missing or ≤ 0 — the residual fit places each name by its ROIC"
+    return "not in the residual fit (too few cross-section names)"
+
+
 def _highlighted(metrics: pd.DataFrame, cfg: dict, floor: float | None = None,
                  max_resid: float | None = None, min_roic: float | None = None,
                  max_ev_fcf: float | None = None) -> pd.DataFrame:
@@ -662,15 +679,15 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
     elif selected:
         srow = metrics[metrics["ticker"] == selected]
         if not srow.empty and pd.notna(srow.iloc[0].get("quality_score")):
-            # scored but residual-less (e.g. ORCL under owner earnings: no ROIC, so
-            # the residual fit skips it) — height known, cheapness unknown. Hollow
-            # marker at the left edge instead of silently vanishing.
+            # scored but residual-less — height known, cheapness unknown. Hollow
+            # marker at the left edge; hover says WHICH check failed.
+            why = _no_residual_reason(srow.iloc[0]) or "excluded from the residual fit"
             fig.add_trace(go.Scatter(
                 x=[x0 + (x1 - x0) * 0.03], y=[float(srow.iloc[0]["quality_score"])],
                 mode="markers+text", text=[f"{selected} · no residual"], textposition="middle right",
                 textfont=dict(size=10, color="#f28e2b"),
                 showlegend=False,
-                hovertext=f"{selected} — quality known, cheapness unknown (no ROIC → no residual)",
+                hovertext=f"{selected} — quality known, cheapness unknown: {why}",
                 marker=dict(size=14, color="rgba(0,0,0,0)", symbol="diamond",
                             line=dict(width=2, color="#f28e2b")),
             ))
@@ -813,11 +830,13 @@ def _company_detail(sel: str, row, hist: pd.DataFrame, overlay: pd.DataFrame,
                        "FCF margin), capped growth, and low debt — then multiplied by how "
                        "smooth the path was. Not a rank versus industry peers. ≥ 60 clears "
                        "the quality floor.")
+        _nr = _no_residual_reason(row)
         m2.metric("Residual", _fmt(row.get("residual"), "{:.2f}"),
-                  "more negative = cheaper for the quality",
+                  _nr or "more negative = cheaper for the quality",
                   help="Is the stock cheap for this quality? Negative means it trades "
                        "below the multiple that this ROIC and industry usually get. "
-                       "More negative = more of a discount. This is what ranks the highlights.")
+                       "More negative = more of a discount. This is what ranks the highlights."
+                       + (f"\n\nNo residual here: {_nr}" if _nr else ""))
         m3.metric("EV/FCF", _fmt(row.get("ev_fcf"), "{:.1f}×"),
                   "years of current FCF to buy the business",
                   help="The price of the whole business (equity + debt − cash) divided by "
@@ -949,14 +968,19 @@ def ideas_page():
     _hunt_map(metrics, hi, cfg, pick_now, floor=z_floor, max_resid=z_resid)
     if pick_now:
         pr = metrics[metrics["ticker"] == pick_now]
-        if not pr.empty and (pd.isna(pr.iloc[0].get("quality_score"))
-                             or pd.isna(pr.iloc[0].get("residual"))):
-            reasons = pr.iloc[0].get("gate_fail_reasons")
-            st.info(
-                f"**{pick_now}** has no position on the map — it is unscored in this scan"
-                + (f" ({reasons})" if reasons is not None and str(reasons) not in ("[]", "nan") else "")
-                + ". The detail below shows whatever the scanner could still assemble."
-            )
+        if not pr.empty and pd.isna(pr.iloc[0].get("residual")):
+            prow = pr.iloc[0]
+            no_res_why = _no_residual_reason(prow)
+            if no_res_why:
+                st.info(f"**{pick_now}** sits at the map's left edge — it is scored, but has "
+                        f"no residual: {no_res_why}. Its detail below shows everything else.")
+            elif pd.isna(prow.get("quality_score")):
+                reasons = prow.get("gate_fail_reasons")
+                st.info(
+                    f"**{pick_now}** has no position on the map — it is unscored in this scan"
+                    + (f" ({reasons})" if reasons is not None and str(reasons) not in ("[]", "nan") else "")
+                    + ". The detail below shows whatever the scanner could still assemble."
+                )
 
     if hi.empty:
         st.info(
