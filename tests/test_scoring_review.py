@@ -23,6 +23,7 @@ def _row(t, ig="IGA", sec="SA", **kw):
         "ev_fcf": 24.0, "ev_fcf_self_pct": 50.0, "ev_fcf_self_z": -0.2,
         "ev_fcf_self_ratio": 1.0, "fcf_yield": 0.04, "mom_12_1": 0.0,
         "brake_gm": 1.0, "brake_fcf_margin": 1.0, "brake_roic": 1.0,
+        "rev_cagr5": 0.08, "fcf_cagr5": 0.08,
     }
     base.update(kw)
     return base
@@ -94,36 +95,84 @@ def test_mom_percentile_is_sector_ranked():
 
 
 # ------------------------------------------------- (3) QualityScore ----------
-def test_quality_weights_and_mvp_sleeves():
+def test_quality_weights_are_core_sleeves():
     assert config.QUALITY_WEIGHTS == {
-        "profitability": 0.45, "consistency": 0.25, "accounting": 0.20, "balance": 0.10,
+        "profitability": 0.40, "growth": 0.30, "balance": 0.30,
     }
     s = SC.compute_scores(_frame()).set_index("ticker")
     comp = s.loc["A00", "quality_component_values"]
-    assert set(comp) == {"profitability", "consistency", "accounting", "balance"}
+    assert set(comp) == {"profitability", "growth", "balance", "stability"}
 
 
-def test_quality_renormalizes_over_available_components():
+def test_quality_is_core_times_stability():
+    """Jumpy path cannot average away: stability is a multiplier, not a 25% sleeve."""
+    df = _frame(n_igb=0)
+    # same core inputs; A00 smooth, A01 CF-like FCF path
+    for t in ("A00", "A01"):
+        df.loc[df["ticker"] == t, ["roic", "fcf_margin", "nd_ebitda"]] = [0.22, 0.30, 0.5]
+        df.loc[df["ticker"] == t, ["rev_cagr5", "fcf_cagr5"]] = [0.11, 0.14]
+        df.loc[df["ticker"] == t, ["gm_stability", "rev_pos_years", "rev_yoy_n"]] = [0.04, 8, 9]
+    df.loc[df["ticker"] == "A00", "fcf_cov"] = 0.08
+    df.loc[df["ticker"] == "A01", "fcf_cov"] = 0.55  # past the 50% FCF CoV zero
+    s = SC.compute_scores(df).set_index("ticker")
+    c0, c1 = s.loc["A00", "quality_component_values"], s.loc["A01", "quality_component_values"]
+    assert c0["profitability"] == c1["profitability"]
+    assert c0["growth"] == c1["growth"]
+    assert c0["balance"] == c1["balance"]
+    assert c0["stability"] > c1["stability"]
+    # A01's score is core × (stability/100), not a blend that still lands in the 70s
+    assert s.loc["A01", "quality_score"] < 60
+    assert s.loc["A00", "quality_score"] > s.loc["A01", "quality_score"] + 15
+    assert s.loc["A00", "quality_floor_pass"]
+    assert not s.loc["A01", "quality_floor_pass"]
+
+
+def test_quality_renormalizes_over_available_core_sleeves():
     df = _frame()
-    df.loc[df["ticker"] == "A00", "fcf_ni"] = np.nan     # accounting sleeve unavailable
-    df.loc[df["ticker"] == "A01", ["roic", "fcf_margin", "gm"]] = np.nan  # whole sleeve out
+    df.loc[df["ticker"] == "A00", "nd_ebitda"] = np.nan
+    df.loc[df["ticker"] == "A01", ["roic", "fcf_margin", "roic_ttm", "fcf_margin_ttm",
+                                   "roic_median_5y", "fcf_margin_median_5y"]] = np.nan
     s = SC.compute_scores(df).set_index("ticker")
     c, w = s.loc["A00", "quality_component_values"], config.QUALITY_WEIGHTS
-    assert c["accounting"] is None
-    assert s.loc["A00", "quality_weight_used"] == pytest.approx(1.0 - w["accounting"])
-    assert s.loc["A00", "quality_score"] == pytest.approx(
-        (c["profitability"] * w["profitability"] + c["consistency"] * w["consistency"]
-         + c["balance"] * w["balance"]) / (1.0 - w["accounting"]), abs=0.15)
-    assert s.loc["A01", "quality_weight_used"] == pytest.approx(1.0 - w["profitability"])
+    assert c["balance"] is None
+    assert s.loc["A00", "quality_weight_used"] == pytest.approx(1.0 - w["balance"])
     assert pd.notna(s.loc["A00", "quality_score"])
+    assert s.loc["A01", "quality_weight_used"] == pytest.approx(1.0 - w["profitability"])
 
 
 def test_quality_all_components_missing_is_null():
     df = _frame(n_igb=0)
-    df.loc[df["ticker"] == "A00", list(config.MVP_SCORE_INPUTS)] = np.nan
+    df.loc[df["ticker"] == "A00", [
+        "roic", "fcf_margin", "roic_ttm", "fcf_margin_ttm",
+        "roic_median_5y", "fcf_margin_median_5y",
+        "rev_cagr5", "fcf_cagr5", "nd_ebitda",
+    ]] = np.nan
     s = SC.compute_scores(df).set_index("ticker")
     assert pd.isna(s.loc["A00", "quality_score"])
     assert not s.loc["A00", "quality_floor_pass"]
+
+
+def test_quality_cagr_cap_does_not_reward_hypergrowth():
+    df = _frame(n_igb=0)
+    df.loc[df["ticker"] == "A00", ["rev_cagr5", "fcf_cagr5"]] = [0.12, 0.12]
+    df.loc[df["ticker"] == "A01", ["rev_cagr5", "fcf_cagr5"]] = [0.40, 0.40]
+    s = SC.compute_scores(df).set_index("ticker")
+    assert s.loc["A00", "quality_component_values"]["growth"] == pytest.approx(100.0)
+    assert s.loc["A01", "quality_component_values"]["growth"] == pytest.approx(100.0)
+
+
+def test_quality_uses_median_not_mean_when_boom_in_window():
+    df = _frame(n_igb=0)
+    # 5y mean looks fat (CF); median and TTM are ordinary
+    df.loc[df["ticker"] == "A00", "fcf_margin"] = 0.31
+    df.loc[df["ticker"] == "A00", "fcf_margin_median_5y"] = 0.18
+    df.loc[df["ticker"] == "A00", "fcf_margin_ttm"] = 0.16
+    df.loc[df["ticker"] == "A00", "roic"] = 0.22
+    df.loc[df["ticker"] == "A00", ["roic_median_5y", "roic_ttm"]] = [0.22, 0.22]
+    s = SC.compute_scores(df).set_index("ticker")
+    # FCF sleeve must score 16% / 25% = 64, not 31%/25% = 100
+    # profitability = mean(ROIC 22/20→100, FCF 16/25→64) = 82
+    assert s.loc["A00", "quality_component_values"]["profitability"] == pytest.approx(82.0, abs=0.6)
 
 
 # ------------------------------------------------- (4) CheapnessScore --------
@@ -173,16 +222,28 @@ def test_absolute_anchor_never_ranked():
 def test_floor_threshold_survives_compute_and_flags():
     df = _frame(12, 12)
     scored = SC.compute_scores(df)
-    assert scored.attrs["quality_floor_threshold"] is not None
+    assert scored.attrs["quality_floor_threshold"] == pytest.approx(config.QUALITY_FLOOR_MIN)
     flagged = FL.apply_flags(scored, gs10=0.04)
     assert flagged.attrs["quality_floor_threshold"] == scored.attrs["quality_floor_threshold"]
 
 
-def test_floor_blocks_when_undefined():
-    scored = SC.compute_scores(_frame(2, 2))     # 4 scored names < 10
-    assert scored.attrs["quality_floor_threshold"] is None
-    assert not scored["quality_floor_pass"].any()
-    assert scored["residual_pct"].isna().all()
+def test_floor_is_absolute_not_top_20pct():
+    """A name at 60 passes even in a tiny sample; 59 does not. No n≥10 guard."""
+    df = _frame(2, 2)
+    scored = SC.compute_scores(df)
+    assert scored.attrs["quality_floor_threshold"] == pytest.approx(config.QUALITY_FLOOR_MIN)
+    # force one name just below / just at the bar via a known core × stability=1
+    df.loc[df["ticker"] == "A00", ["roic", "fcf_margin", "nd_ebitda",
+                                   "rev_cagr5", "fcf_cagr5"]] = [0.20, 0.25, 0.0, 0.12, 0.12]
+    df.loc[df["ticker"] == "A00", ["gm_stability", "fcf_cov", "rev_pos_years", "rev_yoy_n"]] = [
+        0.0, 0.0, 9, 9]
+    df.loc[df["ticker"] == "A01", ["roic", "fcf_margin", "nd_ebitda",
+                                   "rev_cagr5", "fcf_cagr5"]] = [0.05, 0.04, 2.5, 0.01, 0.01]
+    scored = SC.compute_scores(df).set_index("ticker")
+    assert scored.loc["A00", "quality_score"] >= config.QUALITY_FLOOR_MIN
+    assert scored.loc["A00", "quality_floor_pass"]
+    assert scored.loc["A01", "quality_score"] < config.QUALITY_FLOOR_MIN
+    assert not scored.loc["A01", "quality_floor_pass"]
 
 
 # ------------------------------------------------- (6) valuation residual ----

@@ -111,6 +111,10 @@ badge covers it.
 - **Fixed-scale mapping (ABS yields)**: `fcf_yield` → `clip(y, 0, 10%) / 10%` → 0–100.
   Absolute metrics are **never cross-sectionally ranked**: ranking a yield against peers
   reproduces the inverted multiple's ranking and cancels the anchor (the v0.2 bug).
+- **QualityScore fixed bars (v0.5.8)**: ROIC clip(0, 20%)/20%; FCF margin clip(0, 25%)/25%;
+  CAGR clip(0, 12%)/12%; `nd_ebitda` ≤ 0 → 100, 3.0× → 0; CoV 0 → 100, CoV at the
+  sleeve zero (GM 25%, FCF 50%) → 0. Quality is **never** peer-percentile ranked.
+  Profitability uses min(TTM, 5y median), not the 5y mean.
 - **SELF z-score**: (current − 5y **median**) / 5y std — median-centered (v0.4): a
   bubble tail drags both the mean and the std, which was exactly the failure the
   median-ratio arm was added to fix. Valid observations only. **SELF median-ratio**:

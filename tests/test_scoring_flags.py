@@ -35,6 +35,7 @@ def make_frame(n_per_group: int = 12) -> pd.DataFrame:
                 "fcf_yield": rng.uniform(0.02, 0.07),
                 "mom_12_1": rng.uniform(-0.4, 0.4),
                 "brake_gm": 1.0, "brake_fcf_margin": 1.0, "brake_roic": 1.0,
+                "rev_cagr5": 0.08, "fcf_cagr5": 0.08,
             })
     df = pd.DataFrame(rows)
     return df
@@ -47,7 +48,7 @@ def _row(ticker, **kw):
         "fcf_pos_years": 10, "fcf_ni": 1.2, "nd_ebitda": 1.2, "ev_fcf": 26,
         "ev_fcf_self_pct": 40, "ev_fcf_self_z": -0.6, "ev_fcf_self_ratio": 0.95,
         "fcf_yield": 0.036, "mom_12_1": -0.25, "brake_gm": 1.0, "brake_fcf_margin": 1.0,
-        "brake_roic": 1.0,
+        "brake_roic": 1.0, "rev_cagr5": 0.10, "fcf_cagr5": 0.10,
     }
     base.update(kw)
     return base
@@ -81,23 +82,21 @@ def test_peer_ladder_levels():
     assert (scored["peer_level"] == "market").all()
 
 
-def test_quality_floor_is_top_20pct():
+def test_quality_floor_is_absolute_60():
     scored = SC.compute_scores(make_frame(12))
-    q = scored["quality_score"].dropna()
-    expected = q.quantile(0.80)
-    assert scored.attrs["quality_floor_threshold"] == expected
+    assert scored.attrs["quality_floor_threshold"] == pytest.approx(config.QUALITY_FLOOR_MIN)
     assert scored["quality_floor_pass"].sum() >= 1
-    # passers are exactly the at-or-above-cut scores; nothing below ever passes
-    assert (scored.loc[scored["quality_floor_pass"], "quality_score"] >= expected).all()
+    assert (scored.loc[scored["quality_floor_pass"], "quality_score"]
+            >= config.QUALITY_FLOOR_MIN).all()
     below = scored[(~scored["quality_floor_pass"]) & scored["quality_score"].notna()]
-    assert (below["quality_score"] < expected).all()
+    assert (below["quality_score"] < config.QUALITY_FLOOR_MIN).all()
 
 
-def test_quality_floor_small_sample_blocks():
-    # < 10 scored names -> threshold undefinable -> the gate blocks (never waves names through)
+def test_quality_floor_tiny_sample_still_uses_absolute_bar():
     scored = SC.compute_scores(make_frame(3))
-    assert scored.attrs["quality_floor_threshold"] is None
-    assert not scored["quality_floor_pass"].any()
+    assert scored.attrs["quality_floor_threshold"] == pytest.approx(config.QUALITY_FLOOR_MIN)
+    # names can pass; the old n<10 block is gone
+    assert scored["quality_floor_pass"].any() or scored["quality_score"].notna().any()
 
 
 def test_residual_ranks_cheap_high_roic():

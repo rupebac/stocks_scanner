@@ -267,6 +267,12 @@ def test_build_features_end_to_end_columns_and_values():
     assert feat["fcf_margin"] == pytest.approx((25 - 5 - 3) * 4 / 400)
     assert feat["brake_fcf_margin"] == pytest.approx(1.0)   # flat fundamentals
     assert feat["roic"] == pytest.approx(20 * 4 * 0.75 / (40 + 200))
+    assert feat["roic_median_5y"] == pytest.approx(feat["roic"])
+    assert feat["gm_stability"] == pytest.approx(0.0, abs=1e-9)
+    assert feat.get("fcf_cov") is not None
+    assert feat["rev_yoy_n"] >= 9
+    assert feat["rev_pos_years"] == feat["rev_yoy_n"]   # flat synthetic is always up or flat?
+
 
 
 def test_build_features_kmi_style_missing_sbc_and_gross_profit():
@@ -277,7 +283,7 @@ def test_build_features_kmi_style_missing_sbc_and_gross_profit():
     assert feat["fcf_adj_ttm"] == pytest.approx(80)
     assert "sbc_unreported" in (feat.get("dq_flags") or "")
     assert feat["fcf_ttm"] == pytest.approx(80)   # plain fcf still alive
-    assert feat["gm"] is None and feat["gm_ttm"] is None   # no gross profit AND no cost tags
+    assert feat.get("gm") is None and feat.get("gm_ttm") is None   # no gross profit AND no cost tags
     assert feat["brake_gm"] is None
 
 

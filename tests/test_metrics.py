@@ -5,8 +5,9 @@ import pytest
 
 from scanner import config
 from scanner.metrics import (
-    cagr, cagr5_from_series, ev, fixed_scale_yield, invested_capital, self_stats,
-    t_eff_winsorized, winsor_pct_rank,
+    cagr, cagr5_from_series, cagr_score, clip_scale, coeff_var, conservative_level,
+    cov_to_score, ev, fixed_scale_yield, fy_window_quality, invested_capital,
+    nd_ebitda_score, rev_up_years, self_stats, t_eff_winsorized, winsor_pct_rank,
 )
 
 
@@ -153,3 +154,83 @@ def test_self_stats_mid_range():
     s = self_stats(_mk_series(vals))
     assert 0 < s["pct"] < 100
     assert abs(s["median_ratio"] - 1.0) < 0.05
+
+
+# --- QualityScore v0.5.8 fixed bars ------------------------------------------
+def test_clip_scale_caps_and_floors():
+    assert clip_scale(0.20, 0.0, 0.20) == 100
+    assert clip_scale(0.10, 0.0, 0.20) == 50
+    assert clip_scale(0.40, 0.0, 0.20) == 100
+    assert clip_scale(-0.05, 0.0, 0.20) == 0
+    assert clip_scale(None, 0.0, 0.20) is None
+
+
+def test_conservative_level_min_of_ttm_and_median():
+    assert conservative_level(median=0.22, ttm=0.18, mean=0.30) == 0.18
+    assert conservative_level(median=0.22, ttm=None, mean=0.30) == 0.22
+    assert conservative_level(median=None, ttm=None, mean=0.30) == 0.30
+    assert conservative_level(None, None, None) is None
+
+
+def test_nd_ebitda_score_net_cash_is_full_marks():
+    assert nd_ebitda_score(-0.5) == 100
+    assert nd_ebitda_score(0.0) == 100
+    assert nd_ebitda_score(1.5) == 50
+    assert nd_ebitda_score(3.0) == 0
+    assert nd_ebitda_score(4.0) == 0
+    assert nd_ebitda_score(None) is None
+
+
+def test_cagr_score_caps_at_12pct():
+    assert cagr_score(0.12) == 100
+    assert cagr_score(0.06) == 50
+    assert cagr_score(0.40) == 100
+    assert cagr_score(-0.02) == 0
+    assert cagr_score(None) is None
+
+
+def test_cov_to_score_zero_at_threshold():
+    assert cov_to_score(0.0, zero_at=0.25) == 100
+    assert cov_to_score(0.125, zero_at=0.25) == 50
+    assert cov_to_score(0.25, zero_at=0.25) == 0
+    assert cov_to_score(0.50, zero_at=0.25) == 0
+    assert cov_to_score(None, zero_at=0.25) is None
+
+
+def test_coeff_var_needs_three_points_and_positive_mean():
+    assert coeff_var(pd.Series([1.0, 1.0])) is None
+    assert coeff_var(pd.Series([-1.0, -2.0, -3.0]), require_positive_mean=True) is None
+    s = pd.Series([1.2, 4.3, 1.7, 2.0, 1.8])  # CF-like FCF path
+    cv = coeff_var(s, require_positive_mean=True)
+    assert cv is not None and cv > 0.40
+
+
+def test_rev_up_years_counts_positive_yoy_pairs():
+    idx = pd.to_datetime(["2019-12-31", "2020-12-31", "2021-12-31",
+                          "2022-12-31", "2023-12-31", "2024-12-31"])
+    rev = pd.Series([100, 110, 90, 200, 180, 190], index=idx)
+    pos, n = rev_up_years(rev)
+    assert n == 5
+    assert pos == 3  # +10, -20, +110, -20, +10
+    flat = pd.Series([100.0] * 6, index=idx)
+    pos_f, n_f = rev_up_years(flat)
+    assert n_f == 5 and pos_f == 5   # flat is stable, not a haircut
+
+
+def test_fy_window_quality_medians_and_path():
+    idx = pd.to_datetime([f"{y}-12-31" for y in range(2016, 2026)])
+    fcf = [1.0, 1.1, 1.2, 1.3, 1.2, 1.2, 4.3, 1.7, 2.0, 1.8]  # boom in 2022
+    gm = [0.40] * 10
+    roic = [0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.35, 0.18, 0.17, 0.16]
+    rev = [100, 110, 120, 130, 140, 150, 280, 160, 170, 180]
+    F = pd.DataFrame({"fcf": fcf, "gm": gm, "roic": roic, "revenue": rev,
+                      "fcf_margin": [a / b for a, b in zip(fcf, rev)]},
+                     index=idx)
+    out = fy_window_quality(F)
+    assert out["roic_years"] == 9                       # 2016 ROIC = 10% is not > 10%
+    assert out["fcf_pos_years"] == 10
+    assert out["roic_median_5y"] < out["roic"]          # mean lifted by 2022
+    assert out["fcf_cov"] > 0.40
+    assert out["gm_stability"] == pytest.approx(0.0, abs=1e-9)
+    assert out["rev_yoy_n"] == 9
+    assert out["rev_pos_years"] == 8                    # only 2023 is a down year

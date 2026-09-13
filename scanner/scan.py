@@ -91,7 +91,7 @@ def _preset_frames(
     flagship = g[g["flag_derated_quality"]].sort_values("residual")
     beaten = g[g["flag_beaten_but_delivering"]].sort_values("cheapness_score", ascending=False)
     consistency = g["quality_component_values"].map(
-        lambda c: (c.get("consistency") if isinstance(c, dict) else None) or 0
+        lambda c: (c.get("stability") if isinstance(c, dict) else None) or 0
     )
     compounders = g[
         (consistency >= 80)
@@ -289,7 +289,7 @@ def run_scan(
             "beaten_but_delivering": {"flag": "beaten_but_delivering", "rank": "cheapness_score desc",
                                       "requires": "gates_pass & coverage>=0.8"},
             "compounders_on_sale": {
-                "rules": "consistency>=80 & ev_fcf_self_pct<=30 & quality_floor & "
+                "rules": "stability>=80 & ev_fcf_self_pct<=30 & quality_floor & "
                          "brakes 0.97/0.95/0.90 & (fcf_yield>=max(4%,gs10) | residual_pct<=20)",
                 "rank": "cheapness_score desc"},
         },
@@ -297,7 +297,7 @@ def run_scan(
             k: getattr(config, k) for k in [
                 "GATE_ADV_USD", "GATE_MKTCAP_USD", "GATE_REV_CAGR5_MIN", "GATE_FCF_CAGR5_MIN",
                 "MIN_INDEX_TENURE_YEARS", "MIN_SCORE_INPUT_COVERAGE",
-                "QUALITY_FLOOR_QUANTILE", "FLAG_SELF_PCT", "FLAG_SELF_Z", "FLAG_MEDIAN_RATIO",
+                "QUALITY_FLOOR_MIN", "FLAG_SELF_PCT", "FLAG_SELF_Z", "FLAG_MEDIAN_RATIO",
                 "FLAG_YIELD_FLOOR", "FLAG_RESIDUAL_PCT", "FLAG_BRAKE_GM", "FLAG_BRAKE_FCF_MARGIN",
                 "FLAG_BRAKE_ROIC",
             ]

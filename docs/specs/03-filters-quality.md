@@ -6,12 +6,12 @@ Business-quality filters. These answer: *"is the company actually good?"* — **
 never an input to anything in this doc.** That separation is deliberate: quality is
 measured blind, then compared against price in doc 05.
 
-Scoring basis: 5-year lookback (10y where noted), values scored as percentiles within the
-**peer ladder**: GICS industry group when it has ≥ 8 standard-group names, else sector,
-else market — the output states which peer set produced each percentile. FCF basis is
-split by use (Q8, v0.3): margins and multiples on `fcf_adj` (valuation honesty);
-positivity counts and CAGR gates on plain `fcf` — applying the SBC haircut to a 9-of-10
-positivity count can eject the software compounders we hunt. Formulas: doc 06 §7.
+Scoring basis: 5-year lookback (10y where noted). **QualityScore (v0.5.8) is on fixed
+economic bars**, not peer percentiles — see doc 05 §2.1. Cheapness still uses the
+**peer ladder** for multiples: GICS industry group when it has ≥ 8 standard-group names,
+else sector, else market. FCF basis is split by use (Q8, v0.3): margins and multiples on
+`fcf_adj` (valuation honesty); positivity counts and CAGR gates on plain `fcf`.
+Formulas: doc 06 §7 / §9.
 
 ## 3.1 Profitability
 
@@ -24,7 +24,7 @@ positivity count can eject the software compounders we hunt. Formulas: doc 06 §
 | `fcf_margin_ttm` | FCF margin (current) | `fcf_adj`-basis, TTM | ≥ 0.95 × 5y avg (flag brake) | MVP |
 | `fcf_margin` | FCF margin | `fcf_adj` / revenue, 5y avg | ≥ peers (ladder) 60th pct | MVP |
 | `gm` | Gross margin | gross profit / revenue, 5y avg | context | MVP |
-| `gm_stability` | Gross margin stability | std(gm) / mean(gm) over 5y, lower better | context | P1 |
+| `gm_stability` | Gross margin stability | std(gm) / \|mean(gm)\| over 5y FY, lower better | QualityScore stability sleeve | MVP |
 | `op_margin` | Operating margin | EBIT / revenue, 5y avg | context | P1 |
 | `roe` / `roa` | ROE / ROA | standard | restricted-group use | P1 |
 
@@ -43,8 +43,9 @@ positivity count can eject the software compounders we hunt. Formulas: doc 06 §
 |---|---|---|---|---|
 | `roic_years` | ROIC consistency | years of last 10 with ROIC > 10% | ≥ 7 | MVP |
 | `fcf_pos_years` | FCF positivity | years of last 10 with plain `fcf` > 0 | ≥ 9 | MVP |
-| `rev_pos_years` | Revenue consistency | years of last 10 with revenue growth > 0 | ≥ 7 | P1 |
+| `rev_pos_years` | Revenue path | years of last 10 FY with YoY revenue **not down** (`rev_yoy_n` = pair count; flat counts) | QualityScore stability sleeve | MVP |
 | `eps_vol` | Earnings stability | std of TTM EPS year-over-year changes over 5y, lower better | context | P1 |
+| `fcf_cov` | FCF path | std(plain `fcf`) / mean(`fcf`) over 5y FY, lower better; null if mean ≤ 0 | QualityScore stability sleeve | MVP |
 
 Consistency is what separates "good company" from "good year". Adobe/Oracle-type names
 pass `roic_years` = 10/10 even in years their multiple collapses.
@@ -61,9 +62,10 @@ pass `roic_years` = 10/10 even in years their multiple collapses.
 Growth gates are floors, not maximizers: the scanner hunts underpricing, not maximal growth
 (maximal growth is usually already priced). Negative-FCF-growth names get flagged as
 "fundamentals deteriorating" and are blocked from the divergence presets (doc 05).
-Since v0.3, growth also carries **0% weight in QualityScore** (doc 05 §2.1) — a gate,
-never a ranker: percentile-maximizing growth re-introduces acceleration pressure on
-exactly the names we hunt.
+Since v0.5.8, growth is a **capped sleeve** of QualityScore (12% CAGR = 100) **and**
+still a gate (§1 of doc 05). Percentile-maximizing growth is still rejected: the cap
+stops a 40% cyclical spike from outranking an 8% compounder. The path (stability
+multiplier) is what separates a smooth 11% CAGR from a boom/bust 11% CAGR.
 
 Deliberate tolerance for *deceleration*: the flagship pattern (doc 05, `derated_quality`)
 often presents as growth slowing from 20% to 5% while ROIC and FCF **levels** stay intact.
@@ -118,12 +120,12 @@ levels-not-acceleration: a decelerating-but-healthy Adobe can print a 6 and fail
 
 ## Caveats
 
-- **Percentiles need peers — use the industry-group ladder (v0.3)**: score at GICS
-  industry group when it has ≥ 8 standard-group names, else sector, else market; the
-  output states which peer set produced each percentile. Rationale: broad IT percentiles
-  are Mag7-relative ("cheap vs. IT" often means "not an AI winner" — Intel and HPQ rank
-  alongside Adobe), while Energy/Materials sector percentiles at ~20 names make a
-  "30th percentile" a handful of tickers.
+- **Quality is absolute; cheapness still uses the industry-group ladder (v0.5.8 / v0.3)**:
+  QualityScore is fixed economic bars × path stability, never a peer percentile. Multiples
+  still score at GICS industry group when it has ≥ 8 standard-group names, else sector,
+  else market — the output states which peer set produced each cheapness percentile.
+  Rationale for the ladder: broad IT percentiles are Mag7-relative, while Energy/Materials
+  at ~20 names make a "30th percentile" a handful of tickers.
 - **Write-downs and one-offs** wreck 1-year metrics; that's why most gates are 5y averages
   with a TTM non-deterioration check rather than TTM levels alone.
 - **Restricted group** (financials/utilities/RE): `roe`, `pb`, `div_yield` replace ROIC/EV

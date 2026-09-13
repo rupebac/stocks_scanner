@@ -52,10 +52,13 @@ st.markdown(
 # if a threshold changes there, fix this text.
 COLUMN_DOCS = {
     "quality_score": (
-        "Weighted blend of peer-percentile components: profitability 45% (ROIC, FCF margin, "
-        "gross margin) · consistency 25% (of the last 5y: years with ROIC above bar, years "
-        "with positive FCF) · accounting 20% (FCF ÷ net income) · balance 10% (net debt/EBITDA, "
-        "lower = better). The top 20% of this score = the quality floor."
+        "How good the business is on absolute bars, not versus industry peers: "
+        "profitability 40% (ROIC and FCF margin, using min of TTM and 5y median so a "
+        "boom year cannot lift the score) · growth 30% (5y revenue and FCF CAGR, capped "
+        "at 12%) · balance 30% (net debt/EBITDA; net cash = 100, 3× = 0). That core is "
+        "then multiplied by path stability (gross-margin CoV, FCF CoV, share of years "
+        "revenue actually grew) — a jumpy cyclical cannot average its way to a high "
+        "score. Floor is Quality ≥ 60."
     ),
     "residual": (
         "log(EV/FCF) minus the multiple this ROIC and industry group usually get "
@@ -613,7 +616,7 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
         x0, x1 = float(pts["x"].min() - pad), float(pts["x"].max() + pad)
         if thr is not None and pd.notna(thr):
             fig.add_hline(y=thr, line_dash="dot", line_color="#666",
-                          annotation_text=f"quality floor — top 20% (≈{thr:.0f})")
+                          annotation_text=f"quality floor — ≥{thr:.0f}")
             # the zone: above the floor AND residual < 0 (x = −residual > 0)
             fig.add_shape(type="rect", x0=0, x1=x1, y0=thr, y1=108,
                           fillcolor="rgba(228,87,46,0.07)", line_width=0)
@@ -719,10 +722,11 @@ def _company_detail(sel: str, row, hist: pd.DataFrame, overlay: pd.DataFrame,
     with fin:
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Quality (0–100)", _fmt(row.get("quality_score"), "{:.0f}"),
-                  "top 20% passes the gate",
-                  help="How this business looks versus peers: profits, consistency, "
-                       "cash vs reported earnings, and the balance sheet. The top 20% "
-                       "of names on this score pass the quality floor.")
+                  "≥ 60 passes the gate",
+                  help="Is this a business you'd be willing to own? Profitability (ROIC, "
+                       "FCF margin), capped growth, and low debt — then multiplied by how "
+                       "smooth the path was. Not a rank versus industry peers. ≥ 60 clears "
+                       "the quality floor.")
         m2.metric("Residual", _fmt(row.get("residual"), "{:.2f}"),
                   "more negative = cheaper for the quality",
                   help="Is the stock cheap for this quality? Negative means it trades "

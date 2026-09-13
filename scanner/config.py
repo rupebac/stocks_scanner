@@ -49,18 +49,24 @@ CAGR5_FALLBACK_YEARS_LO = 3.5   # FCF only: nearest valid year if the 5y base is
 GOODWILL_IC_PCT = 0.40          # roic_exgoodwill variant trigger (P1, doc 03 §3.1)
 
 # --- Scoring (doc 05 §2) ------------------------------------------------------
-QUALITY_WEIGHTS = {             # doc 05 §2.1; renormalize over available inputs (doc 08 §5)
-    "profitability": 0.45,
-    "consistency": 0.25,
-    "accounting": 0.20,   # MVP: fcf_ni only
-    "balance": 0.10,      # MVP: nd_ebitda only
+QUALITY_WEIGHTS = {             # doc 05 §2.1 v0.5.8; core sleeves, then × stability
+    "profitability": 0.40,
+    "growth": 0.30,
+    "balance": 0.30,
 }
+QUALITY_ROIC_CAP = 0.20         # 20% ROIC = 100 on the profitability bar
+QUALITY_FCF_MARGIN_CAP = 0.25   # 25% FCF margin = 100
+QUALITY_CAGR_CAP = 0.12         # 12% CAGR = 100; faster is not better
+QUALITY_ND_EBITDA_ZERO = 3.0    # 3× net debt/EBITDA = 0; ≤0 (net cash) = 100
+QUALITY_GM_COV_ZERO = 0.25      # GM CoV 25% → stability sleeve 0
+QUALITY_FCF_COV_ZERO = 0.50     # FCF path is lumpier than GM
+QUALITY_FLOOR_MIN = 60.0        # absolute quality floor (replaces top-20% cut)
 CHEAPNESS_WEIGHTS = {           # doc 05 §2.2
     "self_history": 0.40,       # ev_fcf SELF percentile-of-lowness
     "cross_section": 0.30,      # ev_ebit SECT on the peer ladder
     "absolute": 0.30,           # fcf_yield fixed scale
 }
-QUALITY_FLOOR_QUANTILE = 0.80   # top 20% of QualityScore = floor pass (doc 05 §2.3, v0.4)
+QUALITY_FLOOR_QUANTILE = 0.80   # unused since v0.5.8; kept so old scan config.json still loads
 LADDER_MIN_NAMES = 8            # industry group -> sector -> market (doc 05 §2)
 FCF_YIELD_SCALE_MAX = 0.10      # fixed scale clip(0,10%)/10% (doc 06 §9)
 

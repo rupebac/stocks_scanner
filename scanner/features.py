@@ -380,30 +380,10 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
         M.safe_div(stack_now - pref - mi, ebitda_t) if ebitda_t and ebitda_t != 0 else None
     )
 
-    # --- 5y/10y averages, consistency, brakes (doc 03) — by DATE window, not row
-    # count, so gaps in the FY series (tag/tag-chain changes) can't fake a base.
-    # 9.3y/4.3y back from the latest FY end = exactly the last 10 / last 5 fiscal
-    # years (10.3/5.3 pulled in an 11th/6th year). -------------------------------
+    # --- 5y/10y averages, medians, path, CAGR (doc 03 / 05 §2.1 v0.5.8) ----------
     out: dict = {}
     if F is not None and not F.empty:
-        latest = max(F.index)
-        def window(years: float):
-            return F.loc[[e for e in F.index if (latest - e).days <= years * 366]]
-        W10, W5 = window(9.3), window(4.3)
-        if "roic" in W10 and W10["roic"].notna().any():
-            out["roic_years"] = int((W10["roic"] > config.ROIC_THRESHOLD).sum())
-        if "fcf" in W10 and W10["fcf"].notna().any():
-            out["fcf_pos_years"] = int((W10["fcf"] > 0).sum())
-        out["gm"] = float(W5["gm"].dropna().mean()) if "gm" in W5 and W5["gm"].notna().sum() >= 3 else None
-        out["fcf_margin"] = float(W5["fcf_margin"].dropna().mean()) if "fcf_margin" in W5 and W5["fcf_margin"].notna().sum() >= 3 else None
-        out["roic"] = float(W5["roic"].dropna().mean()) if "roic" in W5 and W5["roic"].notna().sum() >= 3 else None
-        out["fcf_cagr5_base_fallback"] = False
-        if "revenue" in F:
-            out["rev_cagr5"], _ = M.cagr5_from_series(F["revenue"].dropna(), cur_rev=rev)
-        if "fcf" in F:
-            val, fb = M.cagr5_from_series(F["fcf"].dropna(), cur_rev=rev, fallback=True)
-            out["fcf_cagr5"] = val
-            out["fcf_cagr5_base_fallback"] = bool(fb)
+        out.update(M.fy_window_quality(F, cur_rev=rev))
     # brakes: TTM vs 5y avg — GM from the derived path when GrossProfit is unreported
     gm_ttm = M.safe_div(t("gross_profit"), rev)
     if gm_ttm is None:

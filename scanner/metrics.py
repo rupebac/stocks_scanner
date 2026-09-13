@@ -140,6 +140,126 @@ def fixed_scale_yield(y: float | None) -> float | None:
     return float(np.clip(y, 0.0, config.FCF_YIELD_SCALE_MAX) / config.FCF_YIELD_SCALE_MAX * 100.0)
 
 
+def _finite(x) -> bool:
+    return x is not None and np.isfinite(x)
+
+
+def clip_scale(x, lo: float, hi: float) -> float | None:
+    """Map x onto 0–100 with lo → 0 and hi → 100; clip outside. None stays None."""
+    if not _finite(x) or hi <= lo:
+        return None
+    return float(np.clip((float(x) - lo) / (hi - lo), 0.0, 1.0) * 100.0)
+
+
+def conservative_level(median=None, ttm=None, mean=None) -> float | None:
+    """min(TTM, 5y median) so a boom year cannot lift the level; 5y mean only if both
+    of those are missing (doc 05 §2.1 v0.5.8)."""
+    present = [float(v) for v in (median, ttm) if _finite(v)]
+    if present:
+        return min(present)
+    return float(mean) if _finite(mean) else None
+
+
+def nd_ebitda_score(nd) -> float | None:
+    """Net cash (≤ 0) = 100; 3.0× EBITDA = 0; linear between."""
+    if not _finite(nd):
+        return None
+    if float(nd) <= 0:
+        return 100.0
+    return float(np.clip(1.0 - float(nd) / config.QUALITY_ND_EBITDA_ZERO, 0.0, 1.0) * 100.0)
+
+
+def cagr_score(g) -> float | None:
+    """clip(CAGR, 0, 12%) / 12% → 0–100. Negative growth scores 0, not 'below zero'."""
+    if not _finite(g):
+        return None
+    cap = config.QUALITY_CAGR_CAP
+    return float(np.clip(float(g), 0.0, cap) / cap * 100.0)
+
+
+def cov_to_score(cov, *, zero_at: float) -> float | None:
+    """Coefficient of variation → 0–100. CoV 0 = 100; CoV ≥ zero_at = 0."""
+    if not _finite(cov) or zero_at <= 0:
+        return None
+    return float(np.clip(1.0 - float(cov) / zero_at, 0.0, 1.0) * 100.0)
+
+
+def coeff_var(s: pd.Series, *, require_positive_mean: bool = False) -> float | None:
+    """Population CoV (std/|mean|) over a FY series. Needs ≥ 3 points."""
+    s = pd.to_numeric(s, errors="coerce").dropna()
+    if len(s) < 3:
+        return None
+    mu = float(s.mean())
+    if require_positive_mean and not (mu > 0):
+        return None
+    if mu == 0:
+        return None
+    return float(s.std(ddof=0) / abs(mu))
+
+
+def rev_up_years(revenue: pd.Series) -> tuple[int | None, int | None]:
+    """Count of non-negative YoY revenue changes (did not fall) and the pair count.
+
+    Flat years count as stable; only declines haircut the stability sleeve.
+    """
+    s = pd.to_numeric(revenue, errors="coerce").dropna().sort_index()
+    if len(s) < 2:
+        return None, None
+    chg = s.diff().iloc[1:]
+    return int((chg >= 0).sum()), int(len(chg))
+
+
+def fy_window_quality(F: pd.DataFrame, cur_rev: float | None = None) -> dict:
+    """5y/10y averages, medians, and path metrics from a fiscal-year frame.
+
+    Windows are by DATE (doc 03): 9.3y / 4.3y back from the latest FY end so a gap
+    in the series cannot fake a 10th/5th year. Path fields feed QualityScore
+    stability (doc 05 §2.1 v0.5.8). `cur_rev` is TTM revenue for the CAGR base
+    floor (doc 06 §8).
+    """
+    out: dict = {}
+    if F is None or not isinstance(F, pd.DataFrame) or F.empty:
+        return out
+    idx = pd.to_datetime(F.index)
+    F = F.copy()
+    F.index = idx
+    latest = max(F.index)
+
+    def window(years: float) -> pd.DataFrame:
+        return F.loc[[e for e in F.index if (latest - e).days <= years * 366]]
+
+    W10, W5 = window(9.3), window(4.3)
+    if "roic" in W10 and W10["roic"].notna().any():
+        out["roic_years"] = int((W10["roic"] > config.ROIC_THRESHOLD).sum())
+    if "fcf" in W10 and W10["fcf"].notna().any():
+        out["fcf_pos_years"] = int((W10["fcf"] > 0).sum())
+    if "gm" in W5 and W5["gm"].notna().sum() >= 3:
+        out["gm"] = float(W5["gm"].dropna().mean())
+        out["gm_stability"] = coeff_var(W5["gm"])
+    if "fcf_margin" in W5 and W5["fcf_margin"].notna().sum() >= 3:
+        m = W5["fcf_margin"].dropna()
+        out["fcf_margin"] = float(m.mean())
+        out["fcf_margin_median_5y"] = float(m.median())
+    if "roic" in W5 and W5["roic"].notna().sum() >= 3:
+        r = W5["roic"].dropna()
+        out["roic"] = float(r.mean())
+        out["roic_median_5y"] = float(r.median())
+    if "fcf" in W5:
+        out["fcf_cov"] = coeff_var(W5["fcf"], require_positive_mean=True)
+    if "revenue" in W10:
+        pos, n = rev_up_years(W10["revenue"])
+        out["rev_pos_years"] = pos
+        out["rev_yoy_n"] = n
+    out["fcf_cagr5_base_fallback"] = False
+    if "revenue" in F:
+        out["rev_cagr5"], _ = cagr5_from_series(F["revenue"].dropna(), cur_rev=cur_rev)
+    if "fcf" in F:
+        val, fb = cagr5_from_series(F["fcf"].dropna(), cur_rev=cur_rev, fallback=True)
+        out["fcf_cagr5"] = val
+        out["fcf_cagr5_base_fallback"] = bool(fb)
+    return out
+
+
 def self_stats(series: pd.Series) -> dict | None:
     """SELF percentile / median-centered z / median-ratio + validity rules
     (docs 02, 06 §9): >= 3y of valid observations AND >= 60% of the window valid,

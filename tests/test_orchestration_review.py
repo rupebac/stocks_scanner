@@ -112,8 +112,8 @@ def _preset_row(ticker, **over):
         "residual": -0.5, "cheapness_score": 50.0, "ev_fcf_self_pct": 25.0,
         "quality_floor_pass": True, "brake_gm": 1.0, "brake_fcf_margin": 1.0,
         "brake_roic": 1.0, "fcf_yield": 0.05, "residual_pct": 10.0,
-        "quality_component_values": {"consistency": 85.0, "profitability": 70.0,
-                                     "accounting": 60.0, "balance": 50.0},
+        "quality_component_values": {"stability": 85.0, "profitability": 70.0,
+                                     "growth": 60.0, "balance": 50.0},
     }
     row.update(over)
     return row
@@ -122,8 +122,8 @@ def _preset_row(ticker, **over):
 def test_compounders_on_sale_has_all_v04_brakes():
     rows = [
         _preset_row("GOOD"),
-        _preset_row("LOWCONS", quality_component_values={"consistency": 79.0}),
-        _preset_row("NULLCONS", quality_component_values={"consistency": None}),
+        _preset_row("LOWCONS", quality_component_values={"stability": 79.0}),
+        _preset_row("NULLCONS", quality_component_values={"stability": None}),
         _preset_row("NANDICT", quality_component_values=float("nan")),  # never raises
         _preset_row("NOPCT", ev_fcf_self_pct=35.0),
         _preset_row("NOFLOOR", quality_floor_pass=False),

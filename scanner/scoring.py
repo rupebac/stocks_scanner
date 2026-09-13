@@ -1,5 +1,6 @@
-"""Scoring: peer ladder percentiles, QualityScore / CheapnessScore, quality floor,
-valuation residual, composite. Doc 05 §2 (frozen v0.4) + doc 06 §9 mechanics.
+"""Scoring: peer ladder percentiles (cheapness / momentum only), QualityScore
+(absolute bars × path stability), CheapnessScore, quality floor, valuation
+residual, composite. Doc 05 §2 (v0.5.8 quality) + doc 06 §9 mechanics.
 """
 from __future__ import annotations
 
@@ -7,7 +8,10 @@ import numpy as np
 import pandas as pd
 
 from . import config
-from .metrics import fixed_scale_yield, winsor_pct_rank
+from .metrics import (
+    cagr_score, clip_scale, conservative_level, cov_to_score,
+    fixed_scale_yield, nd_ebitda_score, winsor_pct_rank,
+)
 
 _PCT_COLS = {
     # column -> higher_better (doc 05 §2.1 / §2.2); ranked on the peer ladder
@@ -91,30 +95,56 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         df["pct_mom_sector"] = df.groupby("sector")["mom_12_1"].transform(
             winsor_pct_rank, higher_better=True)
 
-    # --- QualityScore (doc 05 §2.1; renormalize over available components) ------
-    def present(cols):
-        return [c for c in cols if c in df.columns]
+    # --- QualityScore (doc 05 §2.1 v0.5.8): absolute bars × path stability ------
+    def _levels(median_col, ttm_col, mean_col):
+        return pd.Series(
+            [conservative_level(m, t, n) for m, t, n in zip(
+                _col(df, median_col), _col(df, ttm_col), _col(df, mean_col))],
+            index=df.index,
+        )
 
-    components = {
-        "profitability": present(["pct_roic", "pct_fcf_margin", "pct_gm"]),
-        "consistency": present(["pct_roic_years", "pct_fcf_pos_years"]),
-        "accounting": present(["pct_fcf_ni"]),       # MVP: fcf_ni alone (doc 08 §5)
-        "balance": present(["pct_nd_ebitda"]),       # MVP: nd_ebitda alone (doc 08 §5)
-    }
+    roic_s = _levels("roic_median_5y", "roic_ttm", "roic").map(
+        lambda v: clip_scale(v, 0.0, config.QUALITY_ROIC_CAP))
+    fcf_s = _levels("fcf_margin_median_5y", "fcf_margin_ttm", "fcf_margin").map(
+        lambda v: clip_scale(v, 0.0, config.QUALITY_FCF_MARGIN_CAP))
+    profit = pd.concat([roic_s, fcf_s], axis=1).mean(axis=1, skipna=True)
+
+    growth = pd.concat([
+        _col(df, "rev_cagr5").map(cagr_score),
+        _col(df, "fcf_cagr5").map(cagr_score),
+    ], axis=1).mean(axis=1, skipna=True)
+    balance = _col(df, "nd_ebitda").map(nd_ebitda_score)
+
+    gm_s = _col(df, "gm_stability").map(
+        lambda v: cov_to_score(v, zero_at=config.QUALITY_GM_COV_ZERO))
+    fcf_path = _col(df, "fcf_cov").map(
+        lambda v: cov_to_score(v, zero_at=config.QUALITY_FCF_COV_ZERO))
+    rev_n = _col(df, "rev_yoy_n")
+    rev_pos = _col(df, "rev_pos_years")
+    rev_s = pd.Series(np.nan, index=df.index, dtype="float64")
+    ok = rev_n.gt(0)
+    rev_s.loc[ok] = (rev_pos.loc[ok] / rev_n.loc[ok] * 100.0).clip(0.0, 100.0)
+    stability = pd.concat([gm_s, fcf_path, rev_s], axis=1).mean(axis=1, skipna=True)
+
     comp = pd.DataFrame(
-        {name: (df[cols].mean(axis=1, skipna=True) if cols else np.nan) for name, cols in components.items()},
+        {"profitability": profit, "growth": growth, "balance": balance},
         index=df.index,
     )
-    w = pd.Series({name: config.QUALITY_WEIGHTS[name] for name in components})
+    w = pd.Series({name: config.QUALITY_WEIGHTS[name] for name in comp.columns})
     avail = comp.notna()
-    df["quality_weight_used"] = avail.mul(w, axis=1).sum(axis=1)   # stated, never silent
-    df["quality_score"] = (
-        (comp.mul(w, axis=1).fillna(0.0).sum(axis=1) / df["quality_weight_used"])
+    df["quality_weight_used"] = avail.mul(w, axis=1).sum(axis=1)   # core sleeves; stated
+    core = (
+        (comp.mul(w, axis=1).fillna(0.0).sum(axis=1)
+         / df["quality_weight_used"].replace(0, np.nan))
         .where(df["quality_weight_used"] > 0)
     )
+    # missing path data does not haircut (×1); a computed 0 does
+    df["quality_score"] = core * (stability / 100.0).fillna(1.0)
+    evidence = comp.copy()
+    evidence["stability"] = stability
     df["quality_component_values"] = [   # evidence (doc 05 §4b)
         {n: (None if pd.isna(v) else round(float(v), 1)) for n, v in row.items()}
-        for row in comp.round(1).to_dict("records")
+        for row in evidence.round(1).to_dict("records")
     ]
 
     # --- CheapnessScore (doc 05 §2.2) --------------------------------------------
@@ -135,12 +165,9 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         + parts["abs"] * wc["absolute"]
     ).where(parts.notna().all(axis=1))
 
-    # --- quality floor: fixed top-20% cut (doc 05 §2.3, v0.4) ---------------------
-    qs = df["quality_score"].dropna()
-    thr = float(qs.quantile(config.QUALITY_FLOOR_QUANTILE)) if len(qs) >= 10 else None
-    df["quality_floor_pass"] = df["quality_score"].notna() & (
-        df["quality_score"] >= (thr if thr is not None else np.inf)
-    )
+    # --- quality floor: absolute bar (doc 05 §2.3, v0.5.8) ------------------------
+    thr = float(config.QUALITY_FLOOR_MIN)
+    df["quality_floor_pass"] = df["quality_score"].notna() & (df["quality_score"] >= thr)
 
     # --- valuation residual (doc 05 §2.3) ------------------------------------------
     # Fit on ALL gated rows with valid ev_fcf > 0 and ROIC > 0 (ROIC <= 0 excluded

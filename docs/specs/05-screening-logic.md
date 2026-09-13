@@ -1,6 +1,8 @@
 # 05 — Screening Logic: Gates → Scores → Flags → Screens
 
-Version 0.5 (2026-09-11). Search methodology FROZEN at v0.4 — no flag/score changes since. v0.5: input-availability pointer added (doc 08 §5).
+Version 0.5.8 (2026-09-13). QualityScore rewritten as absolute bars × path stability
+(owner); CheapnessScore / residual / flags otherwise as v0.4. v0.5: input-availability
+pointer added (doc 08 §5).
 
 How the filter catalog becomes a search. Four layers:
 
@@ -47,21 +49,30 @@ Direction normalized so 100 = best.
 
 ### 2.1 QualityScore — "is the business good?" (no price inputs)
 
-| Component | Weight (v0.3, tunable) | Inputs (doc 03) |
+v0.5.8: **absolute bars, not peer percentiles.** A 20% ROIC is good whether peers are
+software or nitrogen. Peer-ladder percentiles remain for CheapnessScore (`ev_ebit`)
+and the `beaten_but_delivering` momentum arm only.
+
+```
+QualityScore = core × (stability / 100)
+core        = weighted blend of profitability / growth / balance (renormalize if a
+              sleeve is missing)
+stability   = 0–100 path smoothness; missing path data does **not** haircut (×1)
+```
+
+A jumpy path cannot average its way to a high score. `fcf_ni` / `gm` *level* /
+`roic_years` / `fcf_pos_years` stay as display; they are not in the score.
+
+| Sleeve | Weight | Mapping (100 = best) |
 |---|---|---|
-| Profitability | 45% | `roic` (+ `roic_exgoodwill` variant), `fcf_margin`, `gm` |
-| Consistency | 25% | `roic_years`, `fcf_pos_years` |
-| Accounting quality | 20% | `fcf_ni`, `accruals` |
-| Balance sheet | 10% | `nd_ebitda`, `int_cov` |
+| Profitability | 40% | Conservative level = min(TTM, 5y **median**; 5y mean only if both missing). ROIC clip(0, 20%)/20%. FCF margin clip(0, 25%)/25%. Equal mix. No gross-margin *level* (sector-structural). |
+| Growth | 30% | `rev_cagr5` and `fcf_cagr5` each clip(0, 12%)/12% — **12% CAGR is full marks**; 40% is not better. Equal mix; one missing → the other. The §1 gates (`rev ≥ 0`, `FCF CAGR ≥ −5%`) still apply separately. |
+| Balance | 30% | `nd_ebitda`: net cash (≤ 0) = 100; 3.0× = 0; linear between. |
+| Stability (multiplier) | — | Mean of: GM CoV (`gm_stability`) with 25% CoV → 0; FCF CoV (`fcf_cov`) with 50% CoV → 0 (cash is lumpier); share of last-10y YoY revenue years that **did not fall** (`rev_pos_years` / `rev_yoy_n`; flat counts as stable). |
 
-Growth carries **0% weight** (v0.3): it is a gate (§1), not a ranker — maximizing growth
-contradicts the thesis (maximal growth is usually already priced) and re-introduces
-acceleration pressure on exactly the names we hunt.
-
-Input availability: components **renormalize over implemented inputs** — which inputs
-ship at MVP is the availability contract in doc 08 §5. At MVP that means accounting
-quality = `fcf_ni` alone and balance sheet = `nd_ebitda` alone; renormalization is
-stated in scan output, never silent.
+Growth stays a **gate and a capped score**, never a maximizer: that is what keeps EQT-style
+volume spikes from outranking a steady 8% compounder. Stability is what drops CF-style
+boom/bust names whose 5y CAGR still looks fine.
 
 ### 2.2 CheapnessScore — "how cheap is the price?" (renamed from MispricingScore, v0.3)
 
@@ -90,10 +101,10 @@ layer's job.
 
 ### 2.3 Quality floor, ranking key, composite
 
-- **Quality floor — a gate, not a ranker.** Top **20% of QualityScore** in the standard
-  group (fixed rank cut, v0.4). This replaces v0.3's "calibrate a threshold to a 15–25%
-  pass rate": same contract, but stable — re-solving for a numeral every night made a
-  stock's candidacy flicker with cohort quality instead of with its own.
+- **Quality floor — a gate, not a ranker.** `QualityScore ≥ 60` on the absolute scale
+  (v0.5.8). Replaces the v0.4 top-20% cut: a fixed numeral so a name's candidacy does not
+  flicker with tonight's cohort, and so Materials peers cannot lift a cyclical to “high
+  quality.” Threshold is stored on the scan artifact as `quality_floor_threshold`.
 - **Flagship rank key: the valuation residual.** Per scan date, fit
   `log(EV/FCF) ~ log(ROIC) + industry-group dummies` — **on the full standard-group
   cross-section** with valid EV/FCF and ROIC (ROIC floored at 1% for the log; ROIC ≤ 0
@@ -171,7 +182,7 @@ Flags may overlap; presets select on flags + scores.
 |---|---|---|
 | **Quality at a Discount** (flagship) | `derated_quality` flag, ranked by valuation residual (§2.3) | the Adobe/Oracle hunt |
 | **Beaten but Delivering** | `beaten_but_delivering` flag, ranked by CheapnessScore | sentiment-divergence entries, earlier in the recovery |
-| **Compounders on Sale** | consistency component ≥ 80 + `ev_fcf` SELF ≤ 30th pct **+ the same brakes as the flagship** (quality floor, margin brakes, yield/residual OR — added v0.4; without them this was the junk list with a nice title) | long-horizon: 10/10 consistency names at self-history discounts |
+| **Compounders on Sale** | stability component ≥ 80 + `ev_fcf` SELF ≤ 30th pct **+ the same brakes as the flagship** (quality floor, margin brakes, yield/residual OR) | long-horizon: smooth-path names at self-history discounts |
 | **Custom** | arbitrary {metric, mode, operator, value} filter stack on any catalog ID | the "like any other scanner" part — full filter-builder UI |
 
 A preset's definition is data (JSON: gates + flag rules + ranking key), not code, so

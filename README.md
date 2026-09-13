@@ -77,8 +77,9 @@ Each run writes scan artifacts to `data/scans/<date>/` (doc 05 §4b): `config.js
 
 ## What it computes (spec summary — full detail in docs/specs/)
 
-- **Quality is the gate**: QualityScore (profitability/consistency/accounting/balance,
-  peer-ladder percentiles) with a fixed top-20% floor. No price inputs.
+- **Quality is the gate**: QualityScore is absolute (profitability × capped growth ×
+  low debt, multiplied by path stability). Floor is Quality ≥ 60. No price inputs.
+  Peer-ladder percentiles are not used for quality.
 - **Cheapness is the rank**: CheapnessScore (EV/FCF vs own 5y history, EV/EBIT vs
   industry-group peers, FCF yield on a fixed 0–10% scale) and the flagship rank key —
   the valuation residual `log(EV/FCF) ~ log(ROIC) + industry group`.

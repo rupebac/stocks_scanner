@@ -118,13 +118,12 @@ implemented inputs, and the renormalization is stated in scan output.
 |---|---|---|
 | CheapnessScore | `ev_fcf` SELF, `ev_ebit` SECT, `fcf_yield` fixed-scale | — (complete) |
 | `derated_quality` | floor, SELF OR-arm (percentile/z/median-ratio), yield/residual OR, `gm_ttm`, `fcf_margin_ttm`, `roic_ttm` brakes | — (complete) |
-| QualityScore | `roic`, `fcf_margin`, `gm` / `roic_years`, `fcf_pos_years` / `fcf_ni` / `nd_ebitda` | `accruals` (accounting = `fcf_ni` alone), `int_cov` (balance = `nd_ebitda` alone), `roic_exgoodwill` (plain `roic` always; variant in P1) |
+| QualityScore | conservative ROIC & FCF margin (min of TTM, 5y median), `rev_cagr5`, `fcf_cagr5`, `nd_ebitda`; path: `gm_stability`, `fcf_cov`, `rev_pos_years`/`rev_yoy_n` | `gm` *level*, `fcf_ni`, `roic_years`, `fcf_pos_years` (display); `accruals`, `int_cov`, `roic_exgoodwill` |
 | Sentiment/gates | `mom_12_1`, `rs_12m`, `dd_52w`, `adv_usd`, `mktcap`, `index_tenure`, `days_to_earnings` | `eps_rev_breadth_3m` (proxy, §4), short interest |
 | Overlay (07) | strike yields, DTE badge, IV/HV display, option gate | — (complete, display-only) |
 
-QualityScore MVP weights after renormalization: profitability 45% / consistency 25% /
-accounting 20% (`fcf_ni` only) / balance sheet 10% (`nd_ebitda` only) — same shares,
-narrower inputs.
+QualityScore (v0.5.8): core = profitability 40% / growth 30% / balance 30% (renormalize
+over present sleeves), then × stability/100. Floor = 60. See doc 05 §2.1.
 
 ## 6. Data-quality hooks (extends doc 01)
 
