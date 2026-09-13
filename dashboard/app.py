@@ -9,7 +9,9 @@ charts, margins) and **Options** (live chain — pick a put or call for
 breakeven and greeks). Cheapness on this page means the valuation residual: log(EV/FCF) minus the
 multiple this ROIC/industry usually gets; the highlights require the quality
 floor, residual < 0, ROIC ≥ 10% and EV/FCF low enough to beat max(4%, 10Y) in
-cash. SELF (vs own 5y
+cash. A named cash setting chooses reported FCF or owner earnings for the
+FCF-CAGR gate, QualityScore FCF sleeves, residual, and the yield bar; overlay
+strike yields stay reported. SELF (vs own 5y
 history) stays a chart, never a rank. Every number is display-only — the
 scanner ranks, the human decides.
 
@@ -29,7 +31,8 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scanner import market_data as MD  # noqa: E402  (live put quotes only — never ranks)
+from scanner import flags as FL, market_data as MD, scoring as SC  # noqa: E402
+from scanner.metrics import holdability_roic  # noqa: E402
 SCANS = ROOT / "data" / "scans"
 
 st.set_page_config(page_title="stocks_scanner", layout="wide")
@@ -56,16 +59,22 @@ COLUMN_DOCS = {
         "profitability 40% (ROIC and FCF margin, using min of TTM and 5y median so a "
         "boom year cannot lift the score) · growth 30% (5y revenue and FCF CAGR, capped "
         "at 12%) · balance 30% (net debt/EBITDA; net cash = 100, 3× = 0). That core is "
-        "then multiplied by path stability (gross-margin CoV, FCF CoV, share of years "
-        "revenue actually grew) — a jumpy cyclical cannot average its way to a high "
-        "score. Floor is Quality ≥ 60."
+        "then multiplied by path stability: revenue-up-year share 50%, gross-margin CoV "
+        "25%, FCF CoV 25% (missing slots renormalize; FCF cannot dominate when GM is "
+        "unreported). A jumpy cyclical cannot average its way to a high score. Floor is "
+        "Quality ≥ 60 and conservative ROIC in [10%, 100%] when ROIC is known "
+        "(>100% is a tiny-capital artifact and fails; missing does not). FCF sleeves "
+        "follow the Ideas cash setting (reported FCF vs owner earnings)."
     ),
     "residual": (
         "log(EV/FCF) minus the multiple this ROIC and industry group usually get "
         "(regression fit). More negative = cheaper than the quality deserves. "
-        "The zone cut is residual < 0."
+        "The zone cut is residual < 0. EV/FCF follows the Ideas cash setting."
     ),
-    "ev_fcf": "EV / TTM adjusted FCF (SBC-expensed).",
+    "ev_fcf": (
+        "EV / TTM cash (SBC-expensed). Default is reported FCF (CFO − capex − SBC). "
+        "Owner-earnings mode uses CFO − D&A − SBC instead."
+    ),
     "price": "Last weekly close.",
     "yield at −5%": "FCF yield you'd lock in if put the stock at −5% (from the options chain).",
 }
@@ -430,20 +439,41 @@ def _gated(metrics: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
-def _highlighted(metrics: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+def _highlighted(metrics: pd.DataFrame, cfg: dict, floor: float | None = None,
+                 max_resid: float | None = None, min_roic: float | None = None,
+                 max_ev_fcf: float | None = None) -> pd.DataFrame:
     """The highlights: gated + quality floor + residual < 0 + absolute holdability —
-    ROIC ≥ 10% (5y avg) and EV/FCF low enough that the cash return clears
-    max(4%, 10Y) (implemented as fcf_yield ≥ bar — same number, inverse form).
-    Missing ROIC or yield fails.
-    Ranked by residual ascending: most under-priced vs its quality first."""
-    gs10 = cfg.get("gs10") if cfg.get("gs10") is not None else 0.0
-    bar = max(0.04, gs10 or 0)
-    g = _gated(metrics)
+    ROIC ≥ 10% (5y avg, else conservative min(TTM, 5y median)) and EV/FCF low enough
+    that the cash return clears max(4%, 10Y). Missing ROIC or EV/FCF fails.
+    Ranked by residual ascending. The four cuts default to the scan's saved rule;
+    the sidebar sliders can move them for this session (display-only — the saved
+    scan, gates and metrics are unchanged)."""
+    gs10 = cfg.get("gs10") or 0.0
+    if max_ev_fcf is None:
+        max_ev_fcf = 1.0 / max(0.04, gs10)          # 4% / 10Y cash bar, in years
+    if floor is None:
+        floor = float(cfg.get("quality_floor_threshold") or 60.0)
+    if max_resid is None:
+        max_resid = 0.0
+    if min_roic is None:
+        min_roic = 0.10
+    g = metrics[
+        metrics["quality_score"].notna()
+        & metrics["gates_pass"].fillna(False)
+        & (metrics["input_coverage"] >= 0.8)
+    ].copy()
+    if g.empty:
+        return g
+    roic_h = pd.Series(
+        [holdability_roic(r.get("roic"), r.get("roic_ttm"), r.get("roic_median_5y"))
+         for _, r in g.iterrows()],
+        index=g.index,
+    )
     hi = g[
-        g["quality_floor_pass"].fillna(False)
-        & g["residual"].notna() & (g["residual"] < 0)
-        & g["roic"].notna() & (g["roic"] >= 0.10)
-        & g["fcf_yield"].notna() & (g["fcf_yield"] >= bar)
+        (g["quality_score"] >= floor)
+        & g["residual"].notna() & (g["residual"] < max_resid)
+        & roic_h.notna() & (roic_h >= min_roic)
+        & g["ev_fcf"].notna() & (g["ev_fcf"] <= max_ev_fcf)
     ]
     return hi.sort_values("residual", ascending=True)
 
@@ -451,7 +481,8 @@ def _highlighted(metrics: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 CHIP_HELP = {
     "beaten": "Price has lagged the sector, but analyst actions still look constructive.",
     "⚠ margins": "Gross margin, FCF margin, or ROIC is below its 5-year average floor.",
-    "⚠ ROIC < 10%": "Five-year average ROIC is under 10% — thin absolute returns.",
+    "⚠ ROIC < 10%": "Holdability ROIC is under 10% — 5y average when present, else "
+                    "min(TTM, 5y median). Thin absolute returns.",
     "⚠ cycle": "Energy or Materials — earnings follow the commodity cycle.",
     "⚠ 5y FCF base": "The usual 5-year FCF year was unusable (often a COVID loss). "
                      "Growth was measured from a nearby year instead.",
@@ -467,8 +498,8 @@ def _row_tags(row) -> list:
         ("brake_gm", 0.97), ("brake_fcf_margin", 0.95), ("brake_roic", 0.90),
     ]):
         tags.append(("⚠ margins", "#b07d2b"))
-    roic = row.get("roic")
-    if pd.notna(roic) and float(roic) < 0.10:
+    roic = holdability_roic(row.get("roic"), row.get("roic_ttm"), row.get("roic_median_5y"))
+    if roic is not None and float(roic) < 0.10:
         tags.append(("⚠ ROIC < 10%", "#8ea0b5"))
     if str(row.get("sector") or "") in ("Energy", "Materials"):
         tags.append(("⚠ cycle", "#76b7b2"))
@@ -487,7 +518,12 @@ def _chips_html(tags: list) -> str:
     )
 
 
-# ------------------------------------------------------------- card graphics ---
+def _ev_hist_col(hist: pd.DataFrame, cash: str) -> str:
+    """Weekly EV/FCF series for charts. Owner mode uses the D&A-based multiple
+    when the scan shipped it; older artifacts fall back to reported FCF."""
+    if cash == "owner" and "ev_fcf_owner" in hist.columns:
+        return "ev_fcf_owner"
+    return "ev_fcf"
 def _spark_svg(values: list, w: int = 190, h: int = 42) -> str:
     """Tiny inline SVG line of a series with the last point marked. Lower line =
     cheaper, so green when the current point sits in the cheap half of its range."""
@@ -524,15 +560,16 @@ def _score_bar(label: str, value, color: str) -> str:
 
 
 def _name_cards(df: pd.DataFrame, hist: pd.DataFrame, ov_by_t: pd.DataFrame,
-                tags: dict, n: int = 8) -> None:
+                tags: dict, n: int = 8, cash: str = "reported") -> None:
     """Graphical cards for the zone names, most negative residual first: 5y EV/FCF
     sparkline (chart only — SELF never ranks), quality bar, and the cash figures."""
     cards = []
+    ev_col = _ev_hist_col(hist, cash)
     for _, r in df.head(n).iterrows():
         y: list = []
-        if not hist.empty and "ticker" in hist.columns:
-            g = hist[(hist["ticker"] == r["ticker"]) & hist["ev_fcf"].notna()].sort_values("week")
-            y = g["ev_fcf"].tail(260).tolist()
+        if not hist.empty and "ticker" in hist.columns and ev_col in hist.columns:
+            g = hist[(hist["ticker"] == r["ticker"]) & hist[ev_col].notna()].sort_values("week")
+            y = g[ev_col].tail(260).tolist()
         med = float(pd.Series(y).median()) if y else None
         price = r.get("price")
         price_s = f"${price:,.0f}" if pd.notna(price) else "—"
@@ -573,11 +610,11 @@ def _name_cards(df: pd.DataFrame, hist: pd.DataFrame, ov_by_t: pd.DataFrame,
 
 
 # ---------------------------------------------------------------- the charts ---
-def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str | None) -> None:
+def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str | None,
+              floor: float | None = None, max_resid: float = 0.0) -> None:
     """Quality (y) × residual (x, plotted as −residual so cheaper sits RIGHT): grey =
-    scored names with a residual, orange = the highlights (floor + residual < 0
-    + ROIC ≥ 10% + EV/FCF below the max(4%, 10Y) bar). The selected ticker is starred.
-    The selected ticker is starred."""
+    scored names with a residual, orange = the highlights under the ACTIVE cuts
+    (sidebar sliders, defaulting to the scan's rule). The selected ticker is starred."""
     pts = metrics[metrics["quality_score"].notna() & metrics["residual"].notna()].copy()
     pts["x"] = -pts["residual"]          # cheaper (more negative residual) -> right
     member = set(hi["ticker"]) if not hi.empty else set()
@@ -611,17 +648,18 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
             marker=dict(size=18, color=star_c, symbol="star",
                         line=dict(width=2, color="white")),
         ))
-    thr = cfg.get("quality_floor_threshold")
+    thr = floor if floor is not None else cfg.get("quality_floor_threshold")
     if not pts.empty:
         pad = (pts["x"].max() - pts["x"].min()) * 0.05 or 0.1
         x0, x1 = float(pts["x"].min() - pad), float(pts["x"].max() + pad)
         if thr is not None and pd.notna(thr):
             fig.add_hline(y=thr, line_dash="dot", line_color="#666",
                           annotation_text=f"quality floor — ≥{thr:.0f}")
-            # the zone: above the floor AND residual < 0 (x = −residual > 0)
-            fig.add_shape(type="rect", x0=0, x1=x1, y0=thr, y1=108,
+            # the zone under the active cuts: above the floor AND residual < max_resid
+            z0 = -max_resid
+            fig.add_shape(type="rect", x0=z0, x1=x1, y0=thr, y1=108,
                           fillcolor="rgba(228,87,46,0.07)", line_width=0)
-            fig.add_annotation(x=(0 + x1) / 2, y=107, text="the hunt zone", showarrow=False,
+            fig.add_annotation(x=(z0 + x1) / 2, y=107, text="the hunt zone", showarrow=False,
                                font=dict(color="#e4572e", size=11))
         fig.update_layout(xaxis_range=[x0, x1])
     fig.update_layout(
@@ -633,15 +671,16 @@ def _hunt_map(metrics: pd.DataFrame, hi: pd.DataFrame, cfg: dict, selected: str 
     )
     st.plotly_chart(fig, width="stretch")
     st.caption(
-        "Grey = scored names with a residual; the shaded region is residual < 0 above the "
-        "quality floor. Orange is the tighter highlights list: floor + residual < 0 + "
-        "ROIC ≥ 10% + EV/FCF under the max(4%, 10Y) bar — cash-cheap and viable, not just "
-        "under-priced vs peers. Those names continue below, most negative residual first."
+        "Grey = scored names with a residual; the shaded region is the hunt zone under the "
+        "ACTIVE cuts (floor + residual + ROIC + EV/FCF — adjust them in the sidebar). "
+        "Orange is the tighter highlights list: cash-cheap and viable, not just under-priced "
+        "vs peers. Those names continue below, most negative residual first."
     )
 
 
-def _detail_charts(h: pd.DataFrame, sel: str) -> None:
+def _detail_charts(h: pd.DataFrame, sel: str, cash: str = "reported") -> None:
     """The four history charts from the persisted weekly frame (no scanner changes)."""
+    ev_col = _ev_hist_col(h, cash)
     g1, g2 = st.columns(2)
     with g1:
         p = h["price"].dropna()
@@ -663,7 +702,7 @@ def _detail_charts(h: pd.DataFrame, sel: str) -> None:
         else:
             st.caption("No price history for this name.")
     with g2:
-        e = h["ev_fcf"].dropna()
+        e = h[ev_col].dropna() if ev_col in h.columns else pd.Series(dtype=float)
         if not e.empty:
             med = float(e.median())
             fig = go.Figure()
@@ -676,13 +715,19 @@ def _detail_charts(h: pd.DataFrame, sel: str) -> None:
             fig.add_trace(go.Scatter(x=[h.loc[e.index[-1], "week"]], y=[cur], mode="markers",
                                      showlegend=False, marker=dict(size=10, color="#e4572e", symbol="diamond"),
                                      hovertemplate=f"<b>{sel} now: {cur:.1f}x</b><extra></extra>"))
-            fig.update_layout(height=300, title="EV/FCF vs its own 5y history", yaxis_title="×")
+            title = "EV/FCF vs its own 5y history"
+            if cash == "owner":
+                title += " (owner earnings)"
+            fig.update_layout(height=300, title=title, yaxis_title="×")
             st.plotly_chart(fig, width="stretch")
         else:
             st.caption("No valid EV/FCF history for this name.")
-    if h["fcf_adj_ttm"].notna().any():
+    fcf_col = "fcf_owner_ttm" if cash == "owner" and "fcf_owner_ttm" in h.columns else "fcf_adj_ttm"
+    fcf_name = ("Owner FCF (CFO − D&A − SBC, TTM)" if fcf_col == "fcf_owner_ttm"
+                else "FCF (adj, TTM)")
+    if fcf_col in h.columns and h[fcf_col].notna().any():
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=h["week"], y=h["fcf_adj_ttm"] / 1e9, name="FCF (adj, TTM)"))
+        fig.add_trace(go.Scatter(x=h["week"], y=h[fcf_col] / 1e9, name=fcf_name))
         fig.add_trace(go.Scatter(x=h["week"], y=h["ni_ttm"] / 1e9, name="Net income (TTM)"))
         fig.update_layout(height=300, title="Cash vs earnings (as-known TTM)", yaxis_title="$B")
         st.plotly_chart(fig, width="stretch")
@@ -714,7 +759,7 @@ def _margin_snapshot(row) -> None:
 
 
 def _company_detail(sel: str, row, hist: pd.DataFrame, overlay: pd.DataFrame,
-                    ov_by_t: pd.DataFrame, tags: dict, gs10) -> None:
+                    ov_by_t: pd.DataFrame, tags: dict, gs10, cash: str = "reported") -> None:
     h = (hist[(hist["ticker"] == sel)].sort_values("week")
          if not hist.empty and "ticker" in hist.columns else pd.DataFrame())
     ov_row = ov_by_t.loc[sel] if (not ov_by_t.empty and sel in ov_by_t.index) else None
@@ -775,7 +820,7 @@ def _company_detail(sel: str, row, hist: pd.DataFrame, overlay: pd.DataFrame,
             st.caption("No scan overlay row for strike-FCF yields (top quality-floor names only).")
 
         if not h.empty:
-            _detail_charts(h, sel)
+            _detail_charts(h, sel, cash)
         else:
             st.info("No weekly history for this name in this scan.")
         st.markdown("**Margins — still intact?**")
@@ -795,10 +840,6 @@ def ideas_page():
     refreshed_at = dt.datetime.fromtimestamp(cfg_path.stat().st_mtime)
     metrics, cfg, hist, overlay = load_scan(scan_dir, cfg_path.stat().st_mtime)
 
-    hi = _highlighted(metrics, cfg)
-    tags = {r["ticker"]: _row_tags(r) for _, r in metrics.iterrows()}
-    ov_by_t = overlay.set_index("ticker") if not overlay.empty else pd.DataFrame()
-
     st.title("Ideas")
     sub = cfg.get("subset") or {}
     if sub.get("tickers"):
@@ -812,6 +853,50 @@ def ideas_page():
         f"{sub_txt} · caches and refresh live on the Data manager page"
     )
 
+    owner_ok = SC.owner_cash_available(metrics)
+    cash_labels = {
+        "reported": "Reported FCF (CFO − capex − SBC)",
+        "owner": "Owner earnings (CFO − D&A − SBC)",
+    }
+    cash = st.radio(
+        "Cash used for the FCF-CAGR gate, QualityScore FCF sleeves, residual, and the yield bar",
+        options=["reported", "owner"],
+        format_func=lambda k: cash_labels[k],
+        index=0,
+        horizontal=True,
+        disabled=not owner_ok,
+        key="cash_definition",
+        help="Default is reported FCF. Owner earnings uses D&A as a maintenance-capex "
+             "proxy so growth buildouts do not zero the operating cash engine. Overlay "
+             "strike yields stay on reported FCF. One series at a time — never a blend.",
+    )
+    if not owner_ok:
+        st.caption("This scan predates owner-earnings columns — run a fresh scan to enable the setting.")
+        cash = "reported"
+    if cash == "owner":
+        metrics = SC.apply_cash_definition(metrics, "owner")
+        metrics = FL.apply_flags(metrics, cfg.get("gs10"))
+
+    # session-only hunt-zone cuts (defaults = the scan's saved rule)
+    with st.sidebar:
+        with st.expander("⚙️ Hunt-zone thresholds", expanded=False):
+            d_floor = float(cfg.get("quality_floor_threshold") or 60.0)
+            d_mult = round(1.0 / max(0.04, cfg.get("gs10") or 0.04), 1)
+            z_floor = st.slider("Quality floor (score ≥)", 30.0, 90.0, d_floor, 1.0)
+            z_resid = st.slider("Max residual", -1.5, 0.5, 0.0, 0.05,
+                                help="0 = must be cheaper than its quality implies. "
+                                     "Raise it to admit near-fair names.")
+            z_roic = st.slider("Min holdability ROIC", 0, 30, 10, 1, format="%d%%")
+            z_ev = st.slider("Max EV/FCF (years to pay back)", 5.0, 40.0, d_mult, 0.5)
+            st.caption(f"Scan defaults: floor ≥ {d_floor:.0f} · residual < 0 · ROIC ≥ 10% · "
+                       f"EV/FCF ≤ {d_mult:.1f}× (the 4%/10Y cash bar). Session-only — the "
+                       "saved scan, gates and metrics are unchanged.")
+
+    hi = _highlighted(metrics, cfg, floor=z_floor, max_resid=z_resid,
+                      min_roic=z_roic / 100.0, max_ev_fcf=z_ev)
+    tags = {r["ticker"]: _row_tags(r) for _, r in metrics.iterrows()}
+    ov_by_t = overlay.set_index("ticker") if not overlay.empty else pd.DataFrame()
+
     floor_n = int(_gated(metrics)["quality_floor_pass"].fillna(False).sum())
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Data as of", cfg.get("asof", scan_dir.name))
@@ -820,7 +905,18 @@ def ideas_page():
     c4.metric("Names in the highlights", len(hi), f"of {floor_n} above the quality floor")
 
     # 1 — the map
-    _hunt_map(metrics, hi, cfg, st.session_state.get("idea_pick"))
+    pick_now = st.session_state.get("idea_pick")
+    _hunt_map(metrics, hi, cfg, pick_now, floor=z_floor, max_resid=z_resid)
+    if pick_now:
+        pr = metrics[metrics["ticker"] == pick_now]
+        if not pr.empty and (pd.isna(pr.iloc[0].get("quality_score"))
+                             or pd.isna(pr.iloc[0].get("residual"))):
+            reasons = pr.iloc[0].get("gate_fail_reasons")
+            st.info(
+                f"**{pick_now}** has no position on the map — it is unscored in this scan"
+                + (f" ({reasons})" if reasons is not None and str(reasons) not in ("[]", "nan") else "")
+                + ". The detail below shows whatever the scanner could still assemble."
+            )
 
     if hi.empty:
         st.info(
@@ -841,7 +937,7 @@ def ideas_page():
         "`⚠ 5y FCF base` = the 5-year FCF year was unusable (COVID/negative); "
         "CAGR used a nearby year."
     )
-    _name_cards(hi, hist, ov_by_t, tags, n=8)
+    _name_cards(hi, hist, ov_by_t, tags, n=8, cash=cash)
 
     table = hi.reset_index(drop=True)
     show = table[["ticker", "name", "sector", "price", "quality_score",
@@ -867,22 +963,28 @@ def ideas_page():
     except Exception:
         picked = None
     tickers = table["ticker"].tolist()
-    # the inspector reaches beyond the highlights: every scored name is selectable
-    # (highlights first in residual order, then the rest alphabetically)
-    others = sorted(set(metrics.loc[metrics["quality_score"].notna(), "ticker"]) - set(tickers))
+    # the inspector reaches beyond the highlights: every scored name, then the
+    # unscored ones (marked), so names like ORCL can still be inspected
+    scored_all = sorted(set(metrics.loc[metrics["quality_score"].notna(), "ticker"]) - set(tickers))
+    unscored = sorted(set(metrics["ticker"]) - set(tickers) - set(scored_all))
+    options = tickers + scored_all + unscored
+    unscored_set = set(unscored)
     if picked in tickers:
         st.session_state["idea_pick"] = picked
-    if st.session_state.get("idea_pick") not in tickers + others:
+    if st.session_state.get("idea_pick") not in options:
         st.session_state["idea_pick"] = tickers[0]
-    sel = st.selectbox("Inspect a company — highlights first, then every scored name",
-                       tickers + others, key="idea_pick")
+    sel = st.selectbox(
+        "Inspect a company — highlights first, then every scored name (unscored marked)",
+        options, key="idea_pick",
+        format_func=lambda t: f"{t} · unscored" if t in unscored_set else t,
+    )
 
     # 3 — the detail, under everything, only once a name is picked
     row = metrics[metrics["ticker"] == sel].iloc[0]
     st.divider()
     st.subheader(f"{sel} — {row.get('name') or ''}")
     _company_detail(sel, metrics[metrics["ticker"] == sel].iloc[0], hist, overlay, ov_by_t,
-                    tags, cfg.get("gs10"))
+                    tags, cfg.get("gs10"), cash=cash)
 
 
 # --------------------------------------------------------- data manager page --
