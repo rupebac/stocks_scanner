@@ -11,3 +11,4 @@ data/*
 # secrets & runtime
 .env
 data/logs/
+dashboard/components/autocomplete/data.js

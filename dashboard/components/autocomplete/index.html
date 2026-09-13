@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  html { color-scheme: dark; }
+  body { margin: 0; background: transparent; font-family: "Source Sans Pro", sans-serif; }
+  .wrap { position: relative; }
+  input {
+    width: 100%; box-sizing: border-box; padding: 9px 12px;
+    border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.35);
+    background: rgba(127, 143, 165, 0.12); color: #fafafa;
+    font-size: 14.5px; outline: none;
+  }
+  input:focus { border-color: #e4572e; }
+  input::placeholder { color: rgba(250, 250, 250, 0.45); }
+  #list {
+    position: absolute; top: 40px; left: 0; right: 0; z-index: 5;
+    background: #161b26; border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  .item { padding: 7px 12px; font-size: 13.5px; color: #e8e8e8; cursor: pointer;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item small { color: rgba(232, 232, 232, 0.55); margin-left: 6px; }
+  .item.act { background: rgba(228, 87, 46, 0.30); color: #ffffff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <input id="q" autocomplete="off" spellcheck="false"/>
+  <div id="list"></div>
+</div>
+<!-- written by dashboard/app.py each session: window.AC_OPTIONS / AC_PLACEHOLDER -->
+<script src="data.js"></script>
+<script>
+  const send = (type, data) => window.parent.postMessage(
+    Object.assign({ isStreamlitMessage: true, type: type }, data), "*");
+  const setH = (h) => send("streamlit:setFrameHeight", { height: h });
+  const setValue = (v) => send("streamlit:setComponentValue", { value: v, dataType: "json" });
+  send("streamlit:componentReady", { apiVersion: 1 });
+  // if the host streams render events, prefer the fresh args from Python
+  window.addEventListener("message", (e) => {
+    const d = e.data;
+    if (!d || !d.isStreamlitMessage || d.type !== "streamlit:render") return;
+    if (d.args && d.args.options) {
+      window.AC_OPTIONS = d.args.options;
+      document.getElementById("q").placeholder = d.args.placeholder || window.AC_PLACEHOLDER || "Search…";
+      filter();
+    }
+  });
+
+  const OPTS = () => window.AC_OPTIONS || [];
+  const norm = (s) => (s || "").toString().toUpperCase();
+  let hits = [], active = -1, lastSent = null;
+
+  function filter() {
+    const q = norm(document.getElementById("q").value.trim());
+    hits = [];
+    if (q) {
+      const pfx = [], sub = [];
+      for (const o of OPTS()) {
+        const t = norm(o.t), l = norm(o.label);
+        if (t.startsWith(q) || l.startsWith(q)) pfx.push(o);
+        else if (t.includes(q) || l.includes(q)) sub.push(o);
+      }
+      hits = pfx.concat(sub).slice(0, 8);
+    }
+    active = hits.length ? 0 : -1;
+    render();
+  }
+
+  function render() {
+    const L = document.getElementById("list");
+    L.innerHTML = "";
+    hits.forEach((o, i) => {
+      const d = document.createElement("div");
+      d.className = "item" + (i === active ? " act" : "");
+      const b = document.createElement("b"); b.textContent = o.t;
+      const s = document.createElement("small"); s.textContent = o.label;
+      d.appendChild(b); d.appendChild(s);
+      d.onclick = () => choose(o);
+      d.onmousemove = () => { if (active !== i) { active = i; render(); } };
+      L.appendChild(d);
+    });
+    setH(44 + (hits.length ? 4 + hits.length * 33 : 0));
+  }
+
+  function choose(o) {
+    document.getElementById("q").value = o.t;
+    hits = []; active = -1;
+    render();
+    document.getElementById("q").blur();
+    if (lastSent !== o.t) { lastSent = o.t; setValue(o.t); }
+  }
+
+  const qEl = document.getElementById("q");
+  qEl.placeholder = window.AC_PLACEHOLDER || "Type a ticker or name…";
+  qEl.addEventListener("input", filter);
+  qEl.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { active = Math.min(active + 1, hits.length - 1); render(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === "Enter") { if (hits[active]) choose(hits[active]); e.preventDefault(); }
+    else if (e.key === "Escape") { hits = []; active = -1; render(); }
+  });
+</script>
+</body>
+</html>
