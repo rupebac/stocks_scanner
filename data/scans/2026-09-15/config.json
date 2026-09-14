@@ -1,0 +1,94 @@
+{
+  "asof": "2026-09-15",
+  "spec": "v0.5 (search frozen v0.4)",
+  "financial_version": "2026-09-14.2",
+  "universe": "sp500",
+  "maturity_basis": "index tenure >=1y",
+  "subset": {
+    "limit": null,
+    "tickers": null
+  },
+  "gs10": 0.0495,
+  "universe_version": "2026-09-14",
+  "quality_floor_threshold": 60.0,
+  "residual_fit": {
+    "n": 219,
+    "slope_log_roic": 0.0035810366142082183,
+    "dummies": {
+      "ig:Commercial and Professional Services": -0.09988857311812219,
+      "ig:Consumer Services": -0.09659092825737978,
+      "ig:Energy": -0.30968164503174705,
+      "ig:Food Beverage and Tobacco": -0.27011789408284576,
+      "ig:Health Care Equipment and Services": -0.050696429719653546,
+      "ig:Materials": 0.06662647545029554,
+      "ig:Media and Entertainment": 0.27864896413885154,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.21221733563239403,
+      "ig:Semiconductors and Semiconductor Equipment": 0.6277937692029985,
+      "ig:Software and Services": 0.25429050120984314,
+      "ig:Technology Hardware and Equipment": 0.2376512316692566,
+      "ig:Transportation": 0.024851925560646283,
+      "sector:Communication Services": -0.4765002526942021,
+      "sector:Consumer Discretionary": 0.071541455502034,
+      "sector:Consumer Staples": 0.003130215349765423
+    },
+    "groups": {
+      "ig:Capital Goods": 35,
+      "ig:Health Care Equipment and Services": 26,
+      "ig:Technology Hardware and Equipment": 20,
+      "ig:Software and Services": 18,
+      "ig:Semiconductors and Semiconductor Equipment": 14,
+      "sector:Consumer Discretionary": 14,
+      "sector:Consumer Staples": 12,
+      "ig:Food Beverage and Tobacco": 11,
+      "ig:Transportation": 11,
+      "ig:Materials": 11,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 10,
+      "ig:Commercial and Professional Services": 10,
+      "ig:Energy": 9,
+      "ig:Media and Entertainment": 8,
+      "ig:Consumer Services": 8,
+      "sector:Communication Services": 2
+    }
+  },
+  "presets": {
+    "flagship": {
+      "flag": "derated_quality",
+      "rank": "residual asc",
+      "requires": "gates_pass & coverage>=0.8"
+    },
+    "beaten_but_delivering": {
+      "flag": "beaten_but_delivering",
+      "rank": "cheapness_score desc",
+      "requires": "gates_pass & coverage>=0.8"
+    },
+    "compounders_on_sale": {
+      "rules": "stability>=80 & ev_fcf_self_pct<=30 & quality_floor & brakes 0.97/0.95/0.90 & (fcf_yield>=max(4%,gs10) | residual_pct<=20)",
+      "rank": "cheapness_score desc"
+    }
+  },
+  "thresholds": {
+    "GATE_ADV_USD": 20000000,
+    "GATE_MKTCAP_USD": 10000000000,
+    "GATE_REV_CAGR5_MIN": 0.0,
+    "GATE_FCF_CAGR5_MIN": -0.05,
+    "MIN_INDEX_TENURE_YEARS": 1.0,
+    "MIN_SCORE_INPUT_COVERAGE": 0.8,
+    "QUALITY_FLOOR_MIN": 60.0,
+    "QUALITY_FLOOR_ROIC_MIN": 0.1,
+    "QUALITY_FLOOR_ROIC_MAX": 1.0,
+    "QUALITY_STABILITY_WEIGHTS": {
+      "revenue": 0.5,
+      "gm": 0.25,
+      "fcf": 0.25
+    },
+    "FLAG_SELF_PCT": 20,
+    "FLAG_SELF_Z": -1.0,
+    "FLAG_MEDIAN_RATIO": 0.8,
+    "FLAG_YIELD_FLOOR": 0.04,
+    "FLAG_RESIDUAL_PCT": 20,
+    "FLAG_BRAKE_GM": 0.97,
+    "FLAG_BRAKE_FCF_MARGIN": 0.95,
+    "FLAG_BRAKE_ROIC": 0.9
+  },
+  "config_hash": "5939bd68cd8c"
+}
