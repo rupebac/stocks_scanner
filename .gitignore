@@ -7,8 +7,11 @@ __pycache__/
 # data caches & scan artifacts (regenerable; the GICS map below IS source)
 data/*
 !data/reference/
+!data/scans/
 
 # secrets & runtime
 .env
 data/logs/
 dashboard/components/autocomplete/data.js
+# Served locally from the installed Plotly package at runtime
+dashboard/components/hunt_map/plotly.min.js

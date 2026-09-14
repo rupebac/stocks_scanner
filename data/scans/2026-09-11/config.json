@@ -1,0 +1,111 @@
+{
+  "asof": "2026-09-11",
+  "spec": "v0.5 (search frozen v0.4)",
+  "subset": {
+    "limit": null,
+    "tickers": [
+      "MMM",
+      "APD",
+      "MO",
+      "AAPL",
+      "ADP",
+      "BBY",
+      "BR",
+      "CARR",
+      "CRL",
+      "CSCO",
+      "COP",
+      "CRWD",
+      "DECK",
+      "DLTR",
+      "EBAY",
+      "EQT",
+      "FICO",
+      "FTNT",
+      "GEHC",
+      "GILD",
+      "HLT",
+      "HUM",
+      "PODD",
+      "JBL",
+      "KMI",
+      "LDOS",
+      "LULU",
+      "MKC",
+      "MCHP",
+      "MOS",
+      "NDSN",
+      "ORLY",
+      "PCAR",
+      "PEP",
+      "PWR",
+      "RSG",
+      "CRM",
+      "SW",
+      "SYK",
+      "TGT",
+      "TMO",
+      "TYL",
+      "UNH",
+      "VRTX",
+      "WBD",
+      "WYNN",
+      "ADBE",
+      "ORCL",
+      "MSFT",
+      "NVDA",
+      "QCOM",
+      "INTC"
+    ]
+  },
+  "gs10": 0.0483,
+  "universe_version": "2026-09-11",
+  "quality_floor_threshold": 69.2136321195145,
+  "residual_fit": {
+    "n": 32,
+    "slope_log_roic": 0.009777485225024946,
+    "dummies": {
+      "sector:Health Care": 0.40911227415963725,
+      "sector:Information Technology": 0.37995238104481893
+    },
+    "groups": {
+      "market:MARKET": 14,
+      "sector:Information Technology": 10,
+      "sector:Health Care": 8
+    }
+  },
+  "presets": {
+    "flagship": {
+      "flag": "derated_quality",
+      "rank": "residual asc",
+      "requires": "gates_pass & coverage>=0.8"
+    },
+    "beaten_but_delivering": {
+      "flag": "beaten_but_delivering",
+      "rank": "cheapness_score desc",
+      "requires": "gates_pass & coverage>=0.8"
+    },
+    "compounders_on_sale": {
+      "rules": "consistency>=80 & ev_fcf_self_pct<=30 & quality_floor & brakes 0.97/0.95/0.90 & (fcf_yield>=max(4%,gs10) | residual_pct<=20)",
+      "rank": "cheapness_score desc"
+    }
+  },
+  "thresholds": {
+    "GATE_ADV_USD": 20000000,
+    "GATE_MKTCAP_USD": 10000000000,
+    "GATE_REV_CAGR5_MIN": 0.0,
+    "GATE_FCF_CAGR5_MIN": -0.05,
+    "MIN_INDEX_TENURE_YEARS": 1.0,
+    "MIN_SCORE_INPUT_COVERAGE": 0.8,
+    "QUALITY_FLOOR_QUANTILE": 0.8,
+    "FLAG_SELF_PCT": 20,
+    "FLAG_SELF_Z": -1.0,
+    "FLAG_MEDIAN_RATIO": 0.8,
+    "FLAG_YIELD_FLOOR": 0.04,
+    "FLAG_RESIDUAL_PCT": 20,
+    "FLAG_BRAKE_GM": 0.97,
+    "FLAG_BRAKE_FCF_MARGIN": 0.95,
+    "FLAG_BRAKE_ROIC": 0.9
+  },
+  "config_hash": "0905d0b7ddb3"
+}

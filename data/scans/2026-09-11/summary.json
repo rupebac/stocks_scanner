@@ -1,0 +1,20 @@
+{
+  "asof": "2026-09-11",
+  "gs10": 0.0483,
+  "universe_rows": 52,
+  "scored": 38,
+  "floor_threshold": 69.2136321195145,
+  "floor_pass": 8,
+  "flag_derated_quality": 1,
+  "flag_beaten": 0,
+  "flagship": [
+    {
+      "ticker": "ADBE",
+      "residual": -1.0264627264211237,
+      "fcf_yield": 0.08351347849756927,
+      "ev_fcf_self_pct": 7.307692307692308
+    }
+  ],
+  "unmapped_subindustries": 0,
+  "scan_dir": "/home/rperez/ZCodeProject/stocks_scanner/data/scans/2026-09-11"
+}

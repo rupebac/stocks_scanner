@@ -1,0 +1,63 @@
+> **Note**
+> This workflow self-hosts nothing — it runs the scanner on GitHub's free
+> runner minutes (unlimited for public repos), commits the day's scan
+> artifacts, and Streamlit Community Cloud redeploys on the push.
+
+name: nightly-scan
+
+on:
+  workflow_dispatch: {}        # manual "Run workflow" button for testing
+  schedule:
+    # 23:30 UTC Tue–Sat = after the Mon–Fri US close and FRED's daily DGS10
+    # post; the scan is stamped with the session it covers.
+    - cron: "30 23 * * 2-6"
+
+permissions:
+  contents: write              # the job commits data/scans back to main
+
+concurrency:
+  group: nightly-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SCANNER_UA: ${{ vars.SCANNER_UA }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run the scan (cold caches; ~20–40 min)
+        run: python -m scanner.scan --no-fmp
+
+      - name: Keep only the last 5 scans
+        run: |
+          cd data/scans
+          ls -1 | sort | head -n -5 | while read -r d; do
+            echo "pruning old scan $d"
+            git rm -r --quiet --ignore-unmatch "$d"
+            rm -rf "$d"
+          done
+
+      - name: Commit today's artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/scans
+          if git diff --cached --quiet; then
+            echo "no scan changes to commit"
+            exit 0
+          fi
+          git commit -m "scan artifacts: $(ls data/scans | sort | tail -1) [skip ci]"
+          git push
