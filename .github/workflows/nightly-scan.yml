@@ -36,6 +36,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: SEC reachability probe
+        run: |
+          curl -sS -o /dev/null -w "data.sec.gov companyfacts -> HTTP %{http_code}\n" \
+            -H "User-Agent: $SCANNER_UA" \
+            "https://data.sec.gov/api/xbrl/companyfacts/CIK0001467373.json" || true
+
       - name: Run the scan (cold caches; ~20–40 min)
         run: python -m scanner.scan
 
