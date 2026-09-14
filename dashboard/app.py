@@ -319,6 +319,8 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
     ann_vs = stats.get("ann_vs_rate")
     ipr = stats.get("income_per_risk")
     cushion = stats.get("cushion_pct")
+    odds = stats.get("assignment_risk")
+    odds_low = odds is not None and odds < 0.01   # delta under 1%: ratio is noise
     k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric(
         "Paid", _fmt(cash, "{:.2%}"),
@@ -326,12 +328,14 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
              "2.9% means $2.90 per $100 locked up. Compare this across stocks at the "
              "same expiry — a thin number means the put barely pays you to wait.")
     k2.metric(
-        "Paid / odds", _fmt(ipr, "{:.2f}"),
+        "Paid / odds", "—" if odds_low else _fmt(ipr, "{:.2f}"),
         help="Odds = the number next to this one ('Odds you own it') — that's the "
              "put's delta, used as the chance you'll be assigned. Paid / odds is "
              "how much you collect per unit of that chance. Same 3% credit is more "
              "attractive when assignment is unlikely (small delta) than when it's a "
-             "coin-flip. Delta is a model guess, not a forecast.")
+             "coin-flip. Delta is a model guess, not a forecast. Shown as '—' when "
+             "the odds are under 1%: dividing by an odds that tiny (usually a bad "
+             "vol print on the chain) turns the ratio into meaningless millions.")
     k3.metric(
         "Price to breakeven",
         _fmt(cushion, "{:.1%}"),
@@ -343,10 +347,12 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
               "How far today's share price is from this call's breakeven (strike plus "
               "premium), as a percent. The dollar figure is 'Breakeven'."))
     k4.metric(
-        "Odds you own it", _fmt(stats.get("assignment_risk"), "{:.0%}"),
+        "Odds you own it", "< 1%" if odds_low else _fmt(odds, "{:.0%}"),
         help="The put's delta, read as a percent: roughly the chance this put finishes "
              "in the money and you have to buy the shares. That's the 'odds' in "
-             "Paid / odds. A model guess from listed implied vol — not a forecast.")
+             "Paid / odds. A model guess from listed implied vol — not a forecast. "
+             "Shown as '< 1%' below 1%, because rounding a sub-1% chance to '0%' "
+             "would read as literally impossible.")
     k5.metric(
         "Breakeven", _fmt(stats.get("breakeven"), "{:.2f}"),
         help="The share price where this put breaks even if you're assigned: strike "

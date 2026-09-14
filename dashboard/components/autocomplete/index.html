@@ -68,10 +68,11 @@
 
   const OPTS = () => window.AC_OPTIONS || [];
   const norm = (s) => (s || "").toString().toUpperCase();
-  let hits = [], active = -1, lastSent = null;
+  let hits = [], active = -1, lastSent = null, collapsed = false;
   const IN_H = 44, ROW_H = 31, PAD = 6;
 
   function filter() {
+    collapsed = false;   // any keystroke reopens the list
     const q = norm(document.getElementById("q").value.trim());
     hits = [];
     if (q) {
@@ -91,6 +92,7 @@
   function render() {
     const L = document.getElementById("list");
     L.innerHTML = "";
+    if (collapsed) { setH(IN_H); return; }
     if (!hits.length) {
       if (norm(document.getElementById("q").value.trim())) {
         const n = document.createElement("div");
@@ -118,9 +120,8 @@
 
   function choose(o) {
     document.getElementById("q").value = o.t;
-    // keep the picked row visible+highlighted (the iframe persists across
-    // reruns, so this stays as the post-pick state until the next query)
-    hits = [o]; active = 0;
+    // hide the list on pick: show only the input with the chosen ticker
+    hits = []; active = -1; collapsed = true;
     render();
     document.getElementById("q").blur();
     if (lastSent !== o.t) { lastSent = o.t; setValue(o.t); }
@@ -133,7 +134,7 @@
     if (e.key === "ArrowDown") { active = Math.min(active + 1, hits.length - 1); render(); e.preventDefault(); }
     else if (e.key === "ArrowUp") { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
     else if (e.key === "Enter") { if (hits[active]) choose(hits[active]); e.preventDefault(); }
-    else if (e.key === "Escape") { qEl.value = ""; filter(); qEl.blur(); }
+    else if (e.key === "Escape") { qEl.value = ""; collapsed = true; render(); qEl.blur(); }
   });
   filter();
 </script>
