@@ -37,7 +37,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run the scan (cold caches; ~20–40 min)
-        run: python -m scanner.scan --no-fmp
+        run: python -m scanner.scan
 
       - name: Keep only the last 5 scans
         run: |

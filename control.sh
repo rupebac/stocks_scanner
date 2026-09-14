@@ -53,7 +53,7 @@ do_start() {
   fi
   if [ -z "$(ls -A data/scans 2>/dev/null)" ]; then
     echo "[control] no scans on disk — running the first full scan (one-time, ~20-40 min)..."
-    "$PY" -m scanner.scan --no-fmp
+    "$PY" -m scanner.scan
   fi
 
   mkdir -p data/logs
