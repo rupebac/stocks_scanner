@@ -563,3 +563,90 @@ def contract_analytics(side: str, spot: float, strike: float, premium: float | N
         if rate and float(rate) > 0:
             out["ann_vs_rate"] = ann / float(rate)
     return out
+
+
+# --- wheel decision block (Ideas → Options, selected contract) -----------------
+# Plain-English numbers for the selected put. Display-only: these never rank,
+# filter, or change highlight membership. Yield math mirrors the overlay strike
+# yields (doc 06 §7): fcf_adj / (strike × shares + stack).
+
+def _num(v):
+    """None-safe float: accepts numpy scalars, rejects NaN/inf/None/pd.NA."""
+    if v is None or isinstance(v, bool):
+        return None
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    return v if not (math.isnan(v) or math.isinf(v)) else None
+
+
+def net_basis(strike, premium) -> float | None:
+    """Cost per share if assigned: strike minus the premium you keep."""
+    k, p = _num(strike), _num(premium)
+    if k is None or p is None:
+        return None
+    return k - p
+
+
+def cash_locked(strike, contracts: int = 1) -> float | None:
+    """Cash set aside for one (or N) cash-secured contract: strike × 100."""
+    k = _num(strike)
+    return None if k is None else k * 100 * int(contracts)
+
+
+def fcf_yield_at_strike(fcf, shares, stack, strike) -> float | None:
+    """TTM reported FCF over the whole-business value at that share price."""
+    f, s, d, k = _num(fcf), _num(shares), _num(stack), _num(strike)
+    if None in (f, s, d, k) or s <= 0:
+        return None
+    ev_strike = k * s + d
+    return f / ev_strike if ev_strike > 0 else None
+
+
+def own_verdict(fcf_yield, gs10: float = 0.0) -> str | None:
+    """One-word answer vs the cash bar: max(4%, 10Y)."""
+    y = _num(fcf_yield)
+    if y is None:
+        return None
+    return "good to own" if y >= max(0.04, float(gs10 or 0.0)) else "thin"
+
+
+def wait_return(premium, strike, dte: int,
+                earnings_in_window: bool = False) -> dict:
+    """Premium over cash locked, with the annualize-or-not rule: yearly only
+    at ≥21 DTE and only when earnings are not 0–5 days out."""
+    p, k = _num(premium), _num(strike)
+    pct = p / k if (p is not None and k is not None and k > 0) else None
+    ann = None
+    note = None
+    if pct is not None:
+        if earnings_in_window:
+            note = "earnings in window — do not yearly"
+        elif int(dte) >= 21:
+            ann = pct * 365.0 / int(dte)
+        else:
+            note = "too short to yearly"
+    return {"pct": pct, "annualized": ann, "note": note}
+
+
+def same_strike_call(calls, strike):
+    """Exact-strike call row from a chain frame, or None. No fuzzy matching:
+    the companion line quotes THIS strike or admits there is none."""
+    if calls is None or getattr(calls, "empty", True):
+        return None
+    k = _num(strike)
+    if k is None:
+        return None
+    hit = calls[pd.to_numeric(calls["strike"], errors="coerce") == k]
+    return None if hit.empty else hit.iloc[0]
+
+
+def call_upside(strike, call_premium, basis) -> float | None:
+    """Total gain vs your cost if the shares get called away at the strike:
+    (strike + call premium) − basis — the two premiums; no price gain above
+    the strike when you sell the same strike."""
+    k, c, b = _num(strike), _num(call_premium), _num(basis)
+    if None in (k, c, b):
+        return None
+    return (k + c) - b
