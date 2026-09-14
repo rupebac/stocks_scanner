@@ -345,41 +345,41 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
 
     strike_f = float(crow["strike"])
     if side == "Puts":
-        # ---- the decision block: own / cost / wait / next step, plain English ----
-        basis = MD.net_basis(strike_f, prem)
-        prem_s = f"{prem:,.2f}" if prem is not None and pd.notna(prem) else "—"
-        basis_s = f"{basis:,.2f}" if basis is not None else "—"
+        # ---- the decision block: margin / breakeven / wait / next step ------------
+        basis = MD.breakeven_price(strike_f, prem)
+        margin = MD.margin_needed(strike_f)
         st.markdown(
-            f"If they put it to you, you own **{sel} at \\${strike_f:,.0f}**. "
-            f"You kept **\\${prem_s}** per share. "
-            f"Your cost is **\\${basis_s}**."
+            f"Sell this put: **margin needed \\${margin:,.0f}**. If assigned, "
+            f"**breakeven \\${_fmt(basis, '{:,.2f}')}** — that is your cost for the shares."
         )
         w1, w2, w3, w4 = st.columns(4)
         w1.metric(
-            "You own it at", _fmt(basis, "${:.2f}"),
-            delta="strike − premium kept" + (" · weak quote" if weak else ""),
+            "Breakeven", _fmt(basis, "${:,.2f}"),
+            delta="If assigned, this is your cost" + (" · weak quote" if weak else ""),
             delta_color="off",
-            help="What assignment would cost you per share: the strike minus the "
-                 "premium you keep. 'Weak quote' means there was no real bid, so the "
+            help="Strike minus the premium you keep — your cost per share if the put "
+                 "is assigned. 'Weak quote' means there was no real bid, so the "
                  "premium you'd actually collect may be smaller than shown.")
         w2.metric(
-            "Cash you lock", _fmt(MD.cash_locked(strike_f), "${:,.0f}"),
-            delta="one contract", delta_color="off",
-            help="Cash set aside to secure one contract: strike × 100 shares. "
-                 "This is the money earning the premium while it waits.")
-        yld = MD.fcf_yield_at_strike(
+            "Margin needed", _fmt(margin, "${:,.0f}"),
+            delta="1 contract, cash-secured", delta_color="off",
+            help="Full cash to secure one contract: strike × 100 shares. Not Reg-T "
+                 "or portfolio margin — this is the cash you set aside, and it is "
+                 "what the premium is paid on.")
+        yld = MD.fcf_yield_at_price(
             None if mrow is None else mrow.get("fcf_adj_ttm"),
             None if mrow is None else mrow.get("shares_cover"),
             None if mrow is None else mrow.get("stack"),
-            strike_f,
+            basis,
         )
         verdict = MD.own_verdict(yld, rate)
         w3.metric(
             "Yield if you own it there", _fmt(yld, "{:.1%}"),
             delta=verdict or "no FCF data", delta_color="off",
             help="TTM reported free cash flow ÷ what the whole business would cost you "
-                 "at the strike (strike × shares + net debt) — the same math as the "
-                 "−5%/−10% assignment test on the Financials tab, at the live strike. "
+                 "at your breakeven price (breakeven × shares + net debt) — the same "
+                 "math as the −5%/−10% assignment test on the Financials tab, priced "
+                 "at your actual cost, premium deducted. "
                  f"'good to own' = clears max(4%, 10Y) = {max(0.04, rate):.1%} today; "
                  "'thin' = below it. Reported FCF only — never blended.")
         wr = MD.wait_return(prem, strike_f, dte, in_event_window)
@@ -399,21 +399,25 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
                            MD._n(crow_call.get("last")))
             cprem, _, cweak = MD._premium_from_quotes(cb, ca_, cl)
             if cprem is not None and cprem > 0:
-                upside = MD.call_upside(strike_f, cprem, basis)
                 exp_bit = "" if call_exp == expiry else (
                     f" (next listed: {dt.date.fromisoformat(call_exp):%b %d}"
                     f", {dte_of[call_exp]}d)")
+                if basis is not None:
+                    keep = MD.called_away_keep(strike_f, basis, cprem)
+                    keep_bit = (f". Called away you'd keep "
+                                f"**\\${strike_f - basis:,.2f}** (strike − breakeven) "
+                                f"plus that **\\${cprem:,.2f}** — **\\${keep:,.2f}** in all")
+                else:
+                    keep_bit = ""
                 st.markdown(
                     f"If you get the shares, you could sell the **\\${strike_f:,.0f} call** "
-                    f"for **\\${cprem:,.2f}** a share (\\${cprem * 100:,.0f} a contract to "
-                    f"wait){exp_bit}. Upside left vs your cost: "
-                    f"**\\${_fmt(upside, '${:,.2f}').lstrip('$')}** — the two premiums; "
-                    "the shares themselves get called away at the strike."
+                    f"for **\\${cprem:,.2f}**{exp_bit}{keep_bit}. "
+                    "If you skip the call, just hold."
                     + (" · call quote is weak" if cweak else "")
                 )
             else:
                 st.markdown(
-                    f"The **${strike_f:,.0f} call** is listed but dead (no real quotes) — "
+                    f"The **\\${strike_f:,.0f} call** is listed but dead (no real quotes) — "
                     "if assigned, just hold.")
         else:
             st.markdown("No call at this strike — if assigned, just hold.")
@@ -478,7 +482,7 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
         cushion = stats.get("cushion_pct")
         odds = stats.get("assignment_risk")
         odds_low = odds is not None and odds < 0.01   # delta under 1%: ratio is noise
-        k1, k2, k3, k4, k5 = st.columns(5)
+        k1, k2, k3, k4 = st.columns(4)
         k1.metric(
             "Paid", _fmt(cash, "{:.2%}"),
             help="The premium you collect, as a share of the cash you post (the strike). "
@@ -513,18 +517,13 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
                  "Paid / odds. A model guess from listed implied vol — not a forecast. "
                  "Shown as '< 1%' below 1%, because rounding a sub-1% chance to '0%' "
                  "would read as literally impossible.")
-        k5.metric(
-            "Breakeven", _fmt(stats.get("breakeven"), "{:.2f}"),
-            help="The share price where this put breaks even if you're assigned: strike "
-                 "minus the premium you already kept. That's your cost basis if you end "
-                 "up owning the stock.")
         if ann is not None:
             year_bit = f"{_fmt(ann, '{:.0%}')}/year · {_fmt(ann_vs, '{:.1f}')}× the 10Y."
         else:
             year_bit = "Too short to quote as a yearly rate."
         st.caption(
             "Paid and Paid/odds compare names at this expiry. "
-            "The other three describe this put. " + year_bit
+            "The other two describe this put. " + year_bit
         )
     with st.expander("Greeks"):
         g1, g2, g3, g4 = st.columns(4)

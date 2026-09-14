@@ -581,27 +581,37 @@ def _num(v):
     return v if not (math.isnan(v) or math.isinf(v)) else None
 
 
-def net_basis(strike, premium) -> float | None:
-    """Cost per share if assigned: strike minus the premium you keep."""
+def breakeven_price(strike, premium) -> float | None:
+    """Your cost per share if assigned: strike minus the premium you keep."""
     k, p = _num(strike), _num(premium)
     if k is None or p is None:
         return None
     return k - p
 
 
-def cash_locked(strike, contracts: int = 1) -> float | None:
-    """Cash set aside for one (or N) cash-secured contract: strike × 100."""
+# legacy name kept for callers written before the plain-English relabel
+net_basis = breakeven_price
+
+
+def margin_needed(strike, contracts: int = 1) -> float | None:
+    """Full cash to secure one (or N) contract: strike × 100. Not Reg-T /
+    portfolio margin — this is the cash-secured number."""
     k = _num(strike)
     return None if k is None else k * 100 * int(contracts)
 
 
-def fcf_yield_at_strike(fcf, shares, stack, strike) -> float | None:
-    """TTM reported FCF over the whole-business value at that share price."""
-    f, s, d, k = _num(fcf), _num(shares), _num(stack), _num(strike)
-    if None in (f, s, d, k) or s <= 0:
+cash_locked = margin_needed
+
+
+def fcf_yield_at_price(fcf, shares, stack, price) -> float | None:
+    """TTM reported FCF over the whole-business value at that share price:
+    fcf / (price × shares + non-equity stack). The assignment test prices the
+    equity at the BREAKEVEN, not the strike — the put premium lowers your cost."""
+    f, s, d, p = _num(fcf), _num(shares), _num(stack), _num(price)
+    if None in (f, s, d, p) or s <= 0:
         return None
-    ev_strike = k * s + d
-    return f / ev_strike if ev_strike > 0 else None
+    ev = p * s + d
+    return f / ev if ev > 0 else None
 
 
 def own_verdict(fcf_yield, gs10: float = 0.0) -> str | None:
@@ -642,11 +652,11 @@ def same_strike_call(calls, strike):
     return None if hit.empty else hit.iloc[0]
 
 
-def call_upside(strike, call_premium, basis) -> float | None:
-    """Total gain vs your cost if the shares get called away at the strike:
-    (strike + call premium) − basis — the two premiums; no price gain above
-    the strike when you sell the same strike."""
-    k, c, b = _num(strike), _num(call_premium), _num(basis)
-    if None in (k, c, b):
+def called_away_keep(strike, basis, call_premium) -> float | None:
+    """What you keep if the shares get called away: the put premium you already
+    kept (strike − breakeven) plus the new call premium. The call caps the
+    shares at the strike — there is no price gain above it."""
+    k, b, c = _num(strike), _num(basis), _num(call_premium)
+    if None in (k, b, c):
         return None
-    return (k + c) - b
+    return (k - b) + c
