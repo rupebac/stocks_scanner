@@ -34,8 +34,6 @@
     background: var(--panel); border: 1px solid var(--border);
     border-radius: 8px; overflow: hidden; box-shadow: var(--shadow);
   }
-  .hd { padding: 8px 12px 4px; font-size: 10.5px; letter-spacing: 0.08em;
-        text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .item { padding: 6px 12px; font-size: 13.5px; color: var(--fg); cursor: pointer;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item small { color: var(--muted); margin-left: 6px; }
@@ -49,11 +47,12 @@
   <input id="q" autocomplete="off" spellcheck="false"/>
   <div id="list"></div>
 </div>
-<!-- written by dashboard/app.py each session: window.AC_OPTIONS / AC_QUICK / AC_PLACEHOLDER -->
+<!-- written by dashboard/app.py each session: window.AC_OPTIONS / AC_PLACEHOLDER -->
 <script src="data.js"></script>
 <script>
   const send = (type, data) => window.parent.postMessage(
     Object.assign({ isStreamlitMessage: true, type: type }, data), "*");
+  const setH = (h) => send("streamlit:setFrameHeight", { height: h });
   const setValue = (v) => send("streamlit:setComponentValue", { value: v, dataType: "json" });
   send("streamlit:componentReady", { apiVersion: 1 });
   // if the host streams render events, prefer the fresh args from Python
@@ -62,20 +61,18 @@
     if (!d || !d.isStreamlitMessage || d.type !== "streamlit:render") return;
     if (d.args && d.args.options) {
       window.AC_OPTIONS = d.args.options;
-      if (d.args.quick) window.AC_QUICK = d.args.quick;
       document.getElementById("q").placeholder = d.args.placeholder || window.AC_PLACEHOLDER || "Search…";
       filter();
     }
   });
 
   const OPTS = () => window.AC_OPTIONS || [];
-  const QUICK = () => window.AC_QUICK || [];
   const norm = (s) => (s || "").toString().toUpperCase();
-  let hits = [], active = -1, quickMode = false, lastSent = null;
+  let hits = [], active = -1, lastSent = null;
+  const IN_H = 44, ROW_H = 31, PAD = 6;
 
   function filter() {
     const q = norm(document.getElementById("q").value.trim());
-    quickMode = !q;
     hits = [];
     if (q) {
       const pfx = [], sub = [];
@@ -85,10 +82,8 @@
         else if (t.includes(q) || l.includes(q)) sub.push(o);
       }
       hits = pfx.concat(sub).slice(0, 8);
-    } else {
-      // idle: today's highlights as one-click picks instead of a blank panel
-      hits = QUICK().slice(0, 8);
     }
+    // blank field -> no suggestions at all, panel collapses to the input
     active = hits.length ? 0 : -1;
     render();
   }
@@ -96,10 +91,17 @@
   function render() {
     const L = document.getElementById("list");
     L.innerHTML = "";
-    if (quickMode && hits.length) {
-      const h = document.createElement("div");
-      h.className = "hd"; h.textContent = "Today's highlights";
-      L.appendChild(h);
+    if (!hits.length) {
+      if (norm(document.getElementById("q").value.trim())) {
+        const n = document.createElement("div");
+        n.className = "none";
+        n.textContent = "No match — try the ticker (e.g. ORCL)";
+        L.appendChild(n);
+        setH(IN_H + PAD + 34);
+      } else {
+        setH(IN_H);
+      }
+      return;
     }
     hits.forEach((o, i) => {
       const d = document.createElement("div");
@@ -111,18 +113,13 @@
       d.onmousemove = () => { if (active !== i) { active = i; render(); } };
       L.appendChild(d);
     });
-    if (!hits.length) {
-      const n = document.createElement("div");
-      n.className = "none";
-      n.textContent = quickMode ? "Type a ticker or company name to search"
-                                : "No match — try the ticker (e.g. ORCL)";
-      L.appendChild(n);
-    }
+    setH(IN_H + PAD + hits.length * ROW_H);
   }
 
   function choose(o) {
     document.getElementById("q").value = o.t;
-    quickMode = false;
+    // keep the picked row visible+highlighted (the iframe persists across
+    // reruns, so this stays as the post-pick state until the next query)
     hits = [o]; active = 0;
     render();
     document.getElementById("q").blur();

@@ -1047,15 +1047,10 @@ def ideas_page():
     # render events into component iframes); the pick travels back via
     # setComponentValue, which does work.
     name_of = {r["ticker"]: str(r.get("name") or "") for _, r in metrics.iterrows()}
-    # idle quick-picks = the current highlight list, so the panel is never blank
-    _ac_quick = [{"t": r["ticker"], "label": name_of.get(r["ticker"], "")}
-                 for r in hi.head(8).to_dict("records")]
     _ac_payload = {"options": [{"t": t, "label": name_of.get(t, "")} for t in options],
-                   "quick": _ac_quick,
                    "placeholder": "Type a ticker or name — e.g. ORCL, Oracle…"}
     _ac_dir = ROOT / "dashboard" / "components" / "autocomplete"
     _ac_js = ("window.AC_OPTIONS = " + json.dumps(_ac_payload["options"]) + ";\n"
-              "window.AC_QUICK = " + json.dumps(_ac_payload["quick"]) + ";\n"
               "window.AC_PLACEHOLDER = " + json.dumps(_ac_payload["placeholder"]) + ";\n")
     try:
         _ac_file = _ac_dir / "data.js"
@@ -1063,6 +1058,8 @@ def ideas_page():
             _ac_file.write_text(_ac_js)
     except OSError:
         pass  # read-only install: the iframe falls back to render-event args
+    # 330 is headroom only: the component collapses itself to the input (~44px)
+    # when idle and grows with the suggestion list via setFrameHeight
     ac = _AUTOCOMPLETE(default=None, height=330, key="idea_ac")
     if ac and ac != st.session_state.get("idea_ac_last"):
         st.session_state["idea_ac_last"] = ac
