@@ -20,7 +20,7 @@ from .sec_edgar import fetch_companyfacts
 warnings.filterwarnings("ignore")
 
 
-def _gates(df: pd.DataFrame, asof: dt.date) -> pd.DataFrame:
+def _gates(df: pd.DataFrame, asof: dt.date, universe="sp500") -> pd.DataFrame:
     """Hard gates (doc 05 §1). Null gate values fail softly with a reason — a null is
     recorded as "n/a", never silently passed and never mislabeled as a threshold miss."""
     def reasons(row):
@@ -35,11 +35,12 @@ def _gates(df: pd.DataFrame, asof: dt.date) -> pd.DataFrame:
             r.append("mktcap n/a")
         elif not mc >= config.GATE_MKTCAP_USD:
             r.append(f"mktcap<{config.GATE_MKTCAP_USD/1e9:.0f}B")
-        ten = row.get("index_tenure_y")
+        tenure_label = "trading history" if universe == "nasdaq100" else "tenure"
+        ten = row.get("trading_history_y" if universe == "nasdaq100" else "index_tenure_y")
         if ten is None or pd.isna(ten):
-            r.append("tenure n/a")
+            r.append(f"{tenure_label} n/a")
         elif ten < config.MIN_INDEX_TENURE_YEARS:
-            r.append("tenure<1y")
+            r.append(f"{tenure_label}<1y")
         rc = row.get("rev_cagr5")
         if rc is None or pd.isna(rc) or rc < config.GATE_REV_CAGR5_MIN:
             r.append("rev_cagr5 gate")
@@ -115,6 +116,7 @@ def run_scan(
     refresh_sec: bool = False,
     refresh_data: bool = False,
     asof: dt.date | None = None,
+    universe: str = "sp500",
 ) -> dict:
     asof = asof or dt.date.today()
     print(f"[scan] asof={asof}")
@@ -123,13 +125,13 @@ def run_scan(
     #    before the scan; prices/options are always fetched fresh anyway.
     if refresh_data:
         print("[scan] refresh-data: forcing re-download of universe, DGS10 and SEC caches")
-        UN.fetch_constituents(refresh=True)
+        UN.fetch_universe(universe, refresh=True)
         from .rates_fx import fetch_dgs10
         fetch_dgs10(refresh=True)
         refresh_sec = True
 
     # 1. universe (doc 01)
-    uni_raw = UN.fetch_constituents()
+    uni_raw = UN.fetch_universe(universe)
     uni, unmapped = UN.with_industry_groups(uni_raw)
     sg = UN.standard_group(uni).copy()
     sg["index_tenure_y"] = sg.apply(lambda r: UN.index_tenure_years(r, asof), axis=1)
@@ -144,6 +146,10 @@ def run_scan(
     symbols = sorted(sg["symbol"].unique())
     weekly = market_data.download_weekly(symbols)
     pxf = market_data.price_features(weekly)
+    observed = weekly.loc[(weekly.close > 0) & (pd.to_datetime(weekly.week) <= pd.Timestamp(asof))]
+    spans = observed.groupby("ticker").week.agg(["min", "max"])
+    years = (pd.to_datetime(spans["max"]) - pd.to_datetime(spans["min"])).dt.days / 365.25
+    sg["trading_history_y"] = sg.symbol.map(years)
     if {"ticker", "adv_usd"} <= set(pxf.columns):
         sg = sg.merge(pxf, left_on="symbol", right_on="ticker", how="left")
     else:
@@ -204,6 +210,7 @@ def run_scan(
         row = {"ticker": u["symbol"], "cik": int(u["cik"]), "name": u["name"],
                "sector": u["sector"], "sub_industry": u["sub_industry"],
                "ig_name": u["ig_name"], "index_tenure_y": u.get("index_tenure_y"),
+               "trading_history_y": u.get("trading_history_y"),
                "adv_usd": u.get("adv_usd"), "mom_12_1": u.get("mom_12_1"),
                "dd_52w": u.get("dd_52w"), "ret_12m": u.get("ret_12m")}
         row.update(feat)
@@ -225,7 +232,7 @@ def run_scan(
 
     # 4. gates, scores, flags
     gs10 = gs10_asof(asof)
-    df = _gates(df, asof)
+    df = _gates(df, asof, universe=universe)
     # doc 05 §1: <80% of MVP score inputs -> unscored, listed separately — such names
     # get no scores/flags and no place in the percentile cross-section
     coverage_fail = df[df["input_coverage"] < config.MIN_SCORE_INPUT_COVERAGE]["ticker"].tolist()
@@ -275,10 +282,14 @@ def run_scan(
             ov_df = pd.DataFrame()
 
     # 7. artifacts (docs 01/05 §4b)
-    out_dir = config.SCANS / asof.isoformat()
+    from .universe_selection import scan_directory
+    out_dir = scan_directory(asof, universe)
     out_dir.mkdir(parents=True, exist_ok=True)
     cfg = {
         "asof": asof.isoformat(), "spec": "v0.5 (search frozen v0.4)",
+        "financial_version": config.FINANCIAL_VERSION,
+        "universe": universe,
+        "maturity_basis": "observed trading history >=1y" if universe == "nasdaq100" else "index tenure >=1y",
         "subset": {"limit": limit, "tickers": tickers},
         "gs10": gs10,
         "universe_version": (
@@ -346,7 +357,8 @@ def run_scan(
 
 
 def main():
-    ap = argparse.ArgumentParser(description="S&P 500 quality/price-divergence scan")
+    ap = argparse.ArgumentParser(description="Stock quality/price-divergence scan")
+    ap.add_argument("--universe", choices=["sp500", "nasdaq100"], default="sp500")
     ap.add_argument("--limit", type=int, default=None, help="first N standard-group names (smoke runs)")
     ap.add_argument("--tickers", type=str, default=None, help="comma-separated symbols subset")
     ap.add_argument("--skip-options", action="store_true", help="skip put overlay (no options/earnings calls)")
@@ -356,6 +368,7 @@ def main():
     ap.add_argument("--asof", type=str, default=None, help="YYYY-MM-DD (default today)")
     args = ap.parse_args()
     run_scan(
+        universe=args.universe,
         limit=args.limit,
         tickers=[t.strip().upper() for t in args.tickers.split(",")] if args.tickers else None,
         skip_options=args.skip_options,

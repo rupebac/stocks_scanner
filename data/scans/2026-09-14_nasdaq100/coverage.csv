@@ -1,0 +1,54 @@
+ticker,reasons
+ASML,insufficient data (prices/SEC)
+PDD,insufficient data (prices/SEC)
+CCEP,insufficient data (prices/SEC)
+FER,insufficient data (prices/SEC)
+HONA,young listing (14 wks of prices; needs 60)
+SPCX,young listing (15 wks of prices; needs 60)
+NVDA,fcf_cagr5 gate
+TSLA,fcf_cagr5 gate
+WDC,rev_cagr5 gate
+NFLX,fcf_cagr5 gate
+WMT,fcf_cagr5 gate
+APP,fcf_cagr5 gate
+TXN,fcf_cagr5 gate
+COST,fcf_cagr5 gate
+ARM,rev_cagr5 gate
+TER,fcf_cagr5 gate
+SHOP,fcf_cagr5 gate
+TMUS,fcf_cagr5 gate
+MCHP,rev_cagr5 gate; fcf_cagr5 gate
+MELI,fcf_cagr5 gate
+WDAY,fcf_cagr5 gate
+SBUX,fcf_cagr5 gate
+ORLY,fcf_cagr5 gate
+CSX,fcf_cagr5 gate
+AXON,fcf_cagr5 gate
+ALNY,fcf_cagr5 gate
+KDP,fcf_cagr5 gate
+GEHC,rev_cagr5 gate
+TRI,rev_cagr5 gate; fcf_cagr5 gate
+MU,fcf_cagr5 gate; coverage<80%
+SNDK,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMZN,fcf_cagr5 gate; coverage<80%
+INTC,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NBIS,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LITE,fcf_cagr5 gate; coverage<80%
+MSTR,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KLAC,coverage<80%
+CRWV,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CRWD,coverage<80%
+RKLB,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ALAB,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BKNG,coverage<80%
+LIN,coverage<80%
+DASH,fcf_cagr5 gate; coverage<80%
+ABNB,fcf_cagr5 gate; coverage<80%
+ADP,fcf_cagr5 gate; coverage<80%
+TTWO,fcf_cagr5 gate; coverage<80%
+WBD,coverage<80%
+BKR,coverage<80%
+KHC,rev_cagr5 gate; coverage<80%
+PCAR,coverage<80%
+FANG,fcf_cagr5 gate; coverage<80%
+ROP,coverage<80%

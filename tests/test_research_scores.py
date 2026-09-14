@@ -4,12 +4,13 @@ import pandas as pd
 import pytest
 from scanner import scoring as SC
 from scanner.research_scores import add_research_scores
+from scanner.universe_selection import available_scans
 
 
 @pytest.fixture
 def metrics():
     # Match the dashboard integration tests against the workspace's saved scan.
-    path = sorted((Path(__file__).resolve().parents[1]/'data/scans').glob('*/metrics.csv'))[-1]
+    path = available_scans(Path(__file__).resolve().parents[1]/'data/scans', 'sp500')[-1] / 'metrics.csv'
     return pd.read_csv(path)
 
 

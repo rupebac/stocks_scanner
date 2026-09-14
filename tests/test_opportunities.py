@@ -106,7 +106,7 @@ def test_growth_lane_requires_material_investment_without_changing_scores():
     pd.testing.assert_frame_equal(df, original)
 
 
-def test_saved_idea_survives_new_app_session_and_removal_can_be_undone(ideas_db):
+def test_saved_idea_survives_new_app_session_and_removal_can_be_undone(ideas_db, browser_storage):
     app = str(Path(__file__).resolve().parents[1] / 'dashboard/app.py')
     at = AppTest.from_file(app, default_timeout=30).run()
     at.selectbox('company_search').select('ORCL').run()
@@ -119,14 +119,15 @@ def test_saved_idea_survives_new_app_session_and_removal_can_be_undone(ideas_db)
     assert not fresh.exception
     assert any('Growth must produce' in t.value for t in fresh.text)
     fresh.button('remove_ORCL').click().run()
-    assert not WL.all_ideas()
+    assert not browser_storage
     next(b for b in fresh.button if b.label == 'Undo last removal').click().run()
-    assert WL.all_ideas()['ORCL']['buy_price'] == 150.
+    assert browser_storage['ORCL']['buy_price'] == 150.
+    assert not WL.all_ideas()  # Personal saves never reached the shared database.
 
 
-def test_options_use_saved_ceiling_and_handle_missing_underlying(ideas_db, monkeypatch):
+def test_options_use_saved_ceiling_and_handle_missing_underlying(ideas_db, monkeypatch, browser_storage):
     from test_options_dashboard import _run_app, selected_strike
-    WL.save('ACN', 178., 'Good business')
+    browser_storage['ACN'] = {'ticker':'ACN','buy_price':178.,'thesis':'Good business','updated_at':''}
     at = _run_app(monkeypatch)
     assert selected_strike(at) <= 178.
     at.toggle('ceiling_ACN').set_value(False).run()
@@ -151,7 +152,7 @@ def test_growth_and_company_research_views_render(ideas_db):
         at.session_state['research_focus'] = focus
         at.run()
         assert not at.exception
-        assert len(at.get('plotly_chart')) <= 2
+        assert len(at.get('plotly_chart')) <= (3 if focus in ['Cash & investment', 'Debt & dilution'] else 2)
 
 
 def test_income_map_and_preview_render_with_quote_metadata(ideas_db, monkeypatch):

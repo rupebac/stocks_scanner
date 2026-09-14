@@ -132,7 +132,7 @@ def test_cards_navigate_without_network(monkeypatch):
     next(b for b in at.button if b.key and b.key.startswith("card_")).click().run()
     assert not at.exception
     assert at.session_state["workspace"] == "Company"
-    assert metric(at, "Reported free cash flow") is not None
+    assert metric(at, "Cash after capex & stock pay") is not None
 
 
 def test_income_comparison_shows_actual_bid_returns(monkeypatch):

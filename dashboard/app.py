@@ -13,9 +13,13 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scanner import market_data as MD, scoring as SC, opportunities as OP, watchlist as WL
-from dashboard import hunt_chart
+from scanner import market_data as MD, scoring as SC, opportunities as OP
+from dashboard import hunt_chart, browser_ideas as WL
 from scanner.research_scores import add_research_scores
+from scanner.universe_selection import UNIVERSES, available_scans
+from scanner import company_lookup as CL
+from scanner import discovery_filters as DF
+from scanner import config as SC_CONFIG
 
 st.set_page_config(page_title="Hunt · Stock & income finder", page_icon="◈", layout="wide")
 st.markdown(f"<style>{(ROOT / 'dashboard/style.css').read_text()}</style>", unsafe_allow_html=True)
@@ -159,8 +163,12 @@ def card_visuals(row, hist):
     if any(row.get(k+"_score_status") == "Estimate" for k in ("quality", "cheapness")):
         parts.append('<div class="score-estimate-note">* Estimate · partial data</div>')
     parts.append('<div class="card-facts">')
-    for label, key in [("Cash yield", "fcf_yield"), ("Revenue · 5y", "rev_cagr5")]:
-        parts.append(f'<div><span>{label}</span><b>{fmt(row.get(key), "{:.1%}")}</b></div>')
+    for label, key, tip in [
+        ("Cash yield", "fcf_yield", "Trailing-year operating cash minus capital spending and stock compensation, divided by enterprise value (market cap plus debt and other claims, less cash). This is a business valuation measure, not a dividend or option premium."),
+        ("Revenue · 5y", "rev_cagr5", "Compound annual revenue growth over the last five fiscal years. For example, 10% means revenue grew at an average compounded rate of 10% per year, not 10% in total.")]:
+        if key == "fcf_yield" and "sbc_unreported" in str(row.get("dq_flags", "")):
+            tip += " Stock compensation is unavailable for this company and was assumed to be zero."
+        parts.append(f'<div tabindex="0" title="{html.escape(tip, quote=True)}" aria-label="{html.escape(label + ": " + tip, quote=True)}"><span>{label}</span><b>{fmt(row.get(key), "{:.1%}")}</b></div>')
     parts.append('</div>')
     flags = []
     if any(OP.number(row.get(k)) is not None and OP.number(row.get(k)) < floor
@@ -184,16 +192,21 @@ def cards(rows, hist, growth=False, all_companies=False):
             with col, st.container(border=True, key="stock_card_"+row.ticker):
                 badge = "RESEARCH" if all_companies else "GROWTH" if growth else "VALUE"
                 tone = "research" if all_companies else "growth" if growth else "value"
+                cap = OP.number(row.get("mktcap"))
+                cap_label = (f"${cap/1e12:,.2f}T" if cap >= 1e12 else f"${cap/1e9:,.1f}B" if cap >= 1e9 else f"${cap/1e6:,.0f}M") if cap is not None and cap > 0 else "—"
                 st.markdown(f'<div class="card-top {tone}"><span class="stock-symbol">{html.escape(row.ticker)}</span>'
                             f'<span class="eyebrow">{badge}</span></div>'
                             f'<div class="card-company"><h3 title="{html.escape(str(row.get("name", "")), quote=True)}">{html.escape(str(row.get("name", "")))}</h3>'
-                            f'<span class="stock-price">{fmt(row.get("price"), "${:,.2f}")}</span></div>', unsafe_allow_html=True)
+                            f'<div class="card-price-block"><span class="stock-price">{fmt(row.get("price"), "${:,.2f}")}</span>'
+                            f'<span class="stock-cap" title="Market capitalization: share price × shares outstanding, from the saved scan.">{cap_label} cap</span></div></div>', unsafe_allow_html=True)
                 card_visuals(row, hist)
                 saved = ideas.get(row.ticker, {})
                 if saved.get("buy_price"):
                     st.caption(f"My buy price {fmt(saved['buy_price'], '${:,.2f}')} · scan price {fmt(row.get('price'), '${:,.2f}')}")
                 quote = st.session_state.get("card_quotes", {}).get(row.ticker)
                 if quote:
+                    if OP.quote_is_stale(quote.get("Fetched")):
+                        st.caption("Old quote snapshot · check the premium again before comparing income.")
                     if OP.number(quote.get("Premium")) is not None:
                         st.markdown(f"**{fmt(quote['Premium'], '${:,.0f}')} premium** · {quote['Days']} days · "
                                     f"{fmt(quote['Return on cash'], '{:.2%}')} on cash")
@@ -219,7 +232,7 @@ def cards(rows, hist, growth=False, all_companies=False):
                                                    earnings(row.ticker, today.isoformat()) if raw else None)
                         st.session_state.setdefault("card_quotes", {})[row.ticker] = result
                         st.rerun()
-                if c.button("Saved ✓" if saved else "Save", disabled=bool(saved), key="save_"+row.ticker, width="stretch"):
+                if c.button("Saved ✓" if saved else "Save", disabled=bool(saved) or not st.session_state.get("_ideas_ready", False), key="save_"+row.ticker, width="stretch"):
                     WL.save(row.ticker)
                     st.rerun()
 
@@ -231,16 +244,55 @@ def reset_hunt_zone():
     st.session_state["hunt_value_control"] = 0.
 
 
-def discovery(metrics, cfg, hist):
-    heading("STOCKS FIRST. INCOME SECOND.", "Good businesses. Better entry prices.",
-            "Find a business, save your buy price, and compare the income available while you wait.")
-    lens, sector = st.columns([2, 1])
+def discovery_filter_changed():
+    st.session_state["map_epoch"] = st.session_state.get("map_epoch", 0) + 1
+
+
+def reset_discovery_filters():
+    for key, value in {"discovery_sector": "All sectors", "min_cap": 0., "max_cap": 0., "min_put_oi": 0, "min_put_volume": 0}.items():
+        st.session_state[key] = value
+    discovery_filter_changed()
+
+
+def discovery(metrics, cfg, hist, controls):
+    lens, sector, filters = controls
     with lens:
         mode = st.segmented_control("Research lens", ["Quality & value", "Investing for growth", "All companies"],
                                     default="Quality & value", key="lens") or "Quality & value"
     with sector:
-        sec = st.selectbox("Sector", ["All sectors"] + sorted(metrics.sector.dropna().unique().tolist()))
-    universe = metrics if sec == "All sectors" else metrics[metrics.sector == sec]
+        sec = st.selectbox("Sector", ["All sectors"] + sorted(metrics.sector.dropna().unique().tolist()), key="discovery_sector", on_change=discovery_filter_changed)
+    with filters:
+        candidates = metrics if sec == "All sectors" else metrics[metrics.sector == sec]
+        a, b, c, d = st.columns(4)
+        minimum = a.number_input("Min market cap · $B", min_value=0., value=0., step=5., key="min_cap", on_change=discovery_filter_changed, help="0 means no minimum. 10 means a $10 billion company.")
+        maximum = b.number_input("Max market cap · $B", min_value=0., value=0., step=5., key="max_cap", on_change=discovery_filter_changed, help="0 means no maximum.")
+        min_oi = c.number_input("Min put open interest", min_value=0, value=0, step=100, key="min_put_oi", on_change=discovery_filter_changed, help="Outstanding contracts at one strike. 0 disables this filter.")
+        min_volume = d.number_input("Min put volume", min_value=0, value=0, step=10, key="min_put_volume", on_change=discovery_filter_changed, help="Reported trading volume at one strike. 0 disables this filter; missing volume is not treated as zero.")
+        if maximum and maximum < minimum:
+            st.warning("Maximum market cap must be at least the minimum, or 0 for no maximum.")
+            return
+        candidates = DF.size_filter(candidates, minimum, maximum)
+        snapshots = st.session_state.setdefault("discovery_options", {})
+        check, reset, summary = st.columns([1, 1, 2])
+        if check.button("Check options activity", disabled=candidates.empty, help="Fetches one put expiry per company, closest to 30 days within the next 90 days."):
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            progress = st.progress(0., text=f"Checking {len(candidates)} companies…")
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                futures = {pool.submit(DF.fetch_activity, ticker): ticker for ticker in candidates.ticker}
+                for n, future in enumerate(as_completed(futures), 1):
+                    snapshots[futures[future]] = future.result()
+                    progress.progress(n/len(futures), text=f"Checked {n}/{len(futures)} companies")
+            progress.empty()
+            discovery_filter_changed()
+        reset.button("Reset filters", on_click=reset_discovery_filters)
+        universe = DF.apply_activity(candidates, snapshots, min_oi, min_volume)
+        summary.caption(f"{len(universe)} / {len(metrics)} companies match · search remains unrestricted")
+        if min_oi or min_volume or snapshots:
+            statuses = [DF.activity_status(snapshots.get(t), min_oi, min_volume) for t in candidates.ticker]
+            unknown = sum(status in {"Not checked", "Stale", "Unavailable"} for status in statuses)
+            st.caption(f"Options: one expiry nearest 30 days (within 90), strikes at or up to 20% below the share price. Both minimums must be met at the same strike. Checks expire after 15 minutes. {unknown} companies need fresh or available data." )
+            if (min_oi or min_volume) and unknown:
+                st.info("Options filters include only verified matches. Use Check options activity to check the current index, sector and size range.")
     zone = st.session_state.setdefault("hunt_zone", {"quality": 60, "valuation": 0.})
     if mode != "Investing for growth":
         with st.expander("Adjust hunt zone"):
@@ -255,7 +307,8 @@ def discovery(metrics, cfg, hist):
     else:
         quality_min, valuation_min = zone["quality"], zone["valuation"]
     hi = SC.highlighted(metrics, gs10=cfg.get("gs10"), quality_min=quality_min, max_residual=-valuation_min)
-    hi = hi[hi.ticker.isin(universe.ticker)]
+    hi = hi[hi.ticker.isin(universe.ticker)].copy()
+    hi["options_activity"] = hi.ticker.map(universe.set_index("ticker").options_activity)
     growth = OP.research_universe(universe)
     rows = growth if mode == "Investing for growth" else universe.sort_values("ticker") if mode == "All companies" else hi
     a, b, c = st.columns(3)
@@ -280,28 +333,31 @@ def discovery(metrics, cfg, hist):
                 income_comparison(rows, cfg, show_chart=False)
     heading("02 / YOUR NEXT LOOK", mode, "Six-month prices, quality and cheapness at a glance. Hover over scores and flags for details.")
     if rows.empty:
-        st.info("No companies match this view. Try another sector or search any company above.")
+        st.info("No companies match this view. Adjust the filters, check options activity, or search any company above.")
     else:
         cards(rows, hist, mode == "Investing for growth", mode == "All companies")
         with st.expander(f"Compare all {len(rows)} companies", expanded=True):
             cols = {"ticker": "Stock", "name": "Company", "price": "Scan share price", "display_quality_score": "Business quality", "display_cheapness_score": "Cheapness",
-                    "quality_score_status": "Quality basis", "cheapness_score_status": "Cheapness basis",
-                    "rev_cagr5": "Revenue growth · 5y", "fcf_yield": "Reported cash yield"}
+                    "rev_cagr5": "Revenue growth · 5y", "fcf_yield": "Reported cash yield", "mktcap": "Market cap · $B"}
             comparison = rows[list(cols)].rename(columns=cols).reset_index(drop=True)
+            comparison["Market cap · $B"] = comparison["Market cap · $B"] / 1e9
             comparison["Business quality"] = comparison["Business quality"] / 100
             comparison["Cheapness"] = comparison["Cheapness"] / 100
             event = st.dataframe(comparison, hide_index=True,
                 width="stretch", on_select="rerun", selection_mode="single-row", key=f"compare_stocks_{mode}_{sec}_{quality_min}_{valuation_min}_{st.session_state.get('map_epoch', 0)}",
-                column_config={"Scan share price": st.column_config.NumberColumn(format="$%.2f"),
+                column_config={"Market cap · $B": st.column_config.NumberColumn(format="$%.1fB"), "Scan share price": st.column_config.NumberColumn(format="$%.2f"),
                                "Business quality": st.column_config.NumberColumn(format="percent",
                                    help="Business quality score expressed as a percentage of 100. 76% means 76/100; this is not an expected return or probability."),
-                               "Cheapness": st.column_config.NumberColumn(format="percent", help="Score out of 100. Check the basis column: estimates use partial data and are not full scanner scores."),
+                               "Cheapness": st.column_config.NumberColumn(format="percent", help="Score out of 100. Estimates use partial data; open the company for the score basis."),
                                "Revenue growth · 5y": st.column_config.NumberColumn(format="percent"),
                                "Reported cash yield": st.column_config.NumberColumn(format="percent")})
             if event.selection.rows:
                 pick(rows.iloc[event.selection.rows[0]].ticker)
                 st.rerun()
     with st.expander("How the shortlist works"):
+        if cfg.get("financial_version") != SC_CONFIG.FINANCIAL_VERSION:
+            st.warning("Saved scores use older financial calculations. Refresh to apply the debt, share-count and leverage corrections.")
+        st.caption("Maturity check: " + cfg.get("maturity_basis", "index tenure >=1y") + ". Financials, utilities and real estate are excluded from index scans.")
         st.write(f"Quality combines profitability, growth, debt and consistency. Your current shortlist requires quality ≥ {quality_min}/100, "
                  f"adequate data, return on capital ≥ 10%, valuation advantage > {valuation_min:.2f}, and a cash yield above "
                  "the higher of 4% and the scan’s 10-year Treasury yield. Reported cash deducts capital spending "
@@ -310,18 +366,31 @@ def discovery(metrics, cfg, hist):
 
 
 def business(row, hist, cfg):
+    flags = str(row.get("dq_flags", ""))
+    if "sbc_unreported" in flags:
+        st.caption("Stock-pay data is unavailable; the saved cash adjustment assumes zero stock compensation.")
+    if "shares_was_proxy" in flags:
+        st.caption("Valuation uses a proxy share count. Check it against the latest filing before setting an entry price.")
+    if "facts_yf" in flags:
+        st.caption("Company metrics use provider statement estimates; the financial-history charts below use SEC-reported figures.")
+    if cfg.get("financial_version") != SC_CONFIG.FINANCIAL_VERSION:
+        st.warning("This saved scan predates corrections to debt extraction, share-count fallbacks and leverage scoring. Refresh data & scores before relying on its valuation or quality scores.")
     a, b, c, d = st.columns(4)
     a.metric("Business quality", fmt(row.get("display_quality_score", row.get("quality_score")), "{:.0f} / 100") + (" *" if row.get("quality_score_status") == "Estimate" else ""),
              help=row.get("quality_score_note", "Business quality score."))
     b.metric("Revenue growth · 5y", fmt(row.get("rev_cagr5"), "{:.1%}"))
     c.metric("Return on capital", fmt(row.get("roic_ttm"), "{:.1%}"))
-    d.metric("Net debt / EBITDA", fmt(row.get("nd_ebitda"), "{:.1f}×"), help="Negative means net cash. EBITDA is earnings before interest, tax, depreciation and amortization.")
+    ebitda = OP.number(row.get("ebitda_ttm"))
+    leverage = row.get("nd_ebitda") if ebitda is None or ebitda > 0 else None
+    d.metric("Net debt / EBITDA", fmt(leverage, "{:.1f}×"), help="Debt including leases, less cash and short-term investments, divided by positive EBITDA. The ratio is unavailable for zero or negative EBITDA.")
+    if ebitda is not None and ebitda <= 0:
+        st.caption("EBITDA is non-positive; a negative ratio would not establish a net-cash position.")
     focus = st.segmented_control("Research question", ["Price & value", "Growth & margins", "Cash & investment", "Debt & dilution"],
                                  default="Price & value", key="research_focus") or "Price & value"
     if focus == "Price & value":
         a, b = st.columns(2)
-        a.metric("Reported free cash flow", fmt(OP.number(row.get("fcf_adj_ttm"))/1e9 if OP.number(row.get("fcf_adj_ttm")) is not None else None, "${:,.2f}B"))
-        b.metric("Reported business cash yield", fmt(row.get("fcf_yield"), "{:.1%}"))
+        a.metric("Cash after capex & stock pay", fmt(OP.number(row.get("fcf_adj_ttm"))/1e9 if OP.number(row.get("fcf_adj_ttm")) is not None else None, "${:,.2f}B"))
+        b.metric("Cash after stock pay / EV", fmt(row.get("fcf_yield"), "{:.1%}"))
         st.caption("Trailing-year cash after capital spending and stock compensation. Cash yield describes the business, not a payout to shareholders.")
         h = hist[hist.ticker == row.ticker].sort_values("week") if not hist.empty else pd.DataFrame()
         if not h.empty:
@@ -346,7 +415,7 @@ def business(row, hist, cfg):
         economic_charts(row, cfg, focus)
     with st.container(border=True):
         st.subheader("Valuation, margins & data details")
-        labels = {"fcf_yield": "Reported cash yield", "ev_fcf": "Business value / cash flow",
+        labels = {"fcf_yield": "Cash after stock pay / EV", "ev_fcf": "Business value / cash flow",
                   "pe_ttm": "Price / earnings", "gm_ttm": "Gross margin", "fcf_margin_ttm": "Cash-flow margin",
                   "residual": "Valuation model residual", "input_coverage": "Data coverage"}
         st.dataframe(pd.DataFrame([{"Measure": label, "Value": fmt(row.get(k), "{:.1%}" if k in
@@ -399,7 +468,7 @@ def options(row, cfg):
     ceiling = saved_buy if is_put and saved_buy and st.toggle("Use my buy price as the strike ceiling", value=True, key=f"ceiling_{ticker}") else None
     if ceiling:
         frame = frame[frame.strike <= ceiling].reset_index(drop=True)
-        st.caption(f"Showing strikes at or below my saved buy price of ${ceiling:,.2f}.")
+        st.caption(f"Entry selection is limited to my saved buy price of ${ceiling:,.2f}. The chain table can show strikes above this ceiling.")
         if frame.empty:
             st.info("No listed strike is at or below your buy price. Turn off the ceiling to inspect the full chain.")
             return
@@ -454,19 +523,23 @@ def options(row, cfg):
         st.caption("Assumes you already own 100 shares. Excludes prior premiums, fees and taxes. A covered call limits gains above the strike.")
     with st.container(border=True):
         st.subheader("Options chain & quote details")
-        show = frame.copy()
+        view = st.selectbox("Strike range", ["Near the money (±10%)", "Near the money (±20%)", "All strikes"], key=f"chain_range_{ticker}")
+        show = raw.get("puts" if is_put else "calls", pd.DataFrame()).copy()
+        show = show[show.strike > 0].sort_values("strike")
+        band = {"Near the money (±10%)": .10, "Near the money (±20%)": .20}.get(view)
+        if band is not None:
+            show = show[show.strike.between(spot * (1-band), spot * (1+band))]
         validated = [OP.bid_quote(r) for _, r in show.iterrows()]
         show["Premium / share price"] = [bid/spot if bid is not None else None for bid, _ in validated]
-        show["Quote status"] = [status for _, status in validated]
-        show["Moneyness"] = ["At the money" if k == spot else
-                             "In the money" if (k > spot if is_put else k < spot) else "Out of the money"
-                             for k in show.strike]
-        visible = show[[c for c in ["strike", "Moneyness", "bid", "ask", "Premium / share price", "Quote status", "volume", "oi", "iv"] if c in show]]
+        visible = show[[c for c in ["strike", "bid", "ask", "Premium / share price", "volume", "oi", "iv"] if c in show]]
         def shade_contract(r):
-            background = {"In the money": "#fff0dc", "At the money": "#edf3fc", "Out of the money": "#ffffff"}[r["Moneyness"]]
+            k = r["strike"]
+            background = "#edf3fc" if k == spot else "#fff0dc" if (k > spot if is_put else k < spot) else "#ffffff"
             return [f"background-color: {background}; color: #292b30" for _ in r]
+        if visible.empty:
+            st.info("No strikes in this range. Select All strikes to see the available chain.")
         st.dataframe(visible.style.apply(shade_contract, axis=1),
-                     hide_index=True, width="stretch", height=480,
+                     hide_index=True, width="stretch", height=720,
                      column_config={"Premium / share price": st.column_config.NumberColumn(format="percent")})
         st.caption("Orange = in the money · blue = at the money · white = out of the money, relative to the fetched share price.")
         stats = MD.contract_analytics("put" if is_put else "call", spot, strike, premium, days, MD._n(q.get("iv")), rate=cfg.get("gs10") or 0.)
@@ -494,7 +567,15 @@ def company(metrics, cfg, hist):
         business(row, hist, cfg)
 
 
+def universe_changed():
+    for key in ("company_search", "idea_pick", "hunt_event_seen"):
+        st.session_state.pop(key, None)
+    st.session_state["next_workspace"] = "Discover"
+    st.session_state["map_epoch"] = st.session_state.get("map_epoch", 0) + 1
+
+
 def main():
+    WL.sync()
     if "pending_hunt_zone" in st.session_state:
         zone = st.session_state.pop("pending_hunt_zone")
         st.session_state["hunt_zone"] = zone
@@ -510,31 +591,111 @@ def main():
                     '02 &nbsp; Choose your price. Sell a put.<br><br>03 &nbsp; If assigned, hold or sell calls.</div>', unsafe_allow_html=True)
         st.caption("Research workspace · 0–90 day options")
     if page == "Data & refresh":
+        from scanner.refresh import SCOPES
+        selected_universe = st.selectbox("What to refresh", list(SCOPES), format_func=SCOPES.get, key="refresh_universe")
         import data_manager
-        data_manager.render()
+        data_manager.render(selected_universe)
         return
-    scans = sorted(p for p in (ROOT / "data/scans").glob("*") if (p / "config.json").exists() and (p / "metrics.csv").exists())
-    if not scans:
-        heading("WELCOME TO HUNT", "Your next idea starts with a scan.")
-        st.info("Open Data & refresh to download the stock universe and run your first scan.")
-        return
-    p = scans[-1]
-    metrics, cfg, hist = load_scan(str(p), (p / "config.json").stat().st_mtime_ns)
-    a, b = st.columns([3, 2])
-    a.markdown(f'<div class="topline">RESEARCH DESK <span> / {html.escape(page.upper())}</span></div>', unsafe_allow_html=True)
-    b.caption(f"● Scan {cfg.get('asof', p.name)} · {len(metrics)} companies · options fetched on demand")
-    names = metrics.set_index("ticker")["name"].to_dict()
-    search = st.selectbox("Find a company", sorted(names), index=None,
-                          placeholder="Search any company or ticker — try Oracle or ORCL", format_func=lambda t: f"{t} · {names[t]}", key="company_search")
+    # Search is independent of the discovery filter and includes exchange listings.
+    sources = {}
+    references = []
+    for universe_id in UNIVERSES:
+        saved = available_scans(ROOT / "data/scans", universe_id)
+        if saved:
+            path = saved[-1]
+            frame, source_cfg, _ = load_scan(str(path), (path / "config.json").stat().st_mtime_ns)
+            references.append(frame)
+            for ticker in frame.ticker:
+                if ticker not in sources or source_cfg.get("asof", "") > sources[ticker][1].get("asof", ""):
+                    sources[ticker] = (path, source_cfg)
+    reference = pd.concat(references, ignore_index=True).drop_duplicates("ticker") if references else pd.DataFrame()
+    try:
+        directory = listing_directory()
+    except Exception:
+        directory = pd.DataFrame(columns=["ticker", "name", "cik", "exchange"])
+        st.caption("Exchange search is temporarily unavailable. Saved companies are still searchable.")
+    names = directory.set_index("ticker")["name"].to_dict()
+    if not reference.empty:
+        names.update(reference.set_index("ticker")["name"].to_dict())
+    st.markdown(f'<div class="topline">RESEARCH DESK <span> / {html.escape(page.upper())}</span></div>', unsafe_allow_html=True)
+    search = st.selectbox("Find a company · NYSE & Nasdaq", sorted(names), index=None,
+                          placeholder="Search any company or ticker — independent of the discovery universe",
+                          format_func=lambda t: f"{t} · {names[t]}", key="company_search")
     if search:
         pick(search)
         st.rerun()
     if page == "Company":
-        company(metrics, cfg, hist)
-    elif page == "Saved ideas":
-        saved_page(metrics, cfg, hist)
-    else:
-        discovery(metrics, cfg, hist)
+        ticker = st.session_state.get("idea_pick")
+        manual_cfg = CL.snapshot_path(ticker) / "config.json" if ticker in names else None
+        newer_manual = manual_cfg is not None and manual_cfg.exists() and (ticker not in sources or manual_cfg.stat().st_mtime_ns > (sources[ticker][0] / "config.json").stat().st_mtime_ns)
+        if ticker in sources and not newer_manual:
+            path, _ = sources[ticker]
+            frame, cfg, hist = load_scan(str(path), (path / "config.json").stat().st_mtime_ns)
+            company(frame, cfg, hist)
+        elif ticker in names:
+            path = CL.snapshot_path(ticker)
+            if not (path / "config.json").exists():
+                listing = directory[directory.ticker == ticker].iloc[0].to_dict()
+                try:
+                    with st.spinner(f"Loading {ticker} financials and price history…"):
+                        CL.build_snapshot(listing)
+                except Exception as exc:
+                    st.error(f"Could not load {ticker}: {exc}")
+                    if st.button("Try again"):
+                        st.rerun()
+                    return
+            raw = pd.read_csv(path / "metrics.csv")
+            frame = CL.score_snapshot(raw, reference)
+            if frame.quality_score_status.iloc[0] == "Not supported":
+                st.info(str(frame.quality_score_note.iloc[0]))
+            cfg = json.loads((path / "config.json").read_text())
+            hist = pd.read_parquet(path / "history.parquet")
+            st.caption(f"On-demand research · {cfg['asof']} · company research")
+            company(frame, cfg, hist)
+        else:
+            st.info("Search for a company above to start exploring.")
+        return
+    if page == "Saved ideas":
+        manual_rows = []
+        for ticker in WL.all_ideas():
+            if ticker not in sources:
+                snapshot = CL.snapshot_path(ticker)
+                if (snapshot / "config.json").exists():
+                    manual_rows.append(pd.read_csv(snapshot / "metrics.csv"))
+        if manual_rows:
+            reference = pd.concat([reference, *manual_rows], ignore_index=True)
+        if reference.empty:
+            st.info("Build a scan to populate your research desk.")
+        else:
+            cfg = next(iter(sources.values()))[1] if sources else {"asof": dt.date.today().isoformat()}
+            saved_page(reference, cfg, pd.DataFrame())
+        return
+    heading("STOCKS FIRST. INCOME SECOND.", "Good businesses. Better entry prices.",
+            "Find a business, save your buy price, and compare the income available while you wait.")
+    lens_control = st.container()
+    filters = st.expander("Filters", expanded=False)
+    with filters:
+        universe_control, sector_control = st.columns(2)
+    selected_universe = universe_control.selectbox("Discovery universe", list(UNIVERSES), format_func=UNIVERSES.get,
+                                      key="stock_universe", on_change=universe_changed,
+                                      help="Applies to discovery, maps and comparisons. Company search covers NYSE and Nasdaq independently.")
+    scans = available_scans(ROOT / "data/scans", selected_universe)
+    if not scans:
+        st.info(f"{UNIVERSES[selected_universe]} has no saved scan yet. Build it to load company scores, charts and option research.")
+        if st.button("Set up this universe", type="primary"):
+            st.session_state["refresh_universe"] = selected_universe
+            st.session_state["next_workspace"] = "Data & refresh"
+            st.rerun()
+        return
+    path = scans[-1]
+    metrics, cfg, hist = load_scan(str(path), (path / "config.json").stat().st_mtime_ns)
+    st.caption(f"Scan {cfg.get('asof', path.name)} · {UNIVERSES[selected_universe]} · {len(metrics)} companies")
+    discovery(metrics, cfg, hist, (lens_control, sector_control, filters))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def listing_directory():
+    return CL.company_directory()
 
 
 @st.cache_data(show_spinner=False)
@@ -567,7 +728,7 @@ def economic_charts(row, cfg, focus):
                   (flows, "Cash after investment", [("fcf_adj", "After all capex & stock pay"), ("fcf_owner", "Depreciation-as-upkeep proxy")], False)]
         st.caption("The proxy substitutes depreciation for upkeep spending. It can overstate available cash. Capital spending includes upkeep and expansion; acquisitions are excluded.")
     else:
-        panels = [(balance, "Borrowings & cash reserves", [("debt", "Borrowings, excluding leases"), ("cash", "Cash & equivalents")], False),
+        panels = [(balance, "Borrowings & cash reserves", [("debt", "Borrowings, excluding leases"), ("leases", "Lease liabilities"), ("cash", "Cash & equivalents")], False),
                   (flows, "How much revenue goes to stock pay?", [("Stock pay / revenue", "Stock compensation / revenue")], True)]
         st.caption("Stock compensation is an economic cost, not the same as net share dilution; buybacks and issuance also affect share count.")
     for col, (frame, title, fields, percent) in zip(st.columns(2), panels):
@@ -581,6 +742,36 @@ def economic_charts(row, cfg, focus):
             col.plotly_chart(chart_style(fig, 360), width="stretch")
         else:
             col.caption(f"{title}: history unavailable.")
+    if focus == "Debt & dilution":
+        dilution = go.Figure()
+        for key, label in [("shares_basic_was", "Basic average shares"), ("shares_diluted_was", "Diluted average shares")]:
+            if key in flows and flows[key].notna().any():
+                dilution.add_trace(go.Scatter(x=flows.effective, y=flows[key]/1e6, name=label, line=dict(shape="hv")))
+        if dilution.data:
+            dilution.update_layout(title="Is the share count growing?", yaxis_title="Million shares")
+            st.plotly_chart(chart_style(dilution, 340), width="stretch")
+            st.caption("Latest reported period-average share counts, not a sum of quarters. Splits, issuance and buybacks can all affect this chart.")
+    from scanner.company_research import financial_snapshot
+    current = financial_snapshot(flows, cfg.get("asof", dt.date.today().isoformat()))
+    if not current.empty:
+        if focus == "Cash & investment":
+            values = current.set_index("field")
+            required = ["cfo", "capex", "sbc"]
+            if all(k in values.index and pd.notna(values.at[k, "Value"]) for k in required) and values.loc[required, "Period ending"].nunique() == 1:
+                amounts = [values.at[k, "Value"] / 1e9 for k in required]
+                bridge = go.Figure(go.Waterfall(x=["Operating cash", "Capital spending", "Stock pay", "Cash remaining"],
+                    measure=["absolute", "relative", "relative", "total"], y=[amounts[0], -amounts[1], -amounts[2], 0],
+                    increasing=dict(marker_color="#3569b0"), decreasing=dict(marker_color="#cf893f"), totals=dict(marker_color="#287650")))
+                bridge.update_layout(title="Where the operating cash goes", yaxis_title="$ billions", showlegend=False)
+                st.plotly_chart(chart_style(bridge, 340), width="stretch")
+                st.caption("Stock pay is a non-cash economic adjustment. Free cash flow before that adjustment is operating cash minus capital spending; the D&A proxy is not spendable cash.")
+            else:
+                st.caption("Cash breakdown needs operating cash, capex and stock pay for the same trailing-year period.")
+        st.markdown("**Financial figures · trailing year**")
+        table = current.drop(columns="field").copy()
+        table["Value"] = table.Value / 1e9
+        table = table.rename(columns={"Value": "$ billions"})
+        st.dataframe(table, hide_index=True, width="stretch", column_config={"$ billions": st.column_config.NumberColumn(format="$%.2fB")})
     st.caption("Source: cached SEC filings, restricted to the scan date. Operating figures cover a trailing year; dates mark when filings became available.")
 
 
@@ -600,7 +791,7 @@ def income_comparison(rows, cfg, show_chart=True):
     budget = c.number_input("Cash available per contract", min_value=0, value=25000, step=1000)
     use_saved = st.toggle("Use my saved buy prices", value=True, help="Treats your saved price as a strike ceiling. Stocks without a saved price use the entry discount.")
     buy_prices = {t: ideas.get(t, {}).get("buy_price") if use_saved else None for t in chosen}
-    signature = (tuple(chosen), days, discount, tuple(buy_prices.items()), cfg.get("asof"))
+    signature = (tuple(chosen), days, discount, tuple(buy_prices.items()), cfg.get("asof"), dt.date.today().isoformat())
     if st.button("Compare put income", disabled=not chosen):
         results = []
         today = dt.date.today()
@@ -620,6 +811,8 @@ def income_comparison(rows, cfg, show_chart=True):
     saved = st.session_state.get("income_results")
     if saved and saved[0] == signature:
         result = pd.DataFrame(saved[1])
+        if any(OP.quote_is_stale(item.get("Fetched")) for item in saved[1]):
+            st.warning("These are old quote snapshots. Run Compare put income again for updated quotes.")
         st.caption("Using one shared expiration for every available chain." if saved[2] else
                    "No expiration is shared by all available chains. Each uses its nearest duration; compare the Days column.")
         if "Cash required" in result:
@@ -708,30 +901,32 @@ def saved_editor(row):
                                      help="Your maximum assignment strike. Zero leaves the price unset.")
             thesis = st.text_area("Why would I be happy to own this business?", value=saved.get("thesis", ""),
                                   placeholder="What I like, what must stay true, and what would change my mind…", key="thesis_"+row.ticker)
-            submitted = st.form_submit_button("Save idea", type="primary")
+            submitted = st.form_submit_button("Save idea", type="primary", disabled=not st.session_state.get("_ideas_ready", False))
         if submitted:
             try:
                 WL.save(row.ticker, target or None, thesis)
                 st.session_state.pop("income_results", None)
                 st.session_state.get("card_quotes", {}).pop(row.ticker, None)
-                st.success("Saved locally. Your buy price will be used as a strike ceiling in put comparisons.")
+                st.caption("Saving in this browser…")
                 st.rerun()
             except (OSError, ValueError) as exc:
                 st.error(f"Could not save this idea: {exc}")
-        st.caption("Saved on this dashboard’s server and shared by its users. No trade or order is placed.")
+        st.caption("Saved only in this browser profile. Other browsers have separate ideas. Clearing site data removes these saves. No trade or order is placed.")
 
 
 def saved_page(metrics, cfg, hist):
     ideas = WL.all_ideas()
     heading("MY RESEARCH", "Saved ideas", "Keep your buy prices and ownership theses between visits.")
     if st.session_state.get("undo_idea"):
-        if st.button("Undo last removal"):
+        if st.button("Undo last removal", disabled=not st.session_state.get("_ideas_ready", False)):
             idea = st.session_state.pop("undo_idea")
             WL.save(idea["ticker"], idea["buy_price"], idea["thesis"])
             st.rerun()
     if not ideas:
         st.info("Save a company from a card or the company workspace. Add your buy price and the reason you would own it.")
         return
+    st.download_button("Export my saved ideas", json.dumps({"version":1,"ideas":ideas}, indent=2), file_name="hunt-saved-ideas.json", mime="application/json")
+    st.caption("Stored in this browser profile. Export a backup before clearing site data or changing browsers.")
     for ticker, idea in ideas.items():
         r = metrics[metrics.ticker == ticker]
         with st.container(border=True):
@@ -745,7 +940,7 @@ def saved_page(metrics, cfg, hist):
                 a.caption("Not present in this scan. Your saved thesis is retained.")
             a.text(idea["thesis"] or "No thesis yet. Open the company to add your reasoning.")
             b.button("Open & edit", key="open_saved_"+ticker, on_click=pick, args=(ticker,), disabled=r.empty, width="stretch")
-            if c.button("Remove", key="remove_"+ticker, width="stretch"):
+            if c.button("Remove", key="remove_"+ticker, width="stretch", disabled=not st.session_state.get("_ideas_ready", False)):
                 st.session_state["undo_idea"] = idea
                 WL.remove(ticker)
                 st.rerun()
@@ -756,3 +951,5 @@ def saved_page(metrics, cfg, hist):
 
 
 main()
+if st.session_state.pop("_ideas_flush", False):
+    st.rerun()

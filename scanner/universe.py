@@ -84,3 +84,64 @@ def index_tenure_years(row, asof: dt.date) -> float | None:
         return None
     added = pd.Timestamp(row["date_added"]).date()
     return (asof - added).days / 365.25
+
+
+# Nasdaq publishes ICB classifications; retain the original subsector and use
+# broad GICS-compatible sectors only for the existing sector fallback ladder.
+ICB_SECTORS = {
+    "Technology": "Information Technology", "Telecommunications": "Communication Services",
+    "Consumer Discretionary": "Consumer Discretionary", "Consumer Staples": "Consumer Staples",
+    "Health Care": "Health Care", "Industrials": "Industrials", "Basic Materials": "Materials",
+    "Energy": "Energy", "Utilities": "Utilities", "Financials": "Financials", "Real Estate": "Real Estate",
+}
+
+
+def normalize_nasdaq(table, sec_tickers, sp500):
+    table = table.rename(columns={c: str(c).split("[")[0].strip() for c in table.columns})
+    table = table.rename(columns={"Ticker": "symbol", "Company": "name", "ICB Industry": "sector", "ICB Subsector": "sub_industry"}).copy()
+    table["symbol"] = table.symbol.str.strip().str.replace(".", "-", regex=False)
+    table["sector"] = table.sector.map(ICB_SECTORS).fillna("Unknown")
+    ciks = {r["ticker"].replace(".", "-"): r["cik_str"] for r in sec_tickers.values()}
+    table["cik"] = table.symbol.map(ciks)
+    known = sp500.set_index("symbol")
+    for col in ("cik", "sector", "sub_industry"):
+        table[col] = table.symbol.map(known[col]).combine_first(table[col])
+    # S&P membership dates are not Nasdaq membership dates. Never borrow them.
+    table["date_added"] = pd.NaT
+    table["sub_industry_norm"] = table.sub_industry.map(_norm_name)
+    table["fetched_at"] = dt.date.today()
+    missing = table.loc[table.cik.isna(), "symbol"].tolist()
+    if missing:
+        raise ValueError(f"Nasdaq constituents missing SEC identifiers: {', '.join(missing)}")
+    table["cik"] = table.cik.astype(int)
+    return table
+
+
+def fetch_universe(universe="sp500", refresh=False):
+    if universe == "sp500":
+        return fetch_constituents(refresh=refresh)
+    if universe != "nasdaq100":
+        raise ValueError(f"Unknown universe: {universe}")
+    path = config.DERIVED / "universe_nasdaq100.csv"
+    if not refresh and path.exists() and time.time() - path.stat().st_mtime < 7 * 86400:
+        cached = pd.read_csv(path)
+        if len(cached) >= 90:
+            return cached
+    response = requests.get("https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies",
+                            headers=config.SEC_HEADERS, timeout=30)
+    response.raise_for_status()
+    tables = pd.read_html(io.StringIO(response.text), flavor="lxml")
+    table = next(t for t in tables if "Ticker" in t.columns and "Company" in t.columns)
+    response = requests.get("https://www.sec.gov/files/company_tickers.json", headers=config.SEC_HEADERS, timeout=30)
+    response.raise_for_status()
+    table = normalize_nasdaq(table, response.json(), fetch_constituents(refresh=refresh))
+    if len(table) < 90 or table.symbol.duplicated().any():
+        raise ValueError("Incomplete or duplicate Nasdaq-100 membership data")
+    history_path = config.DERIVED / "membership_history_nasdaq100.csv"
+    history = table.copy()
+    if history_path.exists():
+        old = pd.read_csv(history_path)
+        history = pd.concat([old[old.fetched_at.astype(str) != str(dt.date.today())], history], ignore_index=True)
+    history.to_csv(history_path, index=False)
+    table.to_csv(path, index=False)
+    return table

@@ -89,3 +89,18 @@ than z when a bubble tail inflates the window's standard deviation (owner refine
 | 2026-09-14 | owner decision (session-configurable zone view) | The Ideas hunt-zone thresholds are adjustable in the UI (sidebar: quality floor, max residual, min holdability ROIC, max EV/FCF), defaulting to the scan's saved rule; overrides recompute the orange zone, cards, table and map rectangle live and are session-only — the scanner, its artifacts and the frozen gates are unchanged. The inspector now also lists unscored names (marked `· unscored`, e.g. ORCL); unscored selections have no map position and show their coverage/gate reasons as a badge instead. Scored non-zone selections keep the amber star on the map |
 
 | 2026-09-14 | Research display scores and direct hunt-zone editing | User requested explanations/scores for ORCL and other unscored names. Canonical scanner scores, the 80% coverage gate, peer populations and eligibility remain unchanged. Separate `display_*_score` columns preserve known scan scores and add explicitly labeled research estimates: quality uses the existing absolute formula with at least 70% core category weight plus profitability and observed stability; cheapness needs at least 60% available component weight, renormalized, retaining existing peer ranks where available and using the full research universe only for missing ones. No missing value is filled as neutral; inadequate evidence remains unavailable with reasons. Dragging hunt-zone lines updates only session thresholds, synchronized with sliders and reset. |
+
+2026-09-14 — Added independent S&P 500 and Nasdaq-100 scans and a discovery-only
+universe selector. Manual NYSE/Nasdaq company search is index-independent and stores
+on-demand evidence separately. Nasdaq index-entry dates are unavailable: its maturity
+gate uses >=1 year of observed trading history; S&P retains >=1 year of index tenure.
+Nasdaq-only ICB subsectors use broad-sector peer fallbacks. On-demand research does not
+create single-company percentile scores or enter index shortlists; supported display
+estimates use the saved index reference pool.
+
+2026-09-14 financial review — Corrected notes-payable debt mappings (including Oracle),
+non-positive EBITDA leverage handling, reported average-share treatment, as-of price
+filtering, and fallback statement periods/currency validation. Non-positive EBITDA
+receives zero balance-quality credit. Financial version `2026-09-14.2` requires fresh
+scans; older outputs are visibly identified. Added a cash reconciliation and period-end
+financial table. Full findings and remaining priorities: `../reviews/2026-09-14-full-review.md`.

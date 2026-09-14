@@ -117,3 +117,14 @@ def brief(row):
     else:
         concern = "Check the earnings date and option liquidity before choosing an entry."
     return {"Business strength": strength, "Price attractiveness": price, "Main concern": concern}
+
+
+def quote_is_stale(fetched, now=None):
+    try:
+        timestamp = dt.datetime.fromisoformat(fetched)
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=dt.timezone.utc)
+        age = ((now or dt.datetime.now(dt.timezone.utc)) - timestamp).total_seconds()
+        return age < -60 or age > 15 * 60
+    except (TypeError, ValueError):
+        return True

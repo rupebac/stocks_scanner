@@ -111,3 +111,6 @@ MVP_SCORE_INPUTS = [
     "roic", "fcf_margin", "gm", "roic_years", "fcf_pos_years",
     "fcf_ni", "nd_ebitda", "ev_ebit", "ev_fcf_self_pct", "fcf_yield",
 ]
+
+# Bump when financial extraction/formulas change; saved scans disclose older math.
+FINANCIAL_VERSION = "2026-09-14.2"

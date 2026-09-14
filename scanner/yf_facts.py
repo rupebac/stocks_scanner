@@ -14,6 +14,7 @@ SEC stays the single primary source; this only runs when SEC assembly fails.
 from __future__ import annotations
 
 import datetime as dt
+import math
 
 import pandas as pd
 import yfinance as yf
@@ -33,7 +34,7 @@ _DURATIONS = {
     "WeightedAverageNumberOfSharesOutstandingBasic": ["Basic Average Shares", "BasicAverageShares"],
 }
 _INSTANTS = {
-    "CashAndCashEquivalentsAtCarryingValue": ["Cash And Cash Equivalents", "CashAndCashEquivalents", "Cash Cash Equivalents And Short Term Investments"],
+    "CashAndCashEquivalentsAtCarryingValue": ["Cash And Cash Equivalents", "CashAndCashEquivalents"],
     "ShortTermInvestments": ["Other Short Term Investments", "OtherShortTermInvestments"],
     "DebtCurrent": ["Current Debt", "CurrentDebt"],
     "LongTermDebtNoncurrent": ["Long Term Debt", "LongTermDebt"],
@@ -47,7 +48,7 @@ _INSTANTS = {
 _SIGN_FLIP = {"PaymentsToAcquirePropertyPlantAndEquipment"}  # yf reports outflows negative
 
 
-def _rows_from_stmt(stmt: pd.DataFrame | None, mapping: dict, kind: str, lag_days: int) -> dict[str, list[dict]]:
+def _rows_from_stmt(stmt: pd.DataFrame | None, mapping: dict, kind: str, lag_days: int, *, annual=False) -> dict[str, list[dict]]:
     """Map a yfinance statement (rows=fact names, cols=period ends) into
     companyfacts-style unit rows per tag."""
     out: dict[str, list[dict]] = {}
@@ -65,7 +66,7 @@ def _rows_from_stmt(stmt: pd.DataFrame | None, mapping: dict, kind: str, lag_day
                 v = float(row[col])
             except (TypeError, ValueError):
                 continue
-            if v != v:  # NaN
+            if not math.isfinite(v):
                 continue
             pairs.append((pd.to_datetime(col).date(), v))
         pairs.sort()
@@ -74,10 +75,9 @@ def _rows_from_stmt(stmt: pd.DataFrame | None, mapping: dict, kind: str, lag_day
             if tag in _SIGN_FLIP:
                 v = -v
             if kind == "duration":
-                span = (end - pairs[i - 1][0]).days if i > 0 else 91
-                if span < 60:  # overlapping/TTM columns in yf data
-                    continue
-                start = end - dt.timedelta(days=span)
+                # Missing columns do not turn a quarter into a year; the first
+                # annual column is also annual, even without a preceding column.
+                start = (pd.Timestamp(end) - pd.DateOffset(months=12 if annual else 3) + pd.Timedelta(days=1)).date()
                 rows.append({"start": start.isoformat(), "end": end.isoformat(),
                              "val": v, "accn": "yf", "fy": end.year, "fp": "Q",
                              "form": "10-Q", "filed": (end + dt.timedelta(days=lag_days)).isoformat()})
@@ -95,11 +95,14 @@ def facts_from_yfinance(ticker: str) -> dict | None:
     statements don't cover the essentials (revenue + cfo + capex)."""
     try:
         tk = yf.Ticker(ticker)
+        info = tk.get_info()
+        if info.get("financialCurrency") != "USD" or info.get("currency") != "USD":
+            return None  # No validated FX/ADR normalization: never relabel foreign currency as USD.
         # this yfinance generation: quarterly_* properties + unprefixed annual ones
         q_dur = _rows_from_stmt(tk.quarterly_income_stmt, _DURATIONS, "duration", 30)
         q_dur.update(_rows_from_stmt(tk.quarterly_cash_flow, _DURATIONS, "duration", 30))
-        a_dur = _rows_from_stmt(tk.income_stmt, _DURATIONS, "duration", 60)
-        a_dur.update(_rows_from_stmt(tk.cash_flow, _DURATIONS, "duration", 60))
+        a_dur = _rows_from_stmt(tk.income_stmt, _DURATIONS, "duration", 60, annual=True)
+        a_dur.update(_rows_from_stmt(tk.cash_flow, _DURATIONS, "duration", 60, annual=True))
         q_ins = _rows_from_stmt(tk.quarterly_balance_sheet, _INSTANTS, "instant", 45)
         a_ins = _rows_from_stmt(tk.balance_sheet, _INSTANTS, "instant", 60)
     except Exception:
@@ -121,7 +124,8 @@ def facts_from_yfinance(ticker: str) -> dict | None:
 
     us_gaap: dict = {}
     for tag, rows in durations.items():
-        us_gaap[tag] = {"label": tag, "units": {"USD": rows}}
+        unit = "shares" if "SharesOutstanding" in tag else "USD"
+        us_gaap[tag] = {"label": tag, "units": {unit: rows}}
     for tag, rows in instants.items():
         us_gaap.setdefault(tag, {"label": tag, "units": {}})["units"]["USD"] = rows
 

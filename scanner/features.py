@@ -55,7 +55,9 @@ def _ttm_timeline(facts: dict, asof: dt.date) -> pd.DataFrame:
     staleness checks) + derived fcf / fcf_adj / ebitda."""
     events: dict[dt.date, dict[str, list[tuple[dt.date, float]]]] = {}
     for f in _FLOW_FIELDS:
-        q = quarters_all(durations_all(facts, f))
+        raw = durations_all(facts, f)
+        # Share averages are levels, not additive flows or cumulative YTD cash.
+        q = raw.rename(columns={"val": "value"}) if f.startswith("shares_") else quarters_all(raw)
         if q.empty:
             continue
         q = q[q["filed"] <= asof]
@@ -89,7 +91,10 @@ def _ttm_timeline(facts: dict, asof: dt.date) -> pd.DataFrame:
                 last_k = e
             active[f] = kept
             ends = sorted(active[f])
-            if len(ends) >= 4:
+            if f.startswith("shares_") and ends:
+                row[f] = active[f][ends[-1]]
+                row["qend_" + f] = pd.Timestamp(ends[-1])
+            elif len(ends) >= 4:
                 last4 = ends[-4:]
                 if (last4[-1] - last4[0]).days <= 300:  # 4 adjacent quarters span <= ~276d
                     row[f] = sum(active[f][e] for e in last4)
@@ -278,7 +283,7 @@ def _ic_at(eq, stack, fy_end) -> float | None:
 def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
                    fallback_shares: float | None = None) -> dict | None:
     """Weekly frame: [week, close] for this ticker (6y). Returns the metric row or None."""
-    px = weekly.sort_values("week").reset_index(drop=True)
+    px = weekly.loc[(pd.to_datetime(weekly.week) <= pd.Timestamp(asof)) & pd.to_numeric(weekly.close, errors="coerce").gt(0)].sort_values("week").reset_index(drop=True)
     if len(px) < 60:
         return None
     tl = _ttm_timeline(facts, asof)
@@ -377,7 +382,7 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     ic_now = None
     if equity is not None:
         ic_now = stack_now + equity  # see _ic_at identity
-    roic_ttm = M.safe_div(nopat_t, ic_now) if nopat_t and ic_now and ic_now > 0 else None
+    roic_ttm = M.safe_div(nopat_t, ic_now) if nopat_t is not None and ic_now is not None and ic_now > 0 else None
 
     ev_ebit = M.safe_div(ev_now, ebit) if ebit and ebit > 0 else None
     ev_fcf = M.safe_div(ev_now, fcf_adj_t) if fcf_adj_t and fcf_adj_t > 0 else None
@@ -389,7 +394,7 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     # net debt excludes preferred and minority interest (doc 03 §3.5 / doc 06 §4):
     # nd_ebitda = (debt + leases − cash − sti) / EBITDA, not the whole EV stack
     nd_ebitda = (
-        M.safe_div(stack_now - pref - mi, ebitda_t) if ebitda_t and ebitda_t != 0 else None
+        M.safe_div(stack_now - pref - mi, ebitda_t) if ebitda_t is not None and ebitda_t > 0 else None
     )
 
     # --- 5y/10y averages, medians, path, CAGR (doc 03 / 05 §2.1 v0.5.8) ----------
@@ -474,6 +479,8 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
 
     # --- data-quality flags (doc 08 §6, minimal set: flag, never silently poison) --
     dq = []
+    if ebitda_t is not None and ebitda_t <= 0:
+        dq.append("ebitda_nonpositive")
     if shares_was_proxy:
         dq.append("shares_was_proxy")
     if sbc_unreported and fcf_adj_t is not None:
@@ -498,6 +505,8 @@ def build_features(facts: dict, weekly: pd.DataFrame, asof: dt.date,
     out.update({
         "price": price_now, "shares_cover": shares_now, "mktcap": mktcap,
         "ev": ev_now, "ic": ic_now, "stack": stack_now,
+        "cfo_ttm": cfo, "capex_ttm": capex, "sbc_ttm": sbc, "dna_ttm": dna,
+        "net_debt": stack_now - pref - mi,
         "revenue_ttm": rev, "ebit_ttm": ebit, "fcf_ttm": fcf_t, "fcf_adj_ttm": fcf_adj_t,
         "fcf_owner_ttm": fcf_owner_t,
         "ebitda_ttm": ebitda_t, "ni_ttm": ni, "nopat_ttm": nopat_t, "t_eff": t_eff,

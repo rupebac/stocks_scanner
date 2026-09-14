@@ -19,8 +19,11 @@ flags, put overlay, scan artifacts, tests, Streamlit UI.
   discount versus premium return. Cards explain why a stock surfaced and what
   to investigate, with on-demand put previews. Every stock remains searchable.
 - **Saved ideas:** persistent buy-price ceilings and ownership theses, with put
-  comparisons against your prices. Ideas live in `data/user/watchlist.sqlite3`,
-  survive scan refreshes, and are shared by users of this dashboard instance.
+  comparisons against your prices. Ideas live in this browser profile's
+  `localStorage`, survive scan refreshes, and are separate across browser profiles
+  and devices. Use the export button to keep a backup: clearing site data removes
+  them. The old shared SQLite file is preserved but is no longer read or imported
+  automatically. Company research and scan data remain shared on the server.
 - **Company:** a business/valuation/concern brief and a focused put/call income calculator. New
   charts read cached SEC filings for revenue, operating profit, operating cash,
   capital spending, debt, cash reserves, and stock compensation. They respect the
@@ -167,3 +170,45 @@ docs/specs/         the frozen specifications (01–08 + decision log)
   counts and CAGR gates (Q8).
 - Thresholds live in `scanner/config.py` with spec references; changing one is a
   methodology change — log it in `docs/specs/OPEN_QUESTIONS.md`.
+
+### Discovery universes and company search
+
+Discovery supports **S&P 500** and **Nasdaq-100**. The universe selector changes the
+map, shortlist, cards, sectors and comparisons; manual company search stays independent.
+NYSE, Nasdaq and NYSE American company listings come from the SEC exchange directory
+(cached for seven days). Searching a company outside the saved scans loads financials
+and prices on demand into `data/company_research/<ticker>/`, without changing either
+index scan. On-demand scores are labeled research estimates using available evidence
+and saved index peers; unsupported sectors and insufficient data do not receive invented
+scores. This is company search, not a comprehensive ETF or derivatives directory.
+
+Run `python -m scanner.scan --universe nasdaq100 --skip-options` or select the universe
+on **Data & refresh**. S&P scans retain the legacy date directory; Nasdaq scans use
+`data/scans/YYYY-MM-DD_nasdaq100/`. Each index has its own scoring cross-section, so
+relative valuations can differ across indices. The Nasdaq list comes from Wikipedia's
+[List of NASDAQ-100 companies](https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies),
+with SEC identifiers and separate membership history. Non-overlapping ICB industries
+use the existing broad-sector peer fallback rather than invented GICS classifications.
+Nasdaq entry dates remain unknown; its maturity gate requires at least one year of
+observed price history instead of S&P index tenure. The existing size, liquidity,
+fundamentals and excluded-sector rules remain in force.
+
+**Data & refresh** defaults to **Both indices + researched companies**. You can also
+refresh either index, only researched/saved companies, or **All NYSE & Nasdaq companies**.
+The full-directory job can take many hours and resumes companies with usable snapshots
+completed today. Each additional company gets persisted research scores against saved
+index peers, with missing evidence and unsupported sectors labeled explicitly. Failures
+are isolated per company and included in the completion report. Refreshes leave option
+chains on demand. CLI: `python -m scanner.refresh --scope tracked` (or `all`, `researched`,
+`sp500`, `nasdaq100`); `--use-cache` avoids forcing source-cache downloads.
+
+Discovery filters combine index, sector, minimum/maximum market capitalization (USD
+billions), and minimum put open interest/trading volume. Zero disables a minimum;
+maximum market cap zero means unlimited. **Check options activity** fetches one expiry
+closest to 30 days within the next 90 days, considering strikes from 80% to 100% of
+that chain's share price. Both activity minimums must hold at the same strike, not
+across unrelated contracts. Checks last 15 minutes in the current session. Active
+options filters exclude unchecked, stale and unavailable evidence; no options calls
+are made just by adjusting filters. These are activity screens, not guarantees of
+execution or tight spreads. Filters update all discovery views without recalculating
+peer scores or restricting manual company search.

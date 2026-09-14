@@ -20,14 +20,17 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from scanner.universe_selection import UNIVERSES, available_scans
+from scanner.refresh import SCOPES
+
 JOB_DIR = ROOT / "data" / "jobs"
 PY = ROOT / ".venv" / "bin" / "python"
 
 
 SOURCES = [
     # (source, used for, cache & freshness)
-    ("Wikipedia — S&P 500 constituents",
-     "Universe: symbols, CIKs, GICS sector/sub-industry, date added (→ the ≥1y index-tenure gate)",
+    ("Wikipedia — S&P 500 / Nasdaq-100 constituents",
+     "Index membership and industry classifications; SEC ticker directory supplies Nasdaq CIKs. Nasdaq membership dates are unknown.",
      "data/derived/universe.csv · 7-day TTL · re-downloaded by the refresh button"),
     ("GICS reference map (local file)",
      "Sub-industry → industry group, defining the peer ladder behind every percentile and the residual fit",
@@ -70,14 +73,27 @@ def _sources_panel():
     )
 
 
-def render():
+def render(universe="tracked"):
     st.header("Keep your research up to date.")
-    st.caption("Refresh company financials, share prices and the stock shortlist. A full update can take 20–40 minutes.")
-    _overview()
+    st.caption("Update financials, prices, business-quality scores and cheapness scores.")
+    if universe in UNIVERSES:
+        _overview(universe)
+    else:
+        cols = st.columns(3)
+        for col, (key, label) in zip(cols, UNIVERSES.items()):
+            scans = available_scans(ROOT / "data/scans", key)
+            col.metric(label, scans[-1].name[:10] if scans else "Not scanned")
+        count = sum(1 for p in (ROOT / "data/company_research").glob("*/config.json"))
+        cols[2].metric("Companies researched individually", count)
+    if universe == "all":
+        st.info("Covers both indices and the full NYSE/Nasdaq company directory. This can take many hours. Progress is saved per company; restarting reuses companies completed today.")
+    elif universe == "tracked":
+        st.caption("Refreshes both indices, plus companies already loaded for research. Personal saved lists stay in each browser. New searches also receive scores on demand.")
+    st.caption("Scores require sufficient financial evidence. Financials, utilities and real estate still need dedicated scoring models.")
     with st.container(border=True):
         st.subheader("Refresh the research desk")
         st.write("Download the latest available data and rebuild the scan. You can follow progress below.")
-        _run_panel()
+        _run_panel(universe)
         _job_panel()
     with st.expander("Where the numbers come from"):
         _sources_panel()
@@ -85,11 +101,11 @@ def render():
 
 # ---------------------------------------------------------------- overview ---
 @st.cache_data(ttl=300, show_spinner=False)
-def _overview_data() -> dict:
+def _overview_data(universe="sp500") -> dict:
     sec_dir = ROOT / "data" / "raw" / "sec"
     files = [p for p in sec_dir.glob("CIK*.json") if "submissions" not in p.name]
     total_mb = sum(p.stat().st_size for p in files) / 1e6
-    uni = ROOT / "data" / "derived" / "universe.csv"
+    uni = ROOT / "data" / "derived" / ("universe.csv" if universe == "sp500" else "universe_nasdaq100.csv")
     uni_age = (dt.datetime.now() - dt.datetime.fromtimestamp(uni.stat().st_mtime)).total_seconds() / 86400 if uni.exists() else None
     uni_rows = len(pd.read_csv(uni)) if uni.exists() else 0
     gs10 = ROOT / "data" / "raw" / "fred_dgs10.csv"
@@ -103,7 +119,7 @@ def _overview_data() -> dict:
     last_scan = None
     scans = ROOT / "data" / "scans"
     if scans.exists():
-        dirs = sorted((d for d in scans.iterdir() if d.is_dir()), reverse=True)
+        dirs = list(reversed(available_scans(scans, universe)))
         for d in dirs:
             try:
                 summ = json.loads((d / "summary.json").read_text())
@@ -116,8 +132,8 @@ def _overview_data() -> dict:
             "uni_rows": uni_rows, "gs10_last": gs10_last, "last_scan": last_scan}
 
 
-def _overview():
-    d = _overview_data()
+def _overview(universe="sp500"):
+    d = _overview_data(universe)
     ls = d["last_scan"]
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Company filings saved", f"{d['sec_n']}", f"{d['sec_mb']:.0f} MB")
@@ -129,31 +145,34 @@ def _overview():
 
 
 # --------------------------------------------------------------- the button ---
-def _start_scan() -> int | None:
+def _start_scan(universe="tracked", refresh=True) -> int | None:
     JOB_DIR.mkdir(parents=True, exist_ok=True)
     log = JOB_DIR / f"scan_{dt.datetime.now():%Y%m%d_%H%M%S}.log"
-    cmd = [str(PY), "-u", "-m", "scanner.scan", "--refresh-data"]  # -u: unbuffered, so the log panel streams
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=open(log, "w"),
-                            stderr=subprocess.STDOUT)
+    if universe not in SCOPES:
+        raise ValueError("Unknown stock universe")
+    result_file = log.with_suffix(".result.json")
+    cmd = [str(PY), "-u", "-m", "scanner.refresh", "--scope", universe, "--result", str(result_file)]
+    if not refresh:
+        cmd.append("--use-cache")
+    with log.open("w") as output:
+        proc = subprocess.Popen(cmd, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
     (JOB_DIR / "latest.json").write_text(json.dumps(
-        {"pid": proc.pid, "log": str(log),
+        {"pid": proc.pid, "log": str(log), "result": str(result_file),
          "started": dt.datetime.now().isoformat(timespec="seconds"),
          "cmd": " ".join(cmd)}))
     return proc.pid
 
 
-def _run_panel():
+def _run_panel(universe="tracked"):
     j = _job_state()
     running = bool(j and j.get("running"))
     if st.button(
-        "Refresh data & rebuild shortlist",
+        "Refresh data & scores",
         type="primary",
         disabled=running,
-        help=("Runs: python -m scanner.scan --refresh-data — forces fresh universe, "
-              "DGS10 and all SEC companyfacts, then a full scan with live prices "
-              "and options."),
+        help=f"Update {SCOPES[universe]}. Option chains are fetched when you open them.",
     ):
-        pid = _start_scan()
+        pid = _start_scan(universe)
         st.toast(f"full refresh started (pid {pid})", icon="🚀")
         st.rerun()
     if running:
@@ -174,6 +193,12 @@ def _job_state() -> dict | None:
         j["running"] = True
     except OSError:
         j["running"] = False
+    if j.get("result") and Path(j["result"]).exists():
+        try:
+            j["outcome"] = json.loads(Path(j["result"]).read_text())
+            j["running"] = False
+        except (OSError, ValueError):
+            pass
     try:
         j["tail"] = Path(j["log"]).read_text(errors="replace").splitlines()[-25:]
     except Exception:
@@ -196,7 +221,12 @@ def _job_panel_body():
     if j is None:
         st.info("No refresh has been launched from this page yet.")
         return
-    status = "🟢 running" if j.get("running") else "⚪ finished"
+    status = "🟢 running" if j.get("running") else j.get("outcome", {}).get("status", "stopped; check the log")
+    if j.get("outcome"):
+        result = j["outcome"]
+        st.caption(f"Individual companies refreshed: {result.get('researched_companies', 0)} · quality scores: {result.get('quality_scores', 0)} · cheapness scores: {result.get('cheapness_scores', 0)}")
+        if result.get("failures") or result.get("error"):
+            st.warning("Some updates failed. See the log for affected companies.")
     st.caption(f"{status} · started {j.get('started')} · pid {j.get('pid')}")
     if j.get("tail"):
         st.code("\n".join(j["tail"]), language=None)

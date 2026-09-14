@@ -88,6 +88,8 @@ def _col(df: pd.DataFrame, name: str) -> pd.Series:
 
 def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
     df = assign_peer_set(df.copy())
+    if "ebitda_ttm" in df and "nd_ebitda" in df:
+        df.loc[pd.to_numeric(df.ebitda_ttm, errors="coerce").le(0), "nd_ebitda"] = np.nan
     for out, (src, hb) in _PCT_COLS.items():
         if src in df.columns:
             df[out] = _group_pct(df, src, hb)
@@ -118,6 +120,7 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
         _col(df, "fcf_cagr5").map(cagr_score),
     ], axis=1).mean(axis=1, skipna=True)
     balance = _col(df, "nd_ebitda").map(nd_ebitda_score)
+    balance.loc[_col(df, "ebitda_ttm").le(0)] = 0.
 
     gm_s = _col(df, "gm_stability").map(
         lambda v: cov_to_score(v, zero_at=config.QUALITY_GM_COV_ZERO))
