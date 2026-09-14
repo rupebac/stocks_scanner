@@ -86,16 +86,15 @@ def _metric(at, label: str):
 def test_default_side_is_puts_and_block_renders(monkeypatch):
     at = _run_app(monkeypatch)
     text = _all_text(at)
-    assert "Sell this put:" in text, "puts must be the landing side"
     assert "not the put you sell first" not in text
     k = _selected_strike(at)
     assert k is not None, "selected put header not found"
-    # breakeven / margin needed use the same words as the sentence
+    # the decision row is the primary block: breakeven / margin needed first
     be, margin = _metric(at, "Breakeven"), _metric(at, "Margin needed")
     assert be is not None and margin is not None
     assert be.value == f"${k - _bid(PUT_PREM, k):,.2f}"
     assert margin.value == f"${k * 100:,.0f}"
-    # the four-number row is the primary block; no duplicate 'You own it at'
+    # no duplicate 'You own it at'
     assert _metric(at, "Yield if you own it there") is not None
     assert _metric(at, "Paid to wait") is not None
     assert _metric(at, "You own it at") is None, "duplicate of Breakeven must not exist"
@@ -133,8 +132,8 @@ def test_calls_side_shows_no_csp_block(monkeypatch):
     at.run()
     text = _all_text(at)
     assert "not the put you sell first" in text
-    assert "Sell this put:" not in text
     assert _metric(at, "Margin needed") is None
+    assert _metric(at, "Yield if you own it there") is None
 
 
 def test_highlights_and_funnel_unchanged(monkeypatch):
@@ -142,4 +141,4 @@ def test_highlights_and_funnel_unchanged(monkeypatch):
     # the page still leads with the scan's own counts; options never touch them
     assert _metric(at, "Names in the highlights") is not None
     assert _metric(at, "Data as of") is not None
-    assert "Sell this put:" in _all_text(at)
+    assert _metric(at, "Margin needed") is not None

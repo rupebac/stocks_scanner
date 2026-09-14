@@ -348,10 +348,6 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
         # ---- the decision block: margin / breakeven / wait / next step ------------
         basis = MD.breakeven_price(strike_f, prem)
         margin = MD.margin_needed(strike_f)
-        st.markdown(
-            f"Sell this put: **margin needed \\${margin:,.0f}**. If assigned, "
-            f"**breakeven \\${_fmt(basis, '{:,.2f}')}** — that is your cost for the shares."
-        )
         w1, w2, w3, w4 = st.columns(4)
         w1.metric(
             "Breakeven", _fmt(basis, "${:,.2f}"),
