@@ -424,8 +424,60 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
     else:
         st.markdown(
             "This is a **call**, not the put you sell first. The wheel starts with the "
-            "put below the current price; the numbers in 'More on this quote' describe "
-            "this call if you already own the shares.")
+            "put below the current price; the numbers in the second row describe this "
+            "call if you already own the shares.")
+
+    # second row, no frame: the power numbers for this exact quote
+    cash = stats.get("cash_pct")
+    ann = stats.get("annualized")
+    ann_vs = stats.get("ann_vs_rate")
+    ipr = stats.get("income_per_risk")
+    cushion = stats.get("cushion_pct")
+    odds = stats.get("assignment_risk")
+    odds_low = odds is not None and odds < 0.01   # delta under 1%: ratio is noise
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric(
+        "Paid", _fmt(cash, "{:.2%}"),
+        help="The premium you collect, as a share of the cash you post (the strike). "
+             "2.9% means $2.90 per $100 locked up. Compare this across stocks at the "
+             "same expiry — a thin number means the put barely pays you to wait.")
+    k2.metric(
+        "Paid / odds",
+        (f"> {cash * 100:.2f}" if odds_low and cash is not None
+         else "—" if odds_low else _fmt(ipr, "{:.2f}")),
+        help="Odds = the number next to this one ('Odds you own it') — that's the "
+             "put's delta, used as the chance you'll be assigned. Paid / odds is "
+             "how much you collect per unit of that chance. Same 3% credit is more "
+             "attractive when assignment is unlikely (small delta) than when it's a "
+             "coin-flip. Delta is a model guess, not a forecast. When the odds are "
+             "under 1%, '> X' is the floor — at least X per 1% of assignment "
+             "chance — because the exact ratio divides by an odds that tiny "
+             "(usually a bad vol print) and explodes into meaningless millions.")
+    k3.metric(
+        "Price to breakeven",
+        _fmt(cushion, "{:.1%}"),
+        help=("How far today's share price is from your breakeven. For a put, "
+              "breakeven is strike minus the premium you kept — this is that gap, "
+              "as a percent of today's price. The dollar figure is 'Breakeven'. "
+              "Bigger percent = more cushion before the put is a worse buy than buying now."
+              if side == "Puts" else
+              "How far today's share price is from this call's breakeven (strike plus "
+              "premium), as a percent. The dollar figure is 'Breakeven'."))
+    k4.metric(
+        "Odds you own it", "< 1%" if odds_low else _fmt(odds, "{:.0%}"),
+        help="The put's delta, read as a percent: roughly the chance this put finishes "
+             "in the money and you have to buy the shares. That's the 'odds' in "
+             "Paid / odds. A model guess from listed implied vol — not a forecast. "
+             "Shown as '< 1%' below 1%, because rounding a sub-1% chance to '0%' "
+             "would read as literally impossible.")
+    if ann is not None:
+        year_bit = f"{_fmt(ann, '{:.0%}')}/year · {_fmt(ann_vs, '{:.1f}')}× the 10Y."
+    else:
+        year_bit = "Too short to quote as a yearly rate."
+    st.caption(
+        "Paid and Paid/odds compare names at this expiry. "
+        "The other two describe this put. " + year_bit
+    )
 
     sq = _quote_from_side(puts, spot, target_pct, expiry, today)
     stand = f"Standing put (nearest {target_pct:.0%} of spot): {_put_one_liner(sq)}"
@@ -474,57 +526,6 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
     )
     st.caption("Click a row to inspect it. Orange = already in the money. "
                "The suggested row is preselected.")
-    with st.expander("More on this quote"):
-        cash = stats.get("cash_pct")
-        ann = stats.get("annualized")
-        ann_vs = stats.get("ann_vs_rate")
-        ipr = stats.get("income_per_risk")
-        cushion = stats.get("cushion_pct")
-        odds = stats.get("assignment_risk")
-        odds_low = odds is not None and odds < 0.01   # delta under 1%: ratio is noise
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric(
-            "Paid", _fmt(cash, "{:.2%}"),
-            help="The premium you collect, as a share of the cash you post (the strike). "
-                 "2.9% means $2.90 per $100 locked up. Compare this across stocks at the "
-                 "same expiry — a thin number means the put barely pays you to wait.")
-        k2.metric(
-            "Paid / odds",
-            (f"> {cash * 100:.2f}" if odds_low and cash is not None
-             else "—" if odds_low else _fmt(ipr, "{:.2f}")),
-            help="Odds = the number next to this one ('Odds you own it') — that's the "
-                 "put's delta, used as the chance you'll be assigned. Paid / odds is "
-                 "how much you collect per unit of that chance. Same 3% credit is more "
-                 "attractive when assignment is unlikely (small delta) than when it's a "
-                 "coin-flip. Delta is a model guess, not a forecast. When the odds are "
-                 "under 1%, '> X' is the floor — at least X per 1% of assignment "
-                 "chance — because the exact ratio divides by an odds that tiny "
-                 "(usually a bad vol print) and explodes into meaningless millions.")
-        k3.metric(
-            "Price to breakeven",
-            _fmt(cushion, "{:.1%}"),
-            help=("How far today's share price is from your breakeven. For a put, "
-                  "breakeven is strike minus the premium you kept — this is that gap, "
-                  "as a percent of today's price. The dollar figure is 'Breakeven'. "
-                  "Bigger percent = more cushion before the put is a worse buy than buying now."
-                  if side == "Puts" else
-                  "How far today's share price is from this call's breakeven (strike plus "
-                  "premium), as a percent. The dollar figure is 'Breakeven'."))
-        k4.metric(
-            "Odds you own it", "< 1%" if odds_low else _fmt(odds, "{:.0%}"),
-            help="The put's delta, read as a percent: roughly the chance this put finishes "
-                 "in the money and you have to buy the shares. That's the 'odds' in "
-                 "Paid / odds. A model guess from listed implied vol — not a forecast. "
-                 "Shown as '< 1%' below 1%, because rounding a sub-1% chance to '0%' "
-                 "would read as literally impossible.")
-        if ann is not None:
-            year_bit = f"{_fmt(ann, '{:.0%}')}/year · {_fmt(ann_vs, '{:.1f}')}× the 10Y."
-        else:
-            year_bit = "Too short to quote as a yearly rate."
-        st.caption(
-            "Paid and Paid/odds compare names at this expiry. "
-            "The other two describe this put. " + year_bit
-        )
     with st.expander("Greeks"):
         g1, g2, g3, g4 = st.columns(4)
         g1.metric("Delta", _fmt(stats.get("delta"), "{:.2f}"))
