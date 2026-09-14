@@ -217,6 +217,10 @@ def run_scan(
     feat_rows = [r for r in rows if any(k not in base_cols for k in r)]
     df = pd.DataFrame(feat_rows)
     if df.empty:
+        from collections import Counter
+        print(f"[scan] feature failures ({len(failures)}):")
+        for why, n in Counter(why for _, why in failures).most_common(8):
+            print(f"[scan]   {n:4d}  {why}")
         raise SystemExit("no stocks produced features")
 
     # 4. gates, scores, flags
