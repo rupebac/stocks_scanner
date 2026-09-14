@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root { --ink:#292b30; --muted:#737780; --accent:#3569b0; }
+html, body, [class*="css"], .stApp { font-family:'DM Sans',sans-serif; color:var(--ink); }
+.stApp { background:#ffffff; }
+[data-testid="stHeader"] { background:rgba(255,255,255,.95); }
+[data-testid="stMainBlockContainer"] { max-width:1400px; padding:4.5rem 3rem 5rem; }
+[data-testid="stSidebar"] { background:#fafbfc; border-right:1px solid #e1e2e5; }
+[data-testid="stSidebarUserContent"] { padding:2rem 1.4rem; }
+h1,h2,h3 { font-family:'Manrope',sans-serif !important; color:var(--ink); letter-spacing:-.045em; }
+h2 { font-size:2rem !important; font-weight:700 !important; padding:.25rem 0 .6rem !important; }
+h3 { font-size:1.35rem !important; }
+p { line-height:1.6; }
+.eyebrow { color:var(--accent); font-size:.65rem; letter-spacing:.13em; font-weight:700; margin-top:.7rem; }
+.muted,.company-name { color:var(--muted); font-size:.9rem; }
+.brand { font-family:'Manrope',sans-serif; font-size:2.7rem; font-weight:800; letter-spacing:-.06em; padding-bottom:2.6rem; }
+.brand span { display:block; font-family:'DM Sans',sans-serif; font-size:.57rem; letter-spacing:.12em; color:var(--muted); margin-top:.5rem; }
+.sidebar-note { font-size:.78rem; color:#747780; border-top:1px solid #dedfe3; padding-top:1.6rem; margin:3rem 0 2rem; line-height:1.6; }
+.sidebar-note b { color:var(--ink); }
+.topline { font-size:.65rem; font-weight:700; letter-spacing:.12em; padding-top:.4rem; }
+.topline span { color:#858892; }
+[data-testid="stVerticalBlockBorderWrapper"] > div { border-radius:16px !important; }
+[data-testid="stVerticalBlockBorderWrapper"] { background:white; border-radius:16px; }
+[data-testid="stMetricLabel"] { color:#737780; font-size:.75rem; }
+[data-testid="stMetricValue"] { font-family:'Manrope',sans-serif; font-size:1.65rem; font-weight:600; letter-spacing:-.04em; }
+.stButton button { border-radius:9px; border:1px solid #dcdee2; color:var(--accent); background:#ffffff; font-size:.85rem; }
+.stButton button:hover { border-color:var(--accent); background:#f0f5fc; color:var(--accent); }
+button:focus-visible, input:focus-visible { outline:2px solid #3569b0 !important; outline-offset:3px; }
+.card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:.8rem; }
+.stock-avatar { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:11px; background:#edf3fc; color:var(--accent); font-weight:700; font-size:.8rem; }
+.stock-price { float:right; font-size:1rem; letter-spacing:-.02em; font-weight:500; }
+.company-name { min-height:2.8rem; }
+[data-testid="stExpander"] { background:rgba(255,255,255,.65); border-radius:12px; }
+[data-testid="stMainMenuItem-print"],[data-testid="stMainMenuItem-recordScreencast"] { display:none; }
+@media (max-width:800px) { [data-testid="stMainBlockContainer"] { padding:4.5rem 1rem 3rem; } h2 { font-size:1.55rem !important; } [data-testid="stMetricValue"] { font-size:1.3rem; } }
+
+[data-testid="stToolbarActions"] { display:none; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap:.65rem; }
+
+[data-testid="stBaseButton-header"] { display:none; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-color:#e1e2e5; }
+
+.card-top .eyebrow { color:#287650; background:#edf7f0; padding:4px 8px; border-radius:6px; letter-spacing:.08em; }
+.card-top.growth .eyebrow { color:#9b5a1c; background:#fff3e5; }
+.card-top.research .eyebrow { color:#3569b0; background:#edf3fc; }

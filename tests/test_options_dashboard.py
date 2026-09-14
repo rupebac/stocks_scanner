@@ -42,103 +42,114 @@ def _rows(side: str) -> list[dict]:
     return out
 
 
-def _run_app(monkeypatch, sel: str = "ACN", with_calls: bool = True) -> AppTest:
-    monkeypatch.setattr(MD, "listed_expiries",
-                        lambda ticker, today: [dt.date.fromisoformat(EXPIRY)])
+def _run_app(monkeypatch, sel="ACN", with_calls=True, zero_bid=False):
+    monkeypatch.setattr(MD, "listed_expiries", lambda ticker, today, max_dte=90: [dt.date.fromisoformat(EXPIRY)])
     monkeypatch.setattr(MD, "next_earnings_date", lambda ticker, today: None)
-
     def fake_chain(ticker, expiry):
-        assert expiry.isoformat() == EXPIRY
-        calls = _rows("call") if with_calls else []
-        return {"puts": pd.DataFrame(_rows("put")),
-                "calls": pd.DataFrame(calls)}
-
+        puts = pd.DataFrame(_rows("put"))
+        if zero_bid:
+            puts["bid"] = 0.
+        return {"puts": puts, "calls": pd.DataFrame(_rows("call") if with_calls else [])}
     monkeypatch.setattr(MD, "fetch_option_chain", fake_chain)
     st.cache_data.clear()
     at = AppTest.from_file(str(APP_FILE), default_timeout=120)
     at.session_state["idea_pick"] = sel
+    at.session_state["workspace"] = "Company"
+    at.session_state["company_tab"] = "Put & call income"
     at.run()
+    assert not at.exception
     return at
 
 
-def _all_text(at) -> str:
-    parts = [m.value for m in at.markdown] + [c.value for c in at.caption]
-    return "\n".join(parts).replace("\\$", "$")
+def metric(at, label):
+    return next((m.value for m in at.metric if m.label == label), None)
 
 
-def _selected_strike(at) -> float | None:
-    for m in at.markdown:
-        v = (m.value or "")
-        if "**This put**" in v:
-            for tok in v.replace(",", "").split():
-                if tok.startswith("$") and tok[1:].replace(".", "").isdigit():
-                    return float(tok[1:])
-    return None
+def selected_strike(at):
+    return next(s.value for s in at.selectbox if s.label == "Buy at this price")
 
 
-def _metric(at, label: str):
-    for m in at.metric:
-        if m.label == label:
-            return m
-    return None
-
-
-def test_default_side_is_puts_and_block_renders(monkeypatch):
+def test_put_cash_and_income_use_bid(monkeypatch):
     at = _run_app(monkeypatch)
-    text = _all_text(at)
-    assert "not the put you sell first" not in text
-    k = _selected_strike(at)
-    assert k is not None, "selected put header not found"
-    # the decision row is the primary block: breakeven / margin needed first
-    be, margin = _metric(at, "Breakeven"), _metric(at, "Margin needed")
-    assert be is not None and margin is not None
-    assert be.value == f"${k - _bid(PUT_PREM, k):,.2f}"
-    assert margin.value == f"${k * 100:,.0f}"
-    # no duplicate 'You own it at'
-    assert _metric(at, "Yield if you own it there") is not None
-    assert _metric(at, "Paid to wait") is not None
-    assert _metric(at, "You own it at") is None, "duplicate of Breakeven must not exist"
-    # next-step line quotes the same-strike call at its bid
-    assert f"sell the **${k:,.0f} call** for **${_bid(CALL_PREM, k):,.2f}**" \
-        in text.replace(",", "")
+    k = selected_strike(at)
+    assert metric(at, "Net cost if assigned") == f"${k-_bid(PUT_PREM,k):,.2f}"
+    assert metric(at, "Cash to set aside") == f"${k*100:,.0f}"
+    assert metric(at, "Premium · 1 contract") == f"${_bid(PUT_PREM,k)*100:,.0f}"
+    assert metric(at, "Return on committed cash") == f"{_bid(PUT_PREM,k)/k:.2%}"
 
 
-def test_reselecting_a_put_row_updates_the_block(monkeypatch):
+def test_changing_entry_and_selecting_strike_updates_income(monkeypatch):
     at = _run_app(monkeypatch)
-    k1 = _selected_strike(at)
-    # moving the strike target re-seeds the suggested row — the same code path
-    # a chain-table click lands on (view → picked_i → decision block)
-    at.number_input("opt_target_ACN").set_value(90.0)
-    at.run()
-    k2 = _selected_strike(at)
-    assert k2 is not None and k2 != k1, "reselected row must be a different strike"
-    be, margin = _metric(at, "Breakeven"), _metric(at, "Margin needed")
-    assert be.value == f"${k2 - _bid(PUT_PREM, k2):,.2f}"
-    assert margin.value == f"${k2 * 100:,.0f}"
-    text = _all_text(at)
-    assert f"sell the **${k2:,.0f} call**" in text.replace(",", "")
-    # called-away keep = (strike − breakeven) + call premium, spelled out
-    assert "strike − breakeven" in text
+    k = selected_strike(at)
+    at.number_input("opt_target_ACN").set_value(90.).run()
+    assert selected_strike(at) != k
+    next(s for s in at.selectbox if s.label == "Buy at this price").select(180.).run()
+    assert not at.exception
+    assert metric(at, "Net cost if assigned") == f"${180-_bid(PUT_PREM,180):,.2f}"
 
 
-def test_missing_same_strike_call_says_just_hold(monkeypatch):
+def test_missing_call_is_honest_about_future_premium(monkeypatch):
     at = _run_app(monkeypatch, with_calls=False)
-    assert "No call at this strike — if assigned, just hold." in _all_text(at)
+    assert any("No positive same-strike" in m.value for m in at.markdown)
+    assert any("different expiration and premium" in c.value for c in at.caption)
 
 
-def test_calls_side_shows_no_csp_block(monkeypatch):
+def test_no_bid_never_uses_last_trade_as_income(monkeypatch):
+    at = _run_app(monkeypatch, zero_bid=True)
+    assert metric(at, "Premium · 1 contract") == "—"
+    assert metric(at, "Net cost if assigned") == "—"
+    assert any("No positive bid" in w.value for w in at.warning)
+
+
+def test_covered_call_uses_original_cost(monkeypatch):
     at = _run_app(monkeypatch)
-    at.session_state["opt_side_ACN"] = "Calls"
-    at.run()
-    text = _all_text(at)
-    assert "not the put you sell first" in text
-    assert _metric(at, "Margin needed") is None
-    assert _metric(at, "Yield if you own it there") is None
+    at.selectbox("side_ACN").select("Sell a covered call").run()
+    at.number_input("cost_ACN").set_value(200.).run()
+    assert not at.exception
+    k = next(s.value for s in at.selectbox if s.label == "Sell shares at this price")
+    assert metric(at, "Cash to set aside") is None
+    assert metric(at, "Shares required") == "100"
+    assert metric(at, "Share gain / loss + this premium if called away") == f"${(k-200+_bid(CALL_PREM,k))*100:,.2f}"
 
 
-def test_highlights_and_funnel_unchanged(monkeypatch):
+def test_search_unscored_company_and_return_to_discovery(monkeypatch):
     at = _run_app(monkeypatch)
-    # the page still leads with the scan's own counts; options never touch them
-    assert _metric(at, "Names in the highlights") is not None
-    assert _metric(at, "Data as of") is not None
-    assert _metric(at, "Margin needed") is not None
+    at.radio("workspace").set_value("Discover").run()
+    assert not at.exception
+    at.selectbox("company_search").select("ORCL").run()
+    assert not at.exception
+    assert at.session_state["idea_pick"] == "ORCL"
+    assert at.session_state["workspace"] == "Company"
+    at.radio("workspace").set_value("Discover").run()
+    assert not at.exception
+    assert metric(at, "Quality & value shortlist") is not None
+
+
+def test_cards_navigate_without_network(monkeypatch):
+    monkeypatch.setattr(MD, "listed_expiries", lambda *a, **k: pytest.fail("Discovery must not load options"))
+    at = AppTest.from_file(str(APP_FILE), default_timeout=120).run()
+    next(b for b in at.button if b.key and b.key.startswith("card_")).click().run()
+    assert not at.exception
+    assert at.session_state["workspace"] == "Company"
+    assert metric(at, "Reported free cash flow") is not None
+
+
+def test_income_comparison_shows_actual_bid_returns(monkeypatch):
+    at = _run_app(monkeypatch)
+    at.radio("workspace").set_value("Discover").run()
+    next(b for b in at.button if b.label == "Compare put income").click().run()
+    assert not at.exception
+    results = at.session_state["income_results"][1]
+    assert len(results) == 3
+    for r in results:
+        assert r["Return on cash"] == pytest.approx(_bid(PUT_PREM,r["Strike"])/r["Strike"])
+        assert r["Cash required"] == r["Strike"]*100
+
+
+def test_expiry_window_includes_90_days_excludes_later(monkeypatch):
+    class Ticker:
+        def __init__(self, ticker): pass
+        options = tuple((dt.date.today()+dt.timedelta(days=d)).isoformat() for d in [0,60,90,91])
+    monkeypatch.setattr(MD.yf, "Ticker", Ticker)
+    out = MD.listed_expiries("X", dt.date.today(), max_dte=90)
+    assert [(d-dt.date.today()).days for d in out] == [0,60,90]

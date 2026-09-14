@@ -71,16 +71,16 @@ def _sources_panel():
 
 
 def render():
-    st.header("Data manager")
-    st.caption(
-        "One action: throw away every cache and pull fresh data from all sources "
-        "(Wikipedia universe, FRED DGS10, SEC EDGAR, prices, options), then re-run "
-        "the full scan. A full refresh takes a while — watch the log below."
-    )
+    st.header("Keep your research up to date.")
+    st.caption("Refresh company financials, share prices and the stock shortlist. A full update can take 20–40 minutes.")
     _overview()
-    _sources_panel()
-    _run_panel()
-    _job_panel()
+    with st.container(border=True):
+        st.subheader("Refresh the research desk")
+        st.write("Download the latest available data and rebuild the scan. You can follow progress below.")
+        _run_panel()
+        _job_panel()
+    with st.expander("Where the numbers come from"):
+        _sources_panel()
 
 
 # ---------------------------------------------------------------- overview ---
@@ -120,10 +120,10 @@ def _overview():
     d = _overview_data()
     ls = d["last_scan"]
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("SEC caches", f"{d['sec_n']}", f"{d['sec_mb']:.0f} MB")
-    c2.metric("Universe", f"{d['uni_rows']} names",
+    c1.metric("Company filings saved", f"{d['sec_n']}", f"{d['sec_mb']:.0f} MB")
+    c2.metric("Companies tracked", f"{d['uni_rows']} names",
               f"{d['uni_age']:.1f} d old" if d["uni_age"] is not None else "missing")
-    c3.metric("DGS10 last obs", str(d["gs10_last"] or "—"))
+    c3.metric("Treasury rate updated", str(d["gs10_last"] or "—"))
     c4.metric("Last scan", ls["name"] if ls else "—",
               f"{ls['scored']} scored · {ls['flags']} flags" if ls else None)
 
@@ -146,7 +146,7 @@ def _run_panel():
     j = _job_state()
     running = bool(j and j.get("running"))
     if st.button(
-        "♻️  Re-download everything & re-scan",
+        "Refresh data & rebuild shortlist",
         type="primary",
         disabled=running,
         help=("Runs: python -m scanner.scan --refresh-data — forces fresh universe, "

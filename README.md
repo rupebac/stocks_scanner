@@ -10,18 +10,31 @@ flags, put overlay, scan artifacts, tests, Streamlit UI.
 
 ## The UI
 
-Two pages. **Ideas** (default) is one scrolling page for the manual
-cash-secured-put workflow: the hunt map (quality vs the valuation residual —
-cheaper-than-quality to the right), tagged cards for the highlights — quality
-floor + residual < 0 + ROIC ≥ 10% + FCF yield ≥ max(4%, 10Y), most negative
-residual first, with FCF yield now and at −5% — a compact table, and a company
-detail that appears under the cards once you pick a ticker (assignment test,
-price/EV-FCF/FCF-yield/cash charts, margin snapshot). A **cash setting** chooses
-reported FCF (CFO − capex − SBC, default) or owner earnings (CFO − D&A − SBC)
-for the FCF-CAGR gate, QualityScore FCF sleeves, residual, and the yield bar;
-overlay strike yields stay reported. **Data manager**
-re-downloads everything and re-scans, shows the caches and the data-source
-inventory. Every number is display-only — the scanner ranks, the human decides.
+**Hunt** is a stock-first research workspace with three destinations:
+
+- **Discover:** an interactive quality/value hunt map, clickable company cards,
+  sector filters, and separate Quality & value, Investing for growth, and All
+  companies views. Every stock remains searchable, including unscored names.
+- **Company:** financial history and a focused put/call income calculator. New
+  charts read cached SEC filings for revenue, operating profit, operating cash,
+  capital spending, debt, cash reserves, and stock compensation. They respect the
+  saved scan's filing-date cutoff; no full rescan is needed to view them.
+- **Data & refresh:** refresh the scan, follow its progress, and inspect sources.
+
+Compare up to six stocks' puts at a target duration of 7–90 days, an entry
+price discount, and a cash budget. Each result shows its actual expiration,
+positive bid premium, premium/share-price ratio, return on committed cash,
+net entry price, earnings flag and fetch time. Quotes load only on request,
+with a 90-second cache. Share-price comparisons use the clearly dated scan
+price. Missing or crossed bids are not presented as collectible income.
+
+The growth lane is a **research filter**, not a quality endorsement: positive
+5-year revenue growth, positive cash before estimated growth investment, and
+higher cash under the depreciation-as-upkeep proxy than after all capex.
+Reported and proxy cash remain separate; the conservative shortlist and scanner
+methodology are unchanged. Covered-call comparisons use the user's original
+share cost and distinguish today's quote from a hypothetical future trade.
+
 
 ## Quick start
 
@@ -109,7 +122,8 @@ scanner/            package (config = every spec threshold)
   overlay.py        put overlay (strike-implied FCF yields, DTE badges, IV/HV, gate)
   fmp.py            vintaged consensus snapshots (revision proxy)
   scan.py           orchestration + CLI + artifacts
-dashboard/app.py    Streamlit UI (Ideas page: hunt map, cards, detail; Data manager)
+dashboard/app.py    Hunt discovery, company research, and option income UI
+scanner/company_research.py  Display-only financial history from cached SEC facts
 tests/              assembly / metrics / scoring+flags (incl. Adobe-pass, PayPal-fail)
 data/reference/     GICS sub-industry → industry-group map
 docs/specs/         the frozen specifications (01–08 + decision log)

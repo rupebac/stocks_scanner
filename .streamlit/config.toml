@@ -3,3 +3,11 @@
 # Print / Record-screencast entries are hidden via CSS in dashboard/app.py.
 [browser]
 gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#3569b0"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f6f9"
+textColor = "#292b30"
+font = "sans serif"
