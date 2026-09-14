@@ -1,8 +1,6 @@
-> **Note**
-> This workflow self-hosts nothing — it runs the scanner on GitHub's free
-> runner minutes (unlimited for public repos), commits the day's scan
-> artifacts, and Streamlit Community Cloud redeploys on the push.
-
+# Runs the scanner on GitHub's free runner minutes (unlimited for public
+# repos), commits the day's scan artifacts, and Streamlit Community Cloud
+# redeploys on the push.
 name: nightly-scan
 
 on:
