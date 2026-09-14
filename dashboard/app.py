@@ -328,14 +328,17 @@ def _options_section(sel: str, spot, gs10, ov_row) -> None:
              "2.9% means $2.90 per $100 locked up. Compare this across stocks at the "
              "same expiry — a thin number means the put barely pays you to wait.")
     k2.metric(
-        "Paid / odds", "—" if odds_low else _fmt(ipr, "{:.2f}"),
+        "Paid / odds",
+        (f"> {cash * 100:.2f}" if odds_low and cash is not None
+         else "—" if odds_low else _fmt(ipr, "{:.2f}")),
         help="Odds = the number next to this one ('Odds you own it') — that's the "
              "put's delta, used as the chance you'll be assigned. Paid / odds is "
              "how much you collect per unit of that chance. Same 3% credit is more "
              "attractive when assignment is unlikely (small delta) than when it's a "
-             "coin-flip. Delta is a model guess, not a forecast. Shown as '—' when "
-             "the odds are under 1%: dividing by an odds that tiny (usually a bad "
-             "vol print on the chain) turns the ratio into meaningless millions.")
+             "coin-flip. Delta is a model guess, not a forecast. When the odds are "
+             "under 1%, '> X' is the floor — at least X per 1% of assignment "
+             "chance — because the exact ratio divides by an odds that tiny "
+             "(usually a bad vol print) and explodes into meaningless millions.")
     k3.metric(
         "Price to breakeven",
         _fmt(cushion, "{:.1%}"),
