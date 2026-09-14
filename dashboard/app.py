@@ -621,7 +621,7 @@ def main():
     search = st.selectbox("Find a company · NYSE & Nasdaq", sorted(names), index=None,
                           placeholder="Search any company or ticker — independent of the discovery universe",
                           format_func=lambda t: f"{t} · {names[t]}", key="company_search")
-    if search:
+    if search and search != st.session_state.get("idea_pick"):
         pick(search)
         st.rerun()
     if page == "Company":
