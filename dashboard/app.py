@@ -538,8 +538,11 @@ def options(row, cfg):
             return [f"background-color: {background}; color: #292b30" for _ in r]
         if visible.empty:
             st.info("No strikes in this range. Select All strikes to see the available chain.")
+        # fit every row: header ~38px + ~35px per row (the page scrolls
+        # instead of an inner table scrollbar)
         st.dataframe(visible.style.apply(shade_contract, axis=1),
-                     hide_index=True, width="stretch", height=720,
+                     hide_index=True, width="stretch",
+                     height=max(120, 38 + 35 * len(visible)),
                      column_config={"Premium / share price": st.column_config.NumberColumn(format="percent")})
         st.caption("Orange = in the money · blue = at the money · white = out of the money, relative to the fetched share price.")
         stats = MD.contract_analytics("put" if is_put else "call", spot, strike, premium, days, MD._n(q.get("iv")), rate=cfg.get("gs10") or 0.)
