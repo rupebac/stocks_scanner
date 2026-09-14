@@ -1,0 +1,1730 @@
+ticker,reasons
+SPY,no companyfacts
+TSM,insufficient data (prices/SEC)
+DIA,no companyfacts
+BABA,insufficient data (prices/SEC)
+NOK,insufficient data (prices/SEC)
+SPOT,insufficient data (prices/SEC)
+NVO,insufficient data (prices/SEC)
+SAP,insufficient data (prices/SEC)
+MDY,no companyfacts
+ASX,insufficient data (prices/SEC)
+CNQ,insufficient data (prices/SEC)
+UMC,insufficient data (prices/SEC)
+CCJ,insufficient data (prices/SEC)
+SU,insufficient data (prices/SEC)
+BTI,insufficient data (prices/SEC)
+UL,insufficient data (prices/SEC)
+ENB,insufficient data (prices/SEC)
+RIO,insufficient data (prices/SEC)
+CP,insufficient data (prices/SEC)
+BHP,insufficient data (prices/SEC)
+ONON,insufficient data (prices/SEC)
+CVE,insufficient data (prices/SEC)
+TECK,insufficient data (prices/SEC)
+CNI,insufficient data (prices/SEC)
+GSK,insufficient data (prices/SEC)
+RACE,insufficient data (prices/SEC)
+PCOR,features error: KeyError: 'start'
+GFI,insufficient data (prices/SEC)
+NYT,features error: KeyError: 'start'
+NIO,insufficient data (prices/SEC)
+STLA,insufficient data (prices/SEC)
+SONY,insufficient data (prices/SEC)
+DEO,insufficient data (prices/SEC)
+HLN,insufficient data (prices/SEC)
+XPEV,insufficient data (prices/SEC)
+RELX,insufficient data (prices/SEC)
+BIRK,insufficient data (prices/SEC)
+ABEV,insufficient data (prices/SEC)
+BCE,insufficient data (prices/SEC)
+EMBJ,insufficient data (prices/SEC)
+DNN,insufficient data (prices/SEC)
+SKM,insufficient data (prices/SEC)
+TM,insufficient data (prices/SEC)
+TME,insufficient data (prices/SEC)
+BTE,insufficient data (prices/SEC)
+TU,insufficient data (prices/SEC)
+SQM,insufficient data (prices/SEC)
+IMO,insufficient data (prices/SEC)
+YPF,insufficient data (prices/SEC)
+HMY,insufficient data (prices/SEC)
+GGB,insufficient data (prices/SEC)
+FSS,no companyfacts
+YMM,insufficient data (prices/SEC)
+FMX,insufficient data (prices/SEC)
+AMX,insufficient data (prices/SEC)
+SBSW,insufficient data (prices/SEC)
+TAK,insufficient data (prices/SEC)
+INSW,features error: KeyError: 'start'
+SNN,insufficient data (prices/SEC)
+PDI,insufficient data (prices/SEC)
+UTZ,features error: KeyError: 'start'
+NXE,insufficient data (prices/SEC)
+PBA,insufficient data (prices/SEC)
+TGB,insufficient data (prices/SEC)
+RCI,insufficient data (prices/SEC)
+LTM,insufficient data (prices/SEC)
+ZTO,insufficient data (prices/SEC)
+IHG,insufficient data (prices/SEC)
+RDY,insufficient data (prices/SEC)
+EC,insufficient data (prices/SEC)
+VIPS,insufficient data (prices/SEC)
+HMC,insufficient data (prices/SEC)
+DXYZ,insufficient data (prices/SEC)
+GIB,insufficient data (prices/SEC)
+RTO,insufficient data (prices/SEC)
+STN,insufficient data (prices/SEC)
+TBBB,insufficient data (prices/SEC)
+PAC,insufficient data (prices/SEC)
+KT,insufficient data (prices/SEC)
+OTF,insufficient data (prices/SEC)
+PAGS,insufficient data (prices/SEC)
+SUZ,insufficient data (prices/SEC)
+PHG,insufficient data (prices/SEC)
+GOF,insufficient data (prices/SEC)
+E,insufficient data (prices/SEC)
+SA,insufficient data (prices/SEC)
+WIT,insufficient data (prices/SEC)
+NOMD,insufficient data (prices/SEC)
+SKE,insufficient data (prices/SEC)
+PKX,insufficient data (prices/SEC)
+VIV,insufficient data (prices/SEC)
+ATHM,insufficient data (prices/SEC)
+SSL,insufficient data (prices/SEC)
+ASR,insufficient data (prices/SEC)
+FMS,insufficient data (prices/SEC)
+ZGN,insufficient data (prices/SEC)
+DAC,features error: KeyError: 'start'
+VET,insufficient data (prices/SEC)
+AAUC,insufficient data (prices/SEC)
+KOF,insufficient data (prices/SEC)
+WDS,insufficient data (prices/SEC)
+CLM,insufficient data (prices/SEC)
+PTY,insufficient data (prices/SEC)
+OGC,insufficient data (prices/SEC)
+TKC,insufficient data (prices/SEC)
+DQ,insufficient data (prices/SEC)
+PSO,insufficient data (prices/SEC)
+BCAT,insufficient data (prices/SEC)
+UTG,insufficient data (prices/SEC)
+WPP,insufficient data (prices/SEC)
+TLK,insufficient data (prices/SEC)
+JKS,insufficient data (prices/SEC)
+TIMB,insufficient data (prices/SEC)
+LPL,insufficient data (prices/SEC)
+NEA,insufficient data (prices/SEC)
+CRF,insufficient data (prices/SEC)
+PDO,insufficient data (prices/SEC)
+MNSO,insufficient data (prices/SEC)
+PDS,insufficient data (prices/SEC)
+OBE,insufficient data (prices/SEC)
+RQI,insufficient data (prices/SEC)
+USA,insufficient data (prices/SEC)
+JPC,insufficient data (prices/SEC)
+NAK,insufficient data (prices/SEC)
+CHT,insufficient data (prices/SEC)
+ECAT,insufficient data (prices/SEC)
+STVN,insufficient data (prices/SEC)
+DRD,insufficient data (prices/SEC)
+NAD,no companyfacts
+ADX,insufficient data (prices/SEC)
+NMZ,no companyfacts
+UTF,insufficient data (prices/SEC)
+NZF,insufficient data (prices/SEC)
+DNP,insufficient data (prices/SEC)
+HYT,insufficient data (prices/SEC)
+TK,insufficient data (prices/SEC)
+MANU,insufficient data (prices/SEC)
+NXG,insufficient data (prices/SEC)
+NVG,no companyfacts
+GOOS,insufficient data (prices/SEC)
+CYD,insufficient data (prices/SEC)
+BSTZ,no companyfacts
+CANF,insufficient data (prices/SEC)
+TYG,insufficient data (prices/SEC)
+DSL,insufficient data (prices/SEC)
+NAC,insufficient data (prices/SEC)
+OGG,insufficient data (prices/SEC)
+CSAN,insufficient data (prices/SEC)
+ATS,insufficient data (prices/SEC)
+EVTL,insufficient data (prices/SEC)
+RLX,insufficient data (prices/SEC)
+RVT,no companyfacts
+BAK,insufficient data (prices/SEC)
+HQH,no companyfacts
+BTX,no companyfacts
+SPXX,insufficient data (prices/SEC)
+MQY,insufficient data (prices/SEC)
+KYN,insufficient data (prices/SEC)
+SID,insufficient data (prices/SEC)
+GAB,no companyfacts
+KBDC,insufficient data (prices/SEC)
+ASGI,insufficient data (prices/SEC)
+BDJ,no companyfacts
+NUV,no companyfacts
+LGPS,insufficient data (prices/SEC)
+FSCO,insufficient data (prices/SEC)
+BST,insufficient data (prices/SEC)
+PHK,insufficient data (prices/SEC)
+LOMA,insufficient data (prices/SEC)
+RERE,insufficient data (prices/SEC)
+AOD,insufficient data (prices/SEC)
+TEO,insufficient data (prices/SEC)
+MHD,no companyfacts
+JFR,no companyfacts
+MUC,insufficient data (prices/SEC)
+SLI,insufficient data (prices/SEC)
+EXG,insufficient data (prices/SEC)
+PCN,insufficient data (prices/SEC)
+THQ,no companyfacts
+BIT,insufficient data (prices/SEC)
+GFR,insufficient data (prices/SEC)
+ETY,insufficient data (prices/SEC)
+EVV,insufficient data (prices/SEC)
+TWN,insufficient data (prices/SEC)
+ASA,insufficient data (prices/SEC)
+PFN,insufficient data (prices/SEC)
+NBXG,insufficient data (prices/SEC)
+ECC,insufficient data (prices/SEC)
+MYI,insufficient data (prices/SEC)
+HQL,no companyfacts
+WRN,insufficient data (prices/SEC)
+AWF,no companyfacts
+MMA,insufficient data (prices/SEC)
+STK,insufficient data (prices/SEC)
+GGN,insufficient data (prices/SEC)
+SRV,insufficient data (prices/SEC)
+PHI,insufficient data (prices/SEC)
+DSU,insufficient data (prices/SEC)
+MUA,insufficient data (prices/SEC)
+BTZ,no companyfacts
+PML,insufficient data (prices/SEC)
+NRK,insufficient data (prices/SEC)
+GDV,no companyfacts
+WDI,no companyfacts
+NMCO,insufficient data (prices/SEC)
+EOS,insufficient data (prices/SEC)
+TV,insufficient data (prices/SEC)
+JQC,no companyfacts
+TII,insufficient data (prices/SEC)
+BHK,no companyfacts
+PAXS,insufficient data (prices/SEC)
+EVT,insufficient data (prices/SEC)
+ACP,insufficient data (prices/SEC)
+ETW,insufficient data (prices/SEC)
+BQ,insufficient data (prices/SEC)
+PTA,no companyfacts
+IGR,insufficient data (prices/SEC)
+BMEZ,insufficient data (prices/SEC)
+DLY,insufficient data (prices/SEC)
+EDD,no companyfacts
+WIW,no companyfacts
+ETV,insufficient data (prices/SEC)
+NFGC,insufficient data (prices/SEC)
+NCDL,insufficient data (prices/SEC)
+BCX,no companyfacts
+BBN,insufficient data (prices/SEC)
+PDX,insufficient data (prices/SEC)
+EMO,no companyfacts
+KIO,insufficient data (prices/SEC)
+NXP,insufficient data (prices/SEC)
+ETG,insufficient data (prices/SEC)
+RNP,no companyfacts
+HUYA,insufficient data (prices/SEC)
+BTT,insufficient data (prices/SEC)
+VMO,insufficient data (prices/SEC)
+THW,insufficient data (prices/SEC)
+CII,insufficient data (prices/SEC)
+VVR,insufficient data (prices/SEC)
+BUI,insufficient data (prices/SEC)
+BME,insufficient data (prices/SEC)
+RA,insufficient data (prices/SEC)
+FAX,no companyfacts
+CDLR,insufficient data (prices/SEC)
+AIO,no companyfacts
+BLW,insufficient data (prices/SEC)
+MEGI,insufficient data (prices/SEC)
+AWP,insufficient data (prices/SEC)
+CET,no companyfacts
+EGG,insufficient data (prices/SEC)
+CCU,insufficient data (prices/SEC)
+FPF,insufficient data (prices/SEC)
+EMD,insufficient data (prices/SEC)
+ISD,no companyfacts
+IGD,no companyfacts
+VKQ,insufficient data (prices/SEC)
+MYN,no companyfacts
+NKX,no companyfacts
+RMT,no companyfacts
+LZM,insufficient data (prices/SEC)
+GHY,no companyfacts
+AVK,insufficient data (prices/SEC)
+BTO,insufficient data (prices/SEC)
+NVA,insufficient data (prices/SEC)
+JRI,no companyfacts
+KF,no companyfacts
+PFL,insufficient data (prices/SEC)
+EAD,no companyfacts
+KTF,no companyfacts
+IQI,insufficient data (prices/SEC)
+FRA,insufficient data (prices/SEC)
+NIE,no companyfacts
+PEO,no companyfacts
+IFN,insufficient data (prices/SEC)
+BGB,insufficient data (prices/SEC)
+HTD,no companyfacts
+FFC,no companyfacts
+BGR,no companyfacts
+PDT,insufficient data (prices/SEC)
+GGT,insufficient data (prices/SEC)
+NDMO,insufficient data (prices/SEC)
+GUG,insufficient data (prices/SEC)
+XFLT,insufficient data (prices/SEC)
+EIM,insufficient data (prices/SEC)
+PSBD,insufficient data (prices/SEC)
+MFM,no companyfacts
+VGM,insufficient data (prices/SEC)
+LEO,no companyfacts
+GUT,no companyfacts
+GAM,no companyfacts
+BRW,insufficient data (prices/SEC)
+RIV,insufficient data (prices/SEC)
+NML,no companyfacts
+DHY,insufficient data (prices/SEC)
+NOA,insufficient data (prices/SEC)
+MMT,no companyfacts
+EOI,insufficient data (prices/SEC)
+STEW,insufficient data (prices/SEC)
+GBAB,insufficient data (prices/SEC)
+ARMP,features error: KeyError: 'start'
+BGT,insufficient data (prices/SEC)
+NMAI,no companyfacts
+SCD,no companyfacts
+AGD,insufficient data (prices/SEC)
+FTHY,insufficient data (prices/SEC)
+MMU,insufficient data (prices/SEC)
+HIO,no companyfacts
+HIX,insufficient data (prices/SEC)
+ASG,insufficient data (prices/SEC)
+LDP,no companyfacts
+BGY,no companyfacts
+IIM,insufficient data (prices/SEC)
+ARDC,insufficient data (prices/SEC)
+EFR,insufficient data (prices/SEC)
+ISOU,insufficient data (prices/SEC)
+BWMX,insufficient data (prices/SEC)
+NCV,no companyfacts
+PCQ,insufficient data (prices/SEC)
+BOE,no companyfacts
+TY,insufficient data (prices/SEC)
+BGH,insufficient data (prices/SEC)
+RFI,no companyfacts
+CIK,insufficient data (prices/SEC)
+DAO,insufficient data (prices/SEC)
+FTF,insufficient data (prices/SEC)
+NHS,no companyfacts
+DFP,no companyfacts
+VCV,insufficient data (prices/SEC)
+BKT,insufficient data (prices/SEC)
+AEF,no companyfacts
+NPCT,no companyfacts
+NPFD,insufficient data (prices/SEC)
+JGH,no companyfacts
+HFRO,insufficient data (prices/SEC)
+MUJ,insufficient data (prices/SEC)
+ETJ,insufficient data (prices/SEC)
+EFT,insufficient data (prices/SEC)
+ZTR,insufficient data (prices/SEC)
+NBH,insufficient data (prices/SEC)
+FTW,insufficient data (prices/SEC)
+VBF,insufficient data (prices/SEC)
+LUXE,insufficient data (prices/SEC)
+EIC,insufficient data (prices/SEC)
+NAN,insufficient data (prices/SEC)
+NCZ,no companyfacts
+SDHY,no companyfacts
+AUNA,insufficient data (prices/SEC)
+NBB,insufficient data (prices/SEC)
+JOF,insufficient data (prices/SEC)
+TEI,no companyfacts
+RLTY,insufficient data (prices/SEC)
+NPV,insufficient data (prices/SEC)
+DBL,insufficient data (prices/SEC)
+NRO,insufficient data (prices/SEC)
+HPS,no companyfacts
+ETO,insufficient data (prices/SEC)
+GNT,no companyfacts
+DDL,insufficient data (prices/SEC)
+AFB,no companyfacts
+DPG,insufficient data (prices/SEC)
+DAVA,insufficient data (prices/SEC)
+MMD,no companyfacts
+EVN,insufficient data (prices/SEC)
+INDO,insufficient data (prices/SEC)
+DSM,no companyfacts
+MXF,insufficient data (prices/SEC)
+EMF,no companyfacts
+ACV,no companyfacts
+HPI,no companyfacts
+EHI,insufficient data (prices/SEC)
+ETB,no companyfacts
+RCS,insufficient data (prices/SEC)
+OIA,insufficient data (prices/SEC)
+IGA,no companyfacts
+ZH,insufficient data (prices/SEC)
+MIY,insufficient data (prices/SEC)
+NMG,insufficient data (prices/SEC)
+MCI,no companyfacts
+IIF,no companyfacts
+GLDG,insufficient data (prices/SEC)
+VKI,insufficient data (prices/SEC)
+ZKH,insufficient data (prices/SEC)
+DHF,insufficient data (prices/SEC)
+GLO,insufficient data (prices/SEC)
+PSF,no companyfacts
+FOF,no companyfacts
+NUW,insufficient data (prices/SEC)
+PMO,insufficient data (prices/SEC)
+HGLB,insufficient data (prices/SEC)
+EDF,insufficient data (prices/SEC)
+HYI,insufficient data (prices/SEC)
+DMB,no companyfacts
+BGX,insufficient data (prices/SEC)
+TSI,insufficient data (prices/SEC)
+OPP,insufficient data (prices/SEC)
+GOTU,insufficient data (prices/SEC)
+RFMZ,insufficient data (prices/SEC)
+EOD,no companyfacts
+JCE,insufficient data (prices/SEC)
+CPAC,insufficient data (prices/SEC)
+FFA,insufficient data (prices/SEC)
+TDF,no companyfacts
+LGI,no companyfacts
+RMM,insufficient data (prices/SEC)
+PMM,insufficient data (prices/SEC)
+BSL,insufficient data (prices/SEC)
+NCA,insufficient data (prices/SEC)
+GNS,insufficient data (prices/SEC)
+JRS,no companyfacts
+HPF,no companyfacts
+PNI,insufficient data (prices/SEC)
+FINS,insufficient data (prices/SEC)
+VNTG,insufficient data (prices/SEC)
+IHD,no companyfacts
+SOR,insufficient data (prices/SEC)
+CEE,insufficient data (prices/SEC)
+IDE,no companyfacts
+PGP,insufficient data (prices/SEC)
+EOT,insufficient data (prices/SEC)
+ERC,no companyfacts
+MSD,no companyfacts
+BWG,no companyfacts
+MHF,no companyfacts
+IAE,no companyfacts
+DMO,insufficient data (prices/SEC)
+GLQ,no companyfacts
+PCF,insufficient data (prices/SEC)
+SIM,insufficient data (prices/SEC)
+MIN,no companyfacts
+GDO,insufficient data (prices/SEC)
+SPE,insufficient data (prices/SEC)
+MCRP,insufficient data (prices/SEC)
+JLS,insufficient data (prices/SEC)
+SABA,insufficient data (prices/SEC)
+EVG,insufficient data (prices/SEC)
+SBI,no companyfacts
+BCV,insufficient data (prices/SEC)
+FT,no companyfacts
+PPT,no companyfacts
+MPV,no companyfacts
+DDC,insufficient data (prices/SEC)
+CAF,no companyfacts
+PCM,insufficient data (prices/SEC)
+CCM,insufficient data (prices/SEC)
+FLC,insufficient data (prices/SEC)
+PFD,insufficient data (prices/SEC)
+VOC,no companyfacts
+NNY,no companyfacts
+VPV,insufficient data (prices/SEC)
+NMS,insufficient data (prices/SEC)
+RGT,no companyfacts
+ERH,no companyfacts
+YSG,insufficient data (prices/SEC)
+VTN,insufficient data (prices/SEC)
+MCN,insufficient data (prices/SEC)
+CCIF,insufficient data (prices/SEC)
+GLV,insufficient data (prices/SEC)
+MPA,insufficient data (prices/SEC)
+WEA,no companyfacts
+EVF,insufficient data (prices/SEC)
+GF,no companyfacts
+HEQ,no companyfacts
+AKO-B,insufficient data (prices/SEC)
+VGI,no companyfacts
+ETX,insufficient data (prices/SEC)
+NAZ,insufficient data (prices/SEC)
+WIA,no companyfacts
+FMN,no companyfacts
+ECF,no companyfacts
+NMT,insufficient data (prices/SEC)
+CEV,insufficient data (prices/SEC)
+RMI,insufficient data (prices/SEC)
+SPMC,insufficient data (prices/SEC)
+NMI,insufficient data (prices/SEC)
+VLT,insufficient data (prices/SEC)
+GRX,insufficient data (prices/SEC)
+IAF,no companyfacts
+WBX,insufficient data (prices/SEC)
+MGF,no companyfacts
+PFO,no companyfacts
+JHI,insufficient data (prices/SEC)
+EEA,no companyfacts
+PGZ,no companyfacts
+TMDE,insufficient data (prices/SEC)
+PAI,no companyfacts
+RMMZ,insufficient data (prices/SEC)
+BMN,insufficient data (prices/SEC)
+SWZ,no companyfacts
+LND,insufficient data (prices/SEC)
+GCV,insufficient data (prices/SEC)
+IGI,insufficient data (prices/SEC)
+RFM,insufficient data (prices/SEC)
+SEAL-PB,insufficient data (prices/SEC)
+SQNS,insufficient data (prices/SEC)
+PIM,no companyfacts
+DMA,insufficient data (prices/SEC)
+NIM,no companyfacts
+FURY,insufficient data (prices/SEC)
+GLU,no companyfacts
+RSF,insufficient data (prices/SEC)
+EIIA,insufficient data (prices/SEC)
+TOPS,insufficient data (prices/SEC)
+GGZ,insufficient data (prices/SEC)
+PSEC-PA,insufficient data (prices/SEC)
+PDPA,insufficient data (prices/SEC)
+JHS,no companyfacts
+MRT,insufficient data (prices/SEC)
+PVL,no companyfacts
+RYDE,insufficient data (prices/SEC)
+GLOP-PA,insufficient data (prices/SEC)
+LUD,insufficient data (prices/SEC)
+GDL,insufficient data (prices/SEC)
+HTFC,insufficient data (prices/SEC)
+PRT,no companyfacts
+STG,insufficient data (prices/SEC)
+BRIA,insufficient data (prices/SEC)
+DTF,insufficient data (prices/SEC)
+BHV,insufficient data (prices/SEC)
+TGE,no companyfacts
+PRIF-PL,insufficient data (prices/SEC)
+LANV,insufficient data (prices/SEC)
+MXE,insufficient data (prices/SEC)
+JMM,no companyfacts
+SYNX,insufficient data (prices/SEC)
+FMY,insufficient data (prices/SEC)
+AMBO,insufficient data (prices/SEC)
+CMCM,insufficient data (prices/SEC)
+GRF,no companyfacts
+MWG,insufficient data (prices/SEC)
+MOGU,insufficient data (prices/SEC)
+RCG,insufficient data (prices/SEC)
+MYND,insufficient data (prices/SEC)
+FEDU,insufficient data (prices/SEC)
+IH,insufficient data (prices/SEC)
+GHG,insufficient data (prices/SEC)
+FENG,insufficient data (prices/SEC)
+AADX,young listing (16 wks of prices; needs 60)
+ADIG,young listing (8 wks of prices; needs 60)
+AERO,young listing (46 wks of prices; needs 60)
+ALH,young listing (50 wks of prices; needs 60)
+ANDG,young listing (40 wks of prices; needs 60)
+ANGX,young listing (54 wks of prices; needs 60)
+AUXX,no companyfacts
+AVEX,young listing (23 wks of prices; needs 60)
+AZUL,young listing (17 wks of prices; needs 60)
+BETA,young listing (46 wks of prices; needs 60)
+BGSI,young listing (46 wks of prices; needs 60)
+BOBS,young listing (33 wks of prices; needs 60)
+BPRE,young listing (40 wks of prices; needs 60)
+BTA,no companyfacts
+BUDA,young listing (37 wks of prices; needs 60)
+CFND,young listing (59 wks of prices; needs 60)
+CHOW,young listing (53 wks of prices; needs 60)
+CITR,young listing (42 wks of prices; needs 60)
+COPR,young listing (12 wks of prices; needs 60)
+CSQR,young listing (10 wks of prices; needs 60)
+CTGG,young listing (14 wks of prices; needs 60)
+DPC,young listing (13 wks of prices; needs 60)
+ENHA,young listing (20 wks of prices; needs 60)
+EROC,young listing (15 wks of prices; needs 60)
+EVMN,young listing (46 wks of prices; needs 60)
+FDXF,young listing (17 wks of prices; needs 60)
+FJET,young listing (40 wks of prices; needs 60)
+FOIL,young listing (6 wks of prices; needs 60)
+FPS,young listing (33 wks of prices; needs 60)
+FSSL,young listing (45 wks of prices; needs 60)
+GCDT,young listing (36 wks of prices; needs 60)
+GMRS,young listing (19 wks of prices; needs 60)
+GMTL,young listing (27 wks of prices; needs 60)
+HAWK,young listing (20 wks of prices; needs 60)
+HSLV,young listing (28 wks of prices; needs 60)
+IMC,young listing (8 wks of prices; needs 60)
+INFQ,young listing (31 wks of prices; needs 60)
+JAGU,young listing (32 wks of prices; needs 60)
+JMKE,young listing (8 wks of prices; needs 60)
+KCA-UN,young listing (21 wks of prices; needs 60)
+KNRX,young listing (51 wks of prices; needs 60)
+LYNX,young listing (5 wks of prices; needs 60)
+MAIR,young listing (23 wks of prices; needs 60)
+MANE,young listing (33 wks of prices; needs 60)
+MBGL,young listing (13 wks of prices; needs 60)
+MDA,young listing (28 wks of prices; needs 60)
+MICC,young listing (41 wks of prices; needs 60)
+MINE,young listing (34 wks of prices; needs 60)
+NINE,young listing (25 wks of prices; needs 60)
+NSRX,young listing (58 wks of prices; needs 60)
+NXB,young listing (45 wks of prices; needs 60)
+OFRM,young listing (33 wks of prices; needs 60)
+PHXE-P,young listing (51 wks of prices; needs 60)
+PMI,young listing (56 wks of prices; needs 60)
+POAS,young listing (45 wks of prices; needs 60)
+PSUS,young listing (21 wks of prices; needs 60)
+PXED,young listing (50 wks of prices; needs 60)
+Q,young listing (47 wks of prices; needs 60)
+QNC,young listing (30 wks of prices; needs 60)
+REA,young listing (20 wks of prices; needs 60)
+REF,young listing (8 wks of prices; needs 60)
+RGNT,young listing (42 wks of prices; needs 60)
+RVI,young listing (29 wks of prices; needs 60)
+RVII,young listing (6 wks of prices; needs 60)
+SBMT,young listing (21 wks of prices; needs 60)
+SIND,young listing (13 wks of prices; needs 60)
+SMJF,young listing (42 wks of prices; needs 60)
+SNSC,young listing (6 wks of prices; needs 60)
+SSMR,young listing (16 wks of prices; needs 60)
+STDN,young listing (10 wks of prices; needs 60)
+STUB,young listing (53 wks of prices; needs 60)
+SUNB,young listing (29 wks of prices; needs 60)
+SUNC,young listing (46 wks of prices; needs 60)
+TP,young listing (7 wks of prices; needs 60)
+VACI,young listing (44 wks of prices; needs 60)
+VCX,young listing (27 wks of prices; needs 60)
+VGNT,young listing (26 wks of prices; needs 60)
+VIA,young listing (54 wks of prices; needs 60)
+VIDA,young listing (19 wks of prices; needs 60)
+WBI,young listing (53 wks of prices; needs 60)
+WHK,young listing (15 wks of prices; needs 60)
+WOLF,young listing (51 wks of prices; needs 60)
+XTND,young listing (3 wks of prices; needs 60)
+XZO,young listing (46 wks of prices; needs 60)
+YSS,young listing (34 wks of prices; needs 60)
+GEV,rev_cagr5 gate; fcf_cagr5 gate
+XOM,rev_cagr5 gate; fcf_cagr5 gate
+VRT,fcf_cagr5 gate
+KO,fcf_cagr5 gate
+T,rev_cagr5 gate
+HD,fcf_cagr5 gate
+BA,fcf_cagr5 gate
+APH,fcf_cagr5 gate
+HPE,fcf_cagr5 gate
+DIS,fcf_cagr5 gate
+VLO,fcf_cagr5 gate
+MCK,fcf_cagr5 gate
+HWM,fcf_cagr5 gate
+CLS,rev_cagr5 gate; fcf_cagr5 gate
+FIX,rev_cagr5 gate
+PWR,fcf_cagr5 gate
+MPC,fcf_cagr5 gate
+CVS,fcf_cagr5 gate
+F,fcf_cagr5 gate
+RCL,fcf_cagr5 gate
+TGT,fcf_cagr5 gate
+LOW,rev_cagr5 gate
+MO,rev_cagr5 gate
+STM,rev_cagr5 gate; fcf_cagr5 gate
+FERG,rev_cagr5 gate; fcf_cagr5 gate
+SHEL,rev_cagr5 gate; fcf_cagr5 gate
+FDX,fcf_cagr5 gate
+AZN,rev_cagr5 gate; fcf_cagr5 gate
+MMM,rev_cagr5 gate; fcf_cagr5 gate
+DAL,fcf_cagr5 gate
+AEM,rev_cagr5 gate; fcf_cagr5 gate
+CAH,fcf_cagr5 gate
+FN,fcf_cagr5 gate
+COR,fcf_cagr5 gate
+CRH,rev_cagr5 gate
+DKS,fcf_cagr5 gate
+HPQ,rev_cagr5 gate; fcf_cagr5 gate
+KVUE,rev_cagr5 gate; fcf_cagr5 gate
+KR,fcf_cagr5 gate
+CRS,fcf_cagr5 gate
+DOCN,fcf_cagr5 gate
+B,rev_cagr5 gate; fcf_cagr5 gate
+XYZ,fcf_cagr5 gate
+GWW,fcf_cagr5 gate
+BP,rev_cagr5 gate; fcf_cagr5 gate
+JBL,fcf_cagr5 gate
+LYV,fcf_cagr5 gate
+TOST,fcf_cagr5 gate
+ATI,fcf_cagr5 gate
+MOD,mktcap<10B; fcf_cagr5 gate
+EME,fcf_cagr5 gate
+NVS,rev_cagr5 gate; fcf_cagr5 gate
+BBY,rev_cagr5 gate; fcf_cagr5 gate
+W,rev_cagr5 gate; fcf_cagr5 gate
+ALB,fcf_cagr5 gate
+VIK,rev_cagr5 gate; fcf_cagr5 gate
+NCLH,mktcap<10B; fcf_cagr5 gate
+SN,rev_cagr5 gate; fcf_cagr5 gate
+EL,rev_cagr5 gate; fcf_cagr5 gate
+WPM,rev_cagr5 gate; fcf_cagr5 gate
+SYY,fcf_cagr5 gate
+LYB,fcf_cagr5 gate
+FDS,mktcap<10B
+INFY,rev_cagr5 gate; fcf_cagr5 gate
+FIS,rev_cagr5 gate; fcf_cagr5 gate
+USFD,fcf_cagr5 gate
+DINO,fcf_cagr5 gate
+ETSY,mktcap<10B
+SW,rev_cagr5 gate; fcf_cagr5 gate
+LVS,fcf_cagr5 gate
+GNRC,fcf_cagr5 gate
+KGC,rev_cagr5 gate; fcf_cagr5 gate
+CAVA,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+WCC,fcf_cagr5 gate
+EAT,mktcap<10B; fcf_cagr5 gate
+PNR,mktcap<10B
+VSH,mktcap<10B; fcf_cagr5 gate
+PAAS,rev_cagr5 gate; fcf_cagr5 gate
+LH,rev_cagr5 gate; fcf_cagr5 gate
+ELF,mktcap<10B; fcf_cagr5 gate
+XPO,fcf_cagr5 gate
+BROS,mktcap<10B; fcf_cagr5 gate
+ESI,mktcap<10B
+PPG,fcf_cagr5 gate
+PBF,mktcap<10B; fcf_cagr5 gate
+JHX,rev_cagr5 gate; fcf_cagr5 gate
+APTV,mktcap<10B; fcf_cagr5 gate
+SNX,fcf_cagr5 gate
+AGX,mktcap<10B
+ANF,mktcap<10B
+NTR,rev_cagr5 gate; fcf_cagr5 gate
+RVTY,fcf_cagr5 gate
+FNV,rev_cagr5 gate; fcf_cagr5 gate
+TEVA,fcf_cagr5 gate
+BB,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+SEI,mktcap<10B; fcf_cagr5 gate
+CHWY,mktcap<10B; fcf_cagr5 gate
+TSN,fcf_cagr5 gate
+PFGC,fcf_cagr5 gate
+BJ,fcf_cagr5 gate
+BWXT,fcf_cagr5 gate
+VLTO,rev_cagr5 gate
+BLDR,mktcap<10B; fcf_cagr5 gate
+MUSA,mktcap<10B; fcf_cagr5 gate
+AMCR,fcf_cagr5 gate
+AER,rev_cagr5 gate; fcf_cagr5 gate
+GAP,mktcap<10B; fcf_cagr5 gate
+EPAM,mktcap<10B
+VSXY,mktcap<10B; fcf_cagr5 gate
+KRMN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+FTV,rev_cagr5 gate; fcf_cagr5 gate
+BAH,mktcap<10B
+AGI,rev_cagr5 gate; fcf_cagr5 gate
+ARMK,fcf_cagr5 gate
+IFF,fcf_cagr5 gate
+PRIM,mktcap<10B; fcf_cagr5 gate
+SPXC,mktcap<10B
+TTE,rev_cagr5 gate; fcf_cagr5 gate
+RS,fcf_cagr5 gate
+ACM,mktcap<10B; fcf_cagr5 gate
+FLS,mktcap<10B
+FND,mktcap<10B; fcf_cagr5 gate
+UHS,fcf_cagr5 gate
+RH,mktcap<10B; fcf_cagr5 gate
+M,mktcap<10B; fcf_cagr5 gate
+LTH,mktcap<10B; fcf_cagr5 gate
+J,rev_cagr5 gate; fcf_cagr5 gate
+ARW,fcf_cagr5 gate
+LEU,mktcap<10B; fcf_cagr5 gate
+FBIN,mktcap<10B; fcf_cagr5 gate
+ACA,mktcap<10B
+TKR,mktcap<10B
+QGEN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BBWI,mktcap<10B; fcf_cagr5 gate
+WEX,mktcap<10B; fcf_cagr5 gate
+DOCS,mktcap<10B
+HBM,rev_cagr5 gate; fcf_cagr5 gate
+ITGR,mktcap<10B
+MHK,mktcap<10B; fcf_cagr5 gate
+MOG-A,fcf_cagr5 gate
+AYI,mktcap<10B
+AGCO,mktcap<10B
+MGM,fcf_cagr5 gate
+ENS,mktcap<10B
+GVA,mktcap<10B; fcf_cagr5 gate
+SHAK,mktcap<10B; fcf_cagr5 gate
+HRL,fcf_cagr5 gate
+MTDR,mktcap<10B
+ACI,mktcap<10B; fcf_cagr5 gate
+BOOT,mktcap<10B
+NEU,mktcap<10B
+MT,rev_cagr5 gate; fcf_cagr5 gate
+RNG,mktcap<10B; fcf_cagr5 gate
+PEN,fcf_cagr5 gate
+CNM,mktcap<10B; fcf_cagr5 gate
+FRO,rev_cagr5 gate; fcf_cagr5 gate
+VMI,mktcap<10B; fcf_cagr5 gate
+WH,mktcap<10B
+AAP,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+LAD,mktcap<10B; fcf_cagr5 gate
+BIO,mktcap<10B
+PLNT,mktcap<10B
+MTN,mktcap<10B
+AOS,mktcap<10B
+DK,mktcap<10B; fcf_cagr5 gate
+EGO,rev_cagr5 gate; fcf_cagr5 gate
+SOLV,rev_cagr5 gate; fcf_cagr5 gate
+WHR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+AIT,fcf_cagr5 gate
+MSGS,mktcap<10B; fcf_cagr5 gate
+TDC,mktcap<10B; rev_cagr5 gate
+LBRT,mktcap<10B; fcf_cagr5 gate
+IAG,rev_cagr5 gate; fcf_cagr5 gate
+MTRN,mktcap<10B; fcf_cagr5 gate
+AEO,mktcap<10B; fcf_cagr5 gate
+PRMB,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BOX,mktcap<10B; fcf_cagr5 gate
+IBP,mktcap<10B; fcf_cagr5 gate
+LUMN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TREX,mktcap<10B
+SITE,mktcap<10B; fcf_cagr5 gate
+TEX,mktcap<10B; fcf_cagr5 gate
+MSM,mktcap<10B; fcf_cagr5 gate
+RHI,mktcap<10B; fcf_cagr5 gate
+LPX,mktcap<10B; fcf_cagr5 gate
+VAL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+AN,mktcap<10B; fcf_cagr5 gate
+MGA,rev_cagr5 gate; fcf_cagr5 gate
+CHE,mktcap<10B; fcf_cagr5 gate
+CE,mktcap<10B
+ULS,rev_cagr5 gate; fcf_cagr5 gate
+PAG,fcf_cagr5 gate
+LEA,mktcap<10B; fcf_cagr5 gate
+POST,mktcap<10B; fcf_cagr5 gate
+FOUR,mktcap<10B; fcf_cagr5 gate
+G,mktcap<10B
+LW,mktcap<10B
+ALV,mktcap<10B; fcf_cagr5 gate
+PVH,mktcap<10B
+NPO,mktcap<10B
+JBTM,mktcap<10B
+BYD,mktcap<10B; fcf_cagr5 gate
+AWI,mktcap<10B
+SIG,mktcap<10B; fcf_cagr5 gate
+YOU,mktcap<10B; fcf_cagr5 gate
+JBS,rev_cagr5 gate; fcf_cagr5 gate
+KSS,mktcap<10B; rev_cagr5 gate
+VVV,mktcap<10B; fcf_cagr5 gate
+TFX,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+KEX,mktcap<10B
+ATKR,mktcap<10B
+LRN,mktcap<10B
+NVST,mktcap<10B
+ST,mktcap<10B
+PARR,mktcap<10B; fcf_cagr5 gate
+CX,rev_cagr5 gate; fcf_cagr5 gate
+GXO,mktcap<10B; fcf_cagr5 gate
+BKD,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NOV,mktcap<10B
+ESE,mktcap<10B
+VIST,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+PSN,mktcap<10B; fcf_cagr5 gate
+WU,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TS,rev_cagr5 gate; fcf_cagr5 gate
+CBZ,mktcap<10B; fcf_cagr5 gate
+INGR,mktcap<10B
+GIL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+YETI,mktcap<10B; fcf_cagr5 gate
+HAE,mktcap<10B
+TTC,mktcap<10B
+GLOB,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+MIR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+MAN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+FCN,mktcap<10B; fcf_cagr5 gate
+MATX,mktcap<10B; fcf_cagr5 gate
+GPI,mktcap<10B; fcf_cagr5 gate
+SON,mktcap<10B; fcf_cagr5 gate
+HOG,mktcap<10B; fcf_cagr5 gate
+ESAB,mktcap<10B
+DHT,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TPC,mktcap<10B; fcf_cagr5 gate
+OLN,mktcap<10B; fcf_cagr5 gate
+KTB,mktcap<10B
+CPRI,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+MTH,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+SMG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+IMAX,mktcap<10B; fcf_cagr5 gate
+BFAM,mktcap<10B
+LEVI,mktcap<10B
+BMI,mktcap<10B
+BDC,mktcap<10B
+SKY,mktcap<10B
+ATR,mktcap<10B
+SXT,mktcap<10B; fcf_cagr5 gate
+AXTA,mktcap<10B
+BCO,mktcap<10B
+TDW,mktcap<10B; fcf_cagr5 gate
+KBR,mktcap<10B; fcf_cagr5 gate
+SSD,mktcap<10B
+UNF,mktcap<10B
+ASH,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+REZI,mktcap<10B; fcf_cagr5 gate
+ADT,mktcap<10B; rev_cagr5 gate
+GTES,mktcap<10B
+VVX,mktcap<10B; fcf_cagr5 gate
+TNL,mktcap<10B
+SEB,mktcap<10B; fcf_cagr5 gate
+ABG,mktcap<10B; fcf_cagr5 gate
+FSM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BRBR,mktcap<10B
+SXI,mktcap<10B
+KNF,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+DV,mktcap<10B
+VPG,mktcap<10B; fcf_cagr5 gate
+MSA,mktcap<10B
+HP,mktcap<10B; fcf_cagr5 gate
+CNR,mktcap<10B; fcf_cagr5 gate
+FLO,mktcap<10B
+VNT,mktcap<10B; fcf_cagr5 gate
+INSP,mktcap<10B; fcf_cagr5 gate
+QTWO,mktcap<10B; fcf_cagr5 gate
+CVSA,mktcap<10B
+OPLN,mktcap<10B
+HUN,mktcap<10B; fcf_cagr5 gate
+CSW,mktcap<10B; fcf_cagr5 gate
+CALX,mktcap<10B; fcf_cagr5 gate
+FUL,mktcap<10B; fcf_cagr5 gate
+KMT,mktcap<10B; fcf_cagr5 gate
+KAI,mktcap<10B
+LCII,mktcap<10B; fcf_cagr5 gate
+ERO,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CRI,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+PAY,mktcap<10B; fcf_cagr5 gate
+UTI,mktcap<10B; fcf_cagr5 gate
+TFII,rev_cagr5 gate; fcf_cagr5 gate
+CBT,mktcap<10B; fcf_cagr5 gate
+TDS,mktcap<10B; rev_cagr5 gate
+ZIM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+AZZ,mktcap<10B; fcf_cagr5 gate
+DXC,mktcap<10B; rev_cagr5 gate
+HAYW,mktcap<10B
+CPA,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+KFY,mktcap<10B
+ATEN,mktcap<10B
+FIGS,mktcap<10B
+CVI,mktcap<10B; fcf_cagr5 gate
+MMS,mktcap<10B; fcf_cagr5 gate
+INGM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+GOLF,mktcap<10B; fcf_cagr5 gate
+TNK,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CRK,mktcap<10B; fcf_cagr5 gate
+MHO,mktcap<10B; fcf_cagr5 gate
+AVNT,mktcap<10B; fcf_cagr5 gate
+OR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+WTTR,mktcap<10B; fcf_cagr5 gate
+ATMU,mktcap<10B; rev_cagr5 gate
+BIP,rev_cagr5 gate; fcf_cagr5 gate
+BHE,mktcap<10B; fcf_cagr5 gate
+CALY,mktcap<10B
+GFF,mktcap<10B; fcf_cagr5 gate
+ROG,mktcap<10B; fcf_cagr5 gate
+GHC,mktcap<10B; fcf_cagr5 gate
+MDU,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NATL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+SPB,mktcap<10B; fcf_cagr5 gate
+TX,rev_cagr5 gate; fcf_cagr5 gate
+HZO,mktcap<10B; fcf_cagr5 gate
+PRKS,mktcap<10B; fcf_cagr5 gate
+BCC,mktcap<10B; fcf_cagr5 gate
+SNDR,mktcap<10B
+SVM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+MWA,mktcap<10B
+YELP,mktcap<10B
+TPB,mktcap<10B
+HNI,mktcap<10B; fcf_cagr5 gate
+PBH,mktcap<10B
+UNFI,mktcap<10B; fcf_cagr5 gate
+PHIN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+WLY,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NSP,mktcap<10B; fcf_cagr5 gate
+HLIO,mktcap<10B
+ALG,mktcap<10B
+KWR,mktcap<10B; fcf_cagr5 gate
+AMN,mktcap<10B
+NHC,mktcap<10B
+COTY,mktcap<10B; fcf_cagr5 gate
+SOBO,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ASM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NAT,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+GRND,mktcap<10B; rev_cagr5 gate
+PRG,mktcap<10B; rev_cagr5 gate
+CNMD,mktcap<10B
+EFOR,mktcap<10B; fcf_cagr5 gate
+GHM,mktcap<10B; fcf_cagr5 gate
+SAH,mktcap<10B; fcf_cagr5 gate
+UHAL-B,rev_cagr5 gate; fcf_cagr5 gate
+LZB,mktcap<10B; fcf_cagr5 gate
+TRN,mktcap<10B; fcf_cagr5 gate
+ABM,mktcap<10B; fcf_cagr5 gate
+CXM,adv<20M; mktcap<10B; fcf_cagr5 gate
+NBR,adv<20M; mktcap<10B; fcf_cagr5 gate
+SBH,adv<20M; mktcap<10B; fcf_cagr5 gate
+BKE,adv<20M; mktcap<10B
+HLF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+EPC,adv<20M; mktcap<10B; fcf_cagr5 gate
+RVLV,adv<20M; mktcap<10B; fcf_cagr5 gate
+WGO,adv<20M; mktcap<10B; fcf_cagr5 gate
+BRSL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+DCH,adv<20M; mktcap<10B; fcf_cagr5 gate
+AIN,adv<20M; mktcap<10B
+BRC,adv<20M; mktcap<10B
+EVC,adv<20M; mktcap<10B; fcf_cagr5 gate
+LNN,adv<20M; mktcap<10B; fcf_cagr5 gate
+CMBT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+EPAC,adv<20M; mktcap<10B
+ECVT,adv<20M; mktcap<10B; fcf_cagr5 gate
+MPTI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+WOR,adv<20M; mktcap<10B; rev_cagr5 gate
+PRLB,adv<20M; mktcap<10B
+USPH,adv<20M; mktcap<10B; fcf_cagr5 gate
+HOS,adv<20M; mktcap<10B
+WWW,adv<20M; mktcap<10B; fcf_cagr5 gate
+AMRC,adv<20M; mktcap<10B; fcf_cagr5 gate
+TTI,adv<20M; mktcap<10B; fcf_cagr5 gate
+TNC,adv<20M; mktcap<10B; fcf_cagr5 gate
+CTS,adv<20M; mktcap<10B
+GRC,adv<20M; mktcap<10B
+MYE,adv<20M; mktcap<10B; fcf_cagr5 gate
+OXM,adv<20M; mktcap<10B; fcf_cagr5 gate
+KFRC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+UVV,adv<20M; mktcap<10B; fcf_cagr5 gate
+SVV,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BBUC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BV,adv<20M; mktcap<10B; fcf_cagr5 gate
+FLOC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+GSL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+MEI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NPKI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+NPK,adv<20M; mktcap<10B; fcf_cagr5 gate
+PLOW,adv<20M; mktcap<10B
+RYZ,adv<20M; mktcap<10B; fcf_cagr5 gate
+EVTC,adv<20M; mktcap<10B
+CMP,adv<20M; mktcap<10B
+WMK,adv<20M; mktcap<10B; fcf_cagr5 gate
+IDT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+DMC,adv<20M; mktcap<10B; fcf_cagr5 gate
+HAFN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ODC,adv<20M; mktcap<10B
+DFIN,adv<20M; mktcap<10B; rev_cagr5 gate
+BXC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TGLS,adv<20M; mktcap<10B; fcf_cagr5 gate
+AMBP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ETD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CDRE,adv<20M; mktcap<10B
+MAX,adv<20M; mktcap<10B; fcf_cagr5 gate
+SLVM,adv<20M; mktcap<10B; fcf_cagr5 gate
+DLX,adv<20M; mktcap<10B; fcf_cagr5 gate
+PKE,adv<20M; mktcap<10B
+NEXA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ARCO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CLB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+RES,adv<20M; mktcap<10B; fcf_cagr5 gate
+AD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+LXU,adv<20M; mktcap<10B; fcf_cagr5 gate
+SCL,adv<20M; mktcap<10B; fcf_cagr5 gate
+MH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+AGRO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TR,adv<20M; mktcap<10B
+JBI,adv<20M; mktcap<10B
+BWLP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+KODK,adv<20M; mktcap<10B; fcf_cagr5 gate
+MCS,adv<20M; mktcap<10B; fcf_cagr5 gate
+NX,adv<20M; mktcap<10B; fcf_cagr5 gate
+BGS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+IPI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CARS,adv<20M; mktcap<10B
+DKL,adv<20M; mktcap<10B; fcf_cagr5 gate
+MOV,adv<20M; mktcap<10B
+GCO,adv<20M; mktcap<10B; fcf_cagr5 gate
+IDR,adv<20M; mktcap<10B; fcf_cagr5 gate
+FVRR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CAL,adv<20M; mktcap<10B; fcf_cagr5 gate
+ICL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+GETY,adv<20M; mktcap<10B; fcf_cagr5 gate
+SMP,adv<20M; mktcap<10B; fcf_cagr5 gate
+YEXT,adv<20M; mktcap<10B; fcf_cagr5 gate
+ORN,adv<20M; mktcap<10B; fcf_cagr5 gate
+MTW,adv<20M; mktcap<10B; fcf_cagr5 gate
+MATV,adv<20M; mktcap<10B; fcf_cagr5 gate
+CSV,adv<20M; mktcap<10B; fcf_cagr5 gate
+LXFR,adv<20M; mktcap<10B; fcf_cagr5 gate
+MAGN,adv<20M; mktcap<10B; fcf_cagr5 gate
+GTN,adv<20M; mktcap<10B; fcf_cagr5 gate
+NGS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CYH,adv<20M; mktcap<10B; fcf_cagr5 gate
+CAAP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CVEO,adv<20M; mktcap<10B; fcf_cagr5 gate
+UAN,adv<20M; mktcap<10B; fcf_cagr5 gate
+GIC,adv<20M; mktcap<10B; fcf_cagr5 gate
+RGR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+VATE,adv<20M; mktcap<10B; fcf_cagr5 gate
+VTEX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+GLP,adv<20M; mktcap<10B; fcf_cagr5 gate
+SD,adv<20M; mktcap<10B
+TTAM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ELMD,adv<20M; mktcap<10B; fcf_cagr5 gate
+NGVC,adv<20M; mktcap<10B; fcf_cagr5 gate
+MG,adv<20M; mktcap<10B; fcf_cagr5 gate
+ZIP,adv<20M; mktcap<10B; fcf_cagr5 gate
+ACEL,adv<20M; mktcap<10B; fcf_cagr5 gate
+TRT,adv<20M; mktcap<10B; fcf_cagr5 gate
+RNGR,adv<20M; mktcap<10B; fcf_cagr5 gate
+EBF,adv<20M; mktcap<10B
+DBI,adv<20M; mktcap<10B; fcf_cagr5 gate
+SPH,adv<20M; mktcap<10B; fcf_cagr5 gate
+QUAD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+ESP,adv<20M; mktcap<10B; rev_cagr5 gate
+USNA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+HLLY,adv<20M; mktcap<10B; fcf_cagr5 gate
+ELA,adv<20M; mktcap<10B; fcf_cagr5 gate
+INTT,adv<20M; mktcap<10B; fcf_cagr5 gate
+TLYS,adv<20M; mktcap<10B; fcf_cagr5 gate
+FC,adv<20M; mktcap<10B
+ACH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+JILL,adv<20M; mktcap<10B; fcf_cagr5 gate
+INFU,adv<20M; mktcap<10B
+HBB,adv<20M; mktcap<10B; fcf_cagr5 gate
+ACU,adv<20M; mktcap<10B; fcf_cagr5 gate
+PLX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+BDL,adv<20M; mktcap<10B; fcf_cagr5 gate
+EVI,adv<20M; mktcap<10B; fcf_cagr5 gate
+RLGT,adv<20M; mktcap<10B; fcf_cagr5 gate
+ALTG,adv<20M; mktcap<10B; fcf_cagr5 gate
+GENC,adv<20M; mktcap<10B; fcf_cagr5 gate
+DHX,adv<20M; mktcap<10B
+CURV,adv<20M; mktcap<10B; fcf_cagr5 gate
+NC,adv<20M; mktcap<10B; fcf_cagr5 gate
+WLKP,adv<20M; mktcap<10B; fcf_cagr5 gate
+CMT,adv<20M; mktcap<10B; fcf_cagr5 gate
+TRAK,adv<20M; mktcap<10B
+PERF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+TISI,adv<20M; mktcap<10B; fcf_cagr5 gate
+TSQ,adv<20M; mktcap<10B; fcf_cagr5 gate
+CINT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CVU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CIX,adv<20M; mktcap<10B
+SGU,adv<20M; mktcap<10B; fcf_cagr5 gate
+NL,adv<20M; mktcap<10B; fcf_cagr5 gate
+APT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+AXIL,adv<20M; mktcap<10B; fcf_cagr5 gate
+CCEL,adv<20M; mktcap<10B; fcf_cagr5 gate
+DIT,adv<20M; mktcap<10B; fcf_cagr5 gate
+MHH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate
+CCZ,adv<20M
+ORCL,fcf_cagr5 gate; coverage<80%
+BE,fcf_cagr5 gate; coverage<80%
+LLY,fcf_cagr5 gate; coverage<80%
+CAT,coverage<80%
+GLW,fcf_cagr5 gate; coverage<80%
+IBM,coverage<80%
+JNJ,coverage<80%
+COHR,fcf_cagr5 gate; coverage<80%
+SNOW,fcf_cagr5 gate; coverage<80%
+CVX,fcf_cagr5 gate; coverage<80%
+UBER,fcf_cagr5 gate; coverage<80%
+GE,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MRK,coverage<80%
+MCD,coverage<80%
+VZ,coverage<80%
+NKE,fcf_cagr5 gate; coverage<80%
+PFE,fcf_cagr5 gate; coverage<80%
+NET,fcf_cagr5 gate; coverage<80%
+FCX,fcf_cagr5 gate; coverage<80%
+PATH,mktcap<10B; fcf_cagr5 gate; coverage<80%
+RDDT,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TJX,coverage<80%
+ETN,coverage<80%
+IONQ,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NEM,coverage<80%
+COP,coverage<80%
+DE,coverage<80%
+BMY,coverage<80%
+SLB,coverage<80%
+CVNA,fcf_cagr5 gate; coverage<80%
+CDE,fcf_cagr5 gate; coverage<80%
+PSX,fcf_cagr5 gate; coverage<80%
+HCA,coverage<80%
+JCI,coverage<80%
+CCL,fcf_cagr5 gate; coverage<80%
+RBLX,coverage<80%
+DVN,coverage<80%
+URI,fcf_cagr5 gate; coverage<80%
+SE,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FIG,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OXY,coverage<80%
+ZTS,coverage<80%
+TWLO,fcf_cagr5 gate; coverage<80%
+EOG,fcf_cagr5 gate; coverage<80%
+MTZ,fcf_cagr5 gate; coverage<80%
+VEEV,fcf_cagr5 gate; coverage<80%
+HIMS,mktcap<10B; fcf_cagr5 gate; coverage<80%
+EMR,coverage<80%
+CTVA,coverage<80%
+U,fcf_cagr5 gate; coverage<80%
+VALE,fcf_cagr5 gate; coverage<80%
+GIS,fcf_cagr5 gate; coverage<80%
+ITW,coverage<80%
+NUE,fcf_cagr5 gate; coverage<80%
+APD,fcf_cagr5 gate; coverage<80%
+DHI,fcf_cagr5 gate; coverage<80%
+IQV,coverage<80%
+QXO,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PBR,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WAT,fcf_cagr5 gate; coverage<80%
+BURL,fcf_cagr5 gate; coverage<80%
+MP,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ADM,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DOW,fcf_cagr5 gate; coverage<80%
+CPNG,fcf_cagr5 gate; coverage<80%
+JOBY,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FLUT,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RBRK,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SMR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+AU,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CLX,fcf_cagr5 gate; coverage<80%
+AA,fcf_cagr5 gate; coverage<80%
+KNX,fcf_cagr5 gate; coverage<80%
+MTD,coverage<80%
+DY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+LUV,fcf_cagr5 gate; coverage<80%
+IOT,fcf_cagr5 gate; coverage<80%
+CAG,mktcap<10B; coverage<80%
+IT,fcf_cagr5 gate; coverage<80%
+RIG,mktcap<10B; coverage<80%
+GWRE,coverage<80%
+SCCO,coverage<80%
+TKO,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DGX,coverage<80%
+LEN,fcf_cagr5 gate; coverage<80%
+PL,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CLF,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ZETA,mktcap<10B; fcf_cagr5 gate; coverage<80%
+NVR,coverage<80%
+PHM,coverage<80%
+CNH,fcf_cagr5 gate; coverage<80%
+DD,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PR,fcf_cagr5 gate; coverage<80%
+GPC,fcf_cagr5 gate; coverage<80%
+SNAP,fcf_cagr5 gate; coverage<80%
+IP,fcf_cagr5 gate; coverage<80%
+AG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RDW,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ACHR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MOS,mktcap<10B; fcf_cagr5 gate; coverage<80%
+AS,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ESTC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+TE,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BUD,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BG,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SWK,fcf_cagr5 gate; coverage<80%
+HNGE,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMRZ,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BAX,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AVY,coverage<80%
+AR,fcf_cagr5 gate; coverage<80%
+S,mktcap<10B; fcf_cagr5 gate; coverage<80%
+EQX,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TXT,fcf_cagr5 gate; coverage<80%
+H,fcf_cagr5 gate; coverage<80%
+ELAN,coverage<80%
+RBC,coverage<80%
+KMX,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ALC,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BALL,fcf_cagr5 gate; coverage<80%
+GKOS,fcf_cagr5 gate; coverage<80%
+SNA,fcf_cagr5 gate; coverage<80%
+ALK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+EQNR,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RPM,coverage<80%
+FLR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MGY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+TAP,mktcap<10B; coverage<80%
+GME,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BTG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SM,mktcap<10B; fcf_cagr5 gate; coverage<80%
+AVTR,fcf_cagr5 gate; coverage<80%
+EHC,coverage<80%
+CCK,coverage<80%
+RRC,mktcap<10B; coverage<80%
+SPHR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RAL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BILL,mktcap<10B; fcf_cagr5 gate; coverage<80%
+VFC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+OSK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+KVYO,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WMS,mktcap<10B; coverage<80%
+UUUU,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+UMAC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HRB,mktcap<10B; coverage<80%
+HXL,mktcap<10B; fcf_cagr5 gate; coverage<80%
+SARO,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CR,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EXP,mktcap<10B; fcf_cagr5 gate; coverage<80%
+UEC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+DDS,fcf_cagr5 gate; coverage<80%
+CMC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+R,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CNK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+EMN,mktcap<10B; fcf_cagr5 gate; coverage<80%
+HRI,mktcap<10B; rev_cagr5 gate; coverage<80%
+MPLX,coverage<80%
+WLK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ECG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RSI,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BBAI,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EXK,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WRBY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CRGY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+PK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+AMPX,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KBH,mktcap<10B; coverage<80%
+STNG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GPOR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+NE,mktcap<10B; fcf_cagr5 gate; coverage<80%
+MUR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+GEO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+NOG,mktcap<10B; coverage<80%
+CHH,mktcap<10B; coverage<80%
+AIR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BTU,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BFLY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BH,mktcap<10B; rev_cagr5 gate; coverage<80%
+HCC,mktcap<10B; coverage<80%
+CNX,mktcap<10B; coverage<80%
+PII,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+AMR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+TAL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ACVA,mktcap<10B; coverage<80%
+SOC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+VOYG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GPK,mktcap<10B; fcf_cagr5 gate; coverage<80%
+HGV,mktcap<10B; fcf_cagr5 gate; coverage<80%
+UAA,mktcap<10B; fcf_cagr5 gate; coverage<80%
+KD,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SLGN,mktcap<10B; coverage<80%
+PRM,mktcap<10B; coverage<80%
+OII,mktcap<10B; coverage<80%
+AI,mktcap<10B; fcf_cagr5 gate; coverage<80%
+LOAR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WHD,mktcap<10B; fcf_cagr5 gate; coverage<80%
+SAM,mktcap<10B; coverage<80%
+DCO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+THO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ZWS,mktcap<10B; coverage<80%
+CSTM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BW,mktcap<10B; fcf_cagr5 gate; coverage<80%
+PUMP,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ASAN,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CRC,mktcap<10B; coverage<80%
+AMTM,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FMC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DAN,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BHVN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+NUVB,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HESM,mktcap<10B; coverage<80%
+AESI,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WKC,mktcap<10B; fcf_cagr5 gate; coverage<80%
+RXO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+EDU,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GENI,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OBDC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FUN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RCUS,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GATX,mktcap<10B; fcf_cagr5 gate; coverage<80%
+SG,mktcap<10B; fcf_cagr5 gate; coverage<80%
+PACS,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CXT,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RAMP,mktcap<10B; coverage<80%
+AMBQ,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DNOW,mktcap<10B; fcf_cagr5 gate; coverage<80%
+UAMY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+NG,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BXSL,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PRGO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+OGN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KOS,mktcap<10B; coverage<80%
+SGHC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+COUR,mktcap<10B; fcf_cagr5 gate; coverage<80%
+TDOC,mktcap<10B; coverage<80%
+LION,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SDRL,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BKV,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PBI,mktcap<10B; rev_cagr5 gate; coverage<80%
+MSGE,mktcap<10B; fcf_cagr5 gate; coverage<80%
+BVN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SUN,fcf_cagr5 gate; coverage<80%
+AGL,mktcap<10B; fcf_cagr5 gate; coverage<80%
+ENOV,mktcap<10B; fcf_cagr5 gate; coverage<80%
+MAIN,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ECO,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LAC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SHO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CON,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TALO,mktcap<10B; fcf_cagr5 gate; coverage<80%
+CGAU,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BKSY,mktcap<10B; fcf_cagr5 gate; coverage<80%
+LPG,mktcap<10B; coverage<80%
+SPCE,mktcap<10B; fcf_cagr5 gate; coverage<80%
+OI,mktcap<10B; fcf_cagr5 gate; coverage<80%
+FSK,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ARIS,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HTGC,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TNET,mktcap<10B; fcf_cagr5 gate; coverage<80%
+SNDA,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BORR,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DBD,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GEF,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NIQ,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GOLD,mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BHC,mktcap<10B; coverage<80%
+ENR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GBX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+IE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MUX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BZH,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GRBK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MD,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+USAS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VYX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VSTS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CCS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+WEAV,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CCO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ADNT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+NGVT,adv<20M; mktcap<10B; rev_cagr5 gate; coverage<80%
+VZLA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NRGV,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MBC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PD,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+HOV,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+INVX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TRIN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AORT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MTX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BBW,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ARLO,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GRDN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PAR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+XPRO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TIC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GBTG,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SFL,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BATL,adv<20M; mktcap<10B; coverage<80%
+ANRO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TDAY,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+IAUX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TROX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+DOLE,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MEC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CHPT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+WFG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+XHR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+FUBO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WNC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+WTI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CLVT,adv<20M; mktcap<10B; coverage<80%
+EVH,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+FTK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CWH,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PRSU,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+EFXT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FET,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MNTN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DEC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HYLN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ONT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TRLV,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SXC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+LAR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GNK,adv<20M; mktcap<10B; coverage<80%
+ALIT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+JMIA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KRP,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+FLNG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TEN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NMM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CTOS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+NMAX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SPIR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+VTOL,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+IHS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ASC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+URG,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+WS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DFH,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SES,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NVGS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+DIN,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+DDD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TSLX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PHR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+NABL,adv<20M; mktcap<10B; coverage<80%
+GPUS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CABO,adv<20M; mktcap<10B; coverage<80%
+DNA,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SRXH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OOMA,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GSBD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LSPD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KOP,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+REPX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RSKD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VTS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CVLG,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SSTK,adv<20M; mktcap<10B; coverage<80%
+VTAK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+REX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+IBTA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CODI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+RYAM,adv<20M; mktcap<10B; coverage<80%
+GTE,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PFLT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MTUS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+DC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OPTU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CTGO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+IIIN,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ITRG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SMWB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LVWR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CNNE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EGY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MSDL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ASPN,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BLCO,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+EBS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GPRK,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SOAR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GROY,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GAU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BBDC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+REI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PLAG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CPHI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CMRE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NXDR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CPS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+HSHP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TBN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SRFM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OIS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BSM,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GRNT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ASIX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MLR,adv<20M; mktcap<10B; coverage<80%
+ARDT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FIRY,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TMQ,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CATX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GCTS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LODE,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CMCL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GLAS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+XPOF,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+NRP,adv<20M; mktcap<10B; coverage<80%
+BCSF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VLRS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SLND,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WYY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TWI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BNED,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MTA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CTEV,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+HCWC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+INR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MNR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VNRX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BLND,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GORO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+COOK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+AMPY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+VGZ,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KULR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OEC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GEL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CLW,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NEWP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CION,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+HVT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MSIF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+JELD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BKTI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+XPER,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+NUS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SIF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KRO,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ACCO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SAR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PACK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+KLC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TBI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EAF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+THM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+WWR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EVEX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+UIS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PSFE,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TRX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MED,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SMRT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TXO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EDVA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DSX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PNNT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AEON,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VLN,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SST,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SCM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+DSS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ZONE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MTNB,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SEG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+YALA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EPM,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PTHS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ADCT,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LCTX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PLG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SRI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CMDB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PEW,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TPET,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMWL,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+UAVS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ANVS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NPWR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VENU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AP,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SLSR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MPU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+STXS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TPVG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CHGG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AIM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SMHI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TUYA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OWLT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BRCC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BALY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ZVIA,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PSQH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMZE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+OSTX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LAW,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CAPL,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+UFI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MYO,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TGEN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CTM,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PHGE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AVD,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SDHC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AZTR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+KAPA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+UP,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+STEM,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+LUCK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+XTNT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+PZG,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BARK,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MAIA,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SKIL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PED,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+KNOP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GWH,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ROLR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TOON,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+FLYX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NRXS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+COE,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+PAAI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+LGCY,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NNVC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+NRDY,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+GRO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CLDI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RFL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EONR,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MXC,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CATO,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+APUS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CVM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TOVX,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ZDGE,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+INUV,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+ZEPP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+VHI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+DLNG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+TOPP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EP,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+TRTN-PC,adv<20M; mktcap<10B; rev_cagr5 gate; coverage<80%
+LSF,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CTA-PB,adv<20M; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+IGC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ATNM,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+UUU,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ACCS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+SER,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AGIG,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MSN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+YCBD,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LGL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BCHT,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+AUST,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FSI,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+XPL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AIRI,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+ITP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+MLSS,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+CKX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+IBO,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GROV,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+REED,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+BRN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+JOB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+GBR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+BGSF,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AKA,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MSC,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LOCL,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+CVR,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+MITQ,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+RVP,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+LITB,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+INLX,adv<20M; mktcap<10B; fcf_cagr5 gate; coverage<80%
+OGEN,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+EQS,adv<20M; mktcap<10B; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%

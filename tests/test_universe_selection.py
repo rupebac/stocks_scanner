@@ -105,3 +105,11 @@ def test_manual_snapshot_keeps_raw_evidence_without_inventing_peer_scores(tmp_pa
     assert frame.price.iloc[0] == 25.
     assert json.loads((path / "config.json").read_text())["research_only"]
     assert not (tmp_path / "scans").exists()
+
+
+def test_all_nyse_registered_and_scannable():
+    import datetime as dt
+    from scanner.universe_selection import UNIVERSES, scan_directory
+    assert "all_nyse" in UNIVERSES and UNIVERSES["all_nyse"] == "All NYSE"
+    p = scan_directory(dt.date(2026, 9, 14), "all_nyse")
+    assert p.name == "2026-09-14_all_nyse"

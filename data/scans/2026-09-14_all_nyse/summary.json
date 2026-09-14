@@ -1,0 +1,13 @@
+{
+  "asof": "2026-09-14",
+  "gs10": 0.0495,
+  "universe_rows": 1862,
+  "scored": 647,
+  "floor_threshold": 60.0,
+  "floor_pass": 31,
+  "flag_derated_quality": 1,
+  "flag_beaten": 2,
+  "flagship": [],
+  "unmapped_subindustries": 3282,
+  "scan_dir": "/home/rperez/workspaces/stocks_scanner/data/scans/2026-09-14_all_nyse"
+}
