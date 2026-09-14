@@ -118,7 +118,7 @@ def _latest_filing_date(cik: int) -> dt.date | None:
     if data is None:
         try:
             r = requests.get(
-                f"https://data.sec.gov/api/xbrl/submissions/CIK{int(cik):010d}.json",
+                f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json",
                 headers=config.SEC_HEADERS, timeout=30,
             )
             time.sleep(config.SEC_RATE_SLEEP)
@@ -152,7 +152,7 @@ def sic_for_cik(cik: int) -> tuple[int | None, str | None]:
     if data is None:
         try:
             r = requests.get(
-                f"https://data.sec.gov/api/xbrl/submissions/CIK{int(cik):010d}.json",
+                f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json",
                 headers=config.SEC_HEADERS, timeout=30,
             )
             time.sleep(config.SEC_RATE_SLEEP)
@@ -165,8 +165,11 @@ def sic_for_cik(cik: int) -> tuple[int | None, str | None]:
         except Exception:
             return (None, None)
     sic = data.get("sic")
-    return (int(sic) if isinstance(sic, int) else None,
-            data.get("sicDescription"))
+    try:
+        sic = int(sic) if sic not in (None, "") else None   # SEC sends "2834", not 2834
+    except (TypeError, ValueError):
+        sic = None
+    return sic, data.get("sicDescription")
 
 
 def _cached_max_filed(facts: dict) -> dt.date | None:
