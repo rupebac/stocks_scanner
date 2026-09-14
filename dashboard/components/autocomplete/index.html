@@ -3,26 +3,45 @@
 <head>
 <meta charset="utf-8"/>
 <style>
-  html { color-scheme: dark; }
+  /* theme-aware: follows the browser color scheme the same way Streamlit's
+     auto theme does, so the input is never white-on-white on a light page */
+  :root {
+    --fg: #31333f; --muted: rgba(60, 60, 67, 0.6); --panel: #ffffff;
+    --border: rgba(0, 0, 0, 0.15); --input-bg: rgba(49, 51, 63, 0.06);
+    --hover: rgba(228, 87, 46, 0.10); --act: rgba(228, 87, 46, 0.22);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #fafafa; --muted: rgba(250, 250, 250, 0.55); --panel: #1c2230;
+      --border: rgba(128, 128, 128, 0.35); --input-bg: rgba(127, 143, 165, 0.12);
+      --hover: rgba(228, 87, 46, 0.18); --act: rgba(228, 87, 46, 0.30);
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+  }
   body { margin: 0; background: transparent; font-family: "Source Sans Pro", sans-serif; }
   .wrap { position: relative; }
   input {
     width: 100%; box-sizing: border-box; padding: 9px 12px;
-    border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.35);
-    background: rgba(127, 143, 165, 0.12); color: #fafafa;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--input-bg); color: var(--fg);
     font-size: 14.5px; outline: none;
   }
   input:focus { border-color: #e4572e; }
-  input::placeholder { color: rgba(250, 250, 250, 0.45); }
+  input::placeholder { color: var(--muted); }
   #list {
     position: absolute; top: 40px; left: 0; right: 0; z-index: 5;
-    background: #161b26; border: 1px solid rgba(128, 128, 128, 0.35);
-    border-radius: 8px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; box-shadow: var(--shadow);
   }
-  .item { padding: 7px 12px; font-size: 13.5px; color: #e8e8e8; cursor: pointer;
+  .hd { padding: 8px 12px 4px; font-size: 10.5px; letter-spacing: 0.08em;
+        text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .item { padding: 6px 12px; font-size: 13.5px; color: var(--fg); cursor: pointer;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item small { color: rgba(232, 232, 232, 0.55); margin-left: 6px; }
-  .item.act { background: rgba(228, 87, 46, 0.30); color: #ffffff; }
+  .item small { color: var(--muted); margin-left: 6px; }
+  .item:hover { background: var(--hover); }
+  .item.act { background: var(--act); }
+  .none { padding: 10px 12px; font-size: 13px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -30,12 +49,11 @@
   <input id="q" autocomplete="off" spellcheck="false"/>
   <div id="list"></div>
 </div>
-<!-- written by dashboard/app.py each session: window.AC_OPTIONS / AC_PLACEHOLDER -->
+<!-- written by dashboard/app.py each session: window.AC_OPTIONS / AC_QUICK / AC_PLACEHOLDER -->
 <script src="data.js"></script>
 <script>
   const send = (type, data) => window.parent.postMessage(
     Object.assign({ isStreamlitMessage: true, type: type }, data), "*");
-  const setH = (h) => send("streamlit:setFrameHeight", { height: h });
   const setValue = (v) => send("streamlit:setComponentValue", { value: v, dataType: "json" });
   send("streamlit:componentReady", { apiVersion: 1 });
   // if the host streams render events, prefer the fresh args from Python
@@ -44,17 +62,20 @@
     if (!d || !d.isStreamlitMessage || d.type !== "streamlit:render") return;
     if (d.args && d.args.options) {
       window.AC_OPTIONS = d.args.options;
+      if (d.args.quick) window.AC_QUICK = d.args.quick;
       document.getElementById("q").placeholder = d.args.placeholder || window.AC_PLACEHOLDER || "Search…";
       filter();
     }
   });
 
   const OPTS = () => window.AC_OPTIONS || [];
+  const QUICK = () => window.AC_QUICK || [];
   const norm = (s) => (s || "").toString().toUpperCase();
-  let hits = [], active = -1, lastSent = null;
+  let hits = [], active = -1, quickMode = false, lastSent = null;
 
   function filter() {
     const q = norm(document.getElementById("q").value.trim());
+    quickMode = !q;
     hits = [];
     if (q) {
       const pfx = [], sub = [];
@@ -64,6 +85,9 @@
         else if (t.includes(q) || l.includes(q)) sub.push(o);
       }
       hits = pfx.concat(sub).slice(0, 8);
+    } else {
+      // idle: today's highlights as one-click picks instead of a blank panel
+      hits = QUICK().slice(0, 8);
     }
     active = hits.length ? 0 : -1;
     render();
@@ -72,6 +96,11 @@
   function render() {
     const L = document.getElementById("list");
     L.innerHTML = "";
+    if (quickMode && hits.length) {
+      const h = document.createElement("div");
+      h.className = "hd"; h.textContent = "Today's highlights";
+      L.appendChild(h);
+    }
     hits.forEach((o, i) => {
       const d = document.createElement("div");
       d.className = "item" + (i === active ? " act" : "");
@@ -82,12 +111,19 @@
       d.onmousemove = () => { if (active !== i) { active = i; render(); } };
       L.appendChild(d);
     });
-    setH(44 + (hits.length ? 4 + hits.length * 33 : 0));
+    if (!hits.length) {
+      const n = document.createElement("div");
+      n.className = "none";
+      n.textContent = quickMode ? "Type a ticker or company name to search"
+                                : "No match — try the ticker (e.g. ORCL)";
+      L.appendChild(n);
+    }
   }
 
   function choose(o) {
     document.getElementById("q").value = o.t;
-    hits = []; active = -1;
+    quickMode = false;
+    hits = [o]; active = 0;
     render();
     document.getElementById("q").blur();
     if (lastSent !== o.t) { lastSent = o.t; setValue(o.t); }
@@ -100,8 +136,9 @@
     if (e.key === "ArrowDown") { active = Math.min(active + 1, hits.length - 1); render(); e.preventDefault(); }
     else if (e.key === "ArrowUp") { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
     else if (e.key === "Enter") { if (hits[active]) choose(hits[active]); e.preventDefault(); }
-    else if (e.key === "Escape") { hits = []; active = -1; render(); }
+    else if (e.key === "Escape") { qEl.value = ""; filter(); qEl.blur(); }
   });
+  filter();
 </script>
 </body>
 </html>

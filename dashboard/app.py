@@ -70,7 +70,7 @@ COLUMN_DOCS = {
         "unreported). A jumpy cyclical cannot average its way to a high score. Floor is "
         "Quality ≥ 60 and conservative ROIC in [10%, 100%] when ROIC is known "
         "(>100% is a tiny-capital artifact and fails; missing does not). FCF sleeves "
-        "follow the Ideas cash setting (reported FCF vs owner earnings)."
+        "follow the Ideas cash setting (after all capex vs maintenance-only)."
     ),
     "residual": (
         "log(EV/FCF) minus the multiple this ROIC and industry group usually get "
@@ -774,7 +774,7 @@ def _detail_charts(h: pd.DataFrame, sel: str, cash: str = "reported") -> None:
                                      hovertemplate=f"<b>{sel} now: {cur:.1f}x</b><extra></extra>"))
             title = "EV/FCF vs its own 5y history"
             if cash == "owner":
-                title += " (owner earnings)"
+                title += " (maintenance-only cash)"
             fig.update_layout(height=300, title=title, yaxis_title="×")
             st.plotly_chart(fig, width="stretch")
         else:
@@ -914,8 +914,8 @@ def ideas_page():
 
     owner_ok = SC.owner_cash_available(metrics)
     cash_labels = {
-        "reported": "Reported FCF (CFO − capex − SBC)",
-        "owner": "Owner earnings (CFO − D&A − SBC)",
+        "reported": "After all capex (growth deducted)",
+        "owner": "Maintenance-only (growth not deducted)",
     }
     cash = st.radio(
         "Cash used for the FCF-CAGR gate, QualityScore FCF sleeves, residual, and the yield bar",
@@ -925,9 +925,12 @@ def ideas_page():
         horizontal=True,
         disabled=not owner_ok,
         key="cash_definition",
-        help="Default is reported FCF. Owner earnings uses D&A as a maintenance-capex "
-             "proxy so growth buildouts do not zero the operating cash engine. Overlay "
-             "strike yields stay on reported FCF. One series at a time — never a blend.",
+        help="After all capex = reported FCF (CFO − capex − SBC): growth spend deducted, "
+             "the conservative view. Maintenance-only = owner earnings (CFO − D&A − SBC): "
+             "D&A as the upkeep proxy, so growth buildouts do not zero the operating cash "
+             "engine — but it assumes upkeep ≈ D&A and overstates cash for companies that "
+             "must keep building. Default is after all capex. Overlay strike yields stay on "
+             "reported FCF. One series at a time — never a blend.",
     )
     if not owner_ok:
         st.caption("This scan predates owner-earnings columns — run a fresh scan to enable the setting.")
@@ -1044,10 +1047,15 @@ def ideas_page():
     # render events into component iframes); the pick travels back via
     # setComponentValue, which does work.
     name_of = {r["ticker"]: str(r.get("name") or "") for _, r in metrics.iterrows()}
+    # idle quick-picks = the current highlight list, so the panel is never blank
+    _ac_quick = [{"t": r["ticker"], "label": name_of.get(r["ticker"], "")}
+                 for r in hi.head(8).to_dict("records")]
     _ac_payload = {"options": [{"t": t, "label": name_of.get(t, "")} for t in options],
+                   "quick": _ac_quick,
                    "placeholder": "Type a ticker or name — e.g. ORCL, Oracle…"}
     _ac_dir = ROOT / "dashboard" / "components" / "autocomplete"
     _ac_js = ("window.AC_OPTIONS = " + json.dumps(_ac_payload["options"]) + ";\n"
+              "window.AC_QUICK = " + json.dumps(_ac_payload["quick"]) + ";\n"
               "window.AC_PLACEHOLDER = " + json.dumps(_ac_payload["placeholder"]) + ";\n")
     try:
         _ac_file = _ac_dir / "data.js"
