@@ -10,22 +10,22 @@
   "quality_floor_threshold": 60.0,
   "residual_fit": {
     "n": 219,
-    "slope_log_roic": 0.022502747900770417,
+    "slope_log_roic": 0.024191521976097335,
     "dummies": {
-      "ig:Commercial and Professional Services": -0.14100213850047363,
-      "ig:Consumer Services": -0.14237739162695737,
-      "ig:Energy": -0.21787339786377374,
-      "ig:Food Beverage and Tobacco": -0.3525268433141948,
-      "ig:Health Care Equipment and Services": -0.0746689569952764,
-      "ig:Materials": 0.06237140966323705,
-      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.1927659686940262,
-      "ig:Semiconductors and Semiconductor Equipment": 0.6634038999713194,
-      "ig:Software and Services": 0.1988290577886715,
-      "ig:Technology Hardware and Equipment": 0.258608665140715,
-      "ig:Transportation": 0.004164900256031548,
-      "sector:Communication Services": 0.07752805541619001,
-      "sector:Consumer Discretionary": 0.03678501731459057,
-      "sector:Consumer Staples": -0.025694097258410504
+      "ig:Commercial and Professional Services": -0.10462132234872973,
+      "ig:Consumer Services": -0.12110479088559839,
+      "ig:Energy": -0.20994412818485222,
+      "ig:Food Beverage and Tobacco": -0.3302005996708696,
+      "ig:Health Care Equipment and Services": -0.04575770222655259,
+      "ig:Materials": 0.07183003209215498,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.212582640805217,
+      "ig:Semiconductors and Semiconductor Equipment": 0.627808492267308,
+      "ig:Software and Services": 0.25440031238157157,
+      "ig:Technology Hardware and Equipment": 0.242394256088023,
+      "ig:Transportation": 0.021891204382717112,
+      "sector:Communication Services": 0.11226515282434855,
+      "sector:Consumer Discretionary": 0.06065542173014045,
+      "sector:Consumer Staples": 0.004964621141742478
     },
     "groups": {
       "ig:Capital Goods": 35,
@@ -85,5 +85,5 @@
     "FLAG_BRAKE_FCF_MARGIN": 0.95,
     "FLAG_BRAKE_ROIC": 0.9
   },
-  "config_hash": "0b496d4cc313"
+  "config_hash": "33ea189d51cc"
 }

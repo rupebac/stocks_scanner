@@ -6,19 +6,19 @@
   "floor_threshold": 60.0,
   "floor_pass": 42,
   "flag_derated_quality": 2,
-  "flag_beaten": 6,
+  "flag_beaten": 5,
   "flagship": [
     {
       "ticker": "ADBE",
-      "residual": -1.0539832237911986,
-      "fcf_yield": 0.08351347849756927,
-      "ev_fcf_self_pct": 7.307692307692308
+      "residual": -1.0482564851116951,
+      "fcf_yield": 0.07950388395254047,
+      "ev_fcf_self_pct": 9.230769230769232
     },
     {
       "ticker": "ADSK",
-      "residual": -0.5231126461559548,
-      "fcf_yield": 0.049646679126773126,
-      "ev_fcf_self_pct": 0.38461538461538464
+      "residual": -0.4836297978790247,
+      "fcf_yield": 0.04573131512370825,
+      "ev_fcf_self_pct": 3.4615384615384617
     }
   ],
   "unmapped_subindustries": 0,
