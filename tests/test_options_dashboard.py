@@ -49,7 +49,8 @@ def _run_app(monkeypatch, sel="ACN", with_calls=True, zero_bid=False):
         puts = pd.DataFrame(_rows("put"))
         if zero_bid:
             puts["bid"] = 0.
-        return {"puts": puts, "calls": pd.DataFrame(_rows("call") if with_calls else [])}
+        return {"puts": puts, "calls": pd.DataFrame(_rows("call") if with_calls else []),
+                "underlying_price": 180., "underlying_time": "2026-09-14T15:30:00+00:00"}
     monkeypatch.setattr(MD, "fetch_option_chain", fake_chain)
     st.cache_data.clear()
     at = AppTest.from_file(str(APP_FILE), default_timeout=120)

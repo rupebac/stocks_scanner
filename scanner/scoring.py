@@ -375,7 +375,8 @@ def apply_cash_definition(df: pd.DataFrame, mode: str = "reported") -> pd.DataFr
 
 
 def highlighted(df: pd.DataFrame, gs10: float | None = None,
-                yield_floor: float = 0.04) -> pd.DataFrame:
+                yield_floor: float = 0.04, *, quality_min: float | None = None,
+                max_residual: float = 0.0) -> pd.DataFrame:
     """Ideas highlights: gated + quality floor + residual < 0 + holdability.
     Holdability ROIC is the 5y average when present, else conservative
     min(TTM, 5y median). Missing both fails. Yield uses the active cash series."""
@@ -394,9 +395,17 @@ def highlighted(df: pd.DataFrame, gs10: float | None = None,
          for _, r in g.iterrows()],
         index=g.index,
     )
+    floor_pass = g["quality_floor_pass"].fillna(False)
+    if quality_min is not None:
+        # Interactive display override; retain the scanner's conservative ROIC band.
+        roic_level = pd.Series([
+            conservative_level(r.get("roic_median_5y"), r.get("roic_ttm"), r.get("roic"))
+            for _, r in g.iterrows()], index=g.index)
+        roic_ok = roic_level.isna() | roic_level.between(config.QUALITY_FLOOR_ROIC_MIN, config.QUALITY_FLOOR_ROIC_MAX)
+        floor_pass = (g["quality_score"] >= quality_min) & roic_ok
     hi = g[
-        g["quality_floor_pass"].fillna(False)
-        & g["residual"].notna() & (g["residual"] < 0)
+        floor_pass
+        & g["residual"].notna() & (g["residual"] < max_residual)
         & roic_h.notna() & (roic_h >= config.ROIC_THRESHOLD)
         & g["fcf_yield"].notna() & (g["fcf_yield"] >= bar)
     ]

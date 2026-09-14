@@ -10,12 +10,18 @@ flags, put overlay, scan artifacts, tests, Streamlit UI.
 
 ## The UI
 
-**Hunt** is a stock-first research workspace with three destinations:
+**Hunt** is a stock-first research workspace with four destinations:
 
 - **Discover:** an interactive quality/value hunt map, clickable company cards,
+  draggable quality/valuation hunt-zone cutoffs, synchronized sliders and reset,
   sector filters, and separate Quality & value, Investing for growth, and All
-  companies views. Every stock remains searchable, including unscored names.
-- **Company:** financial history and a focused put/call income calculator. New
+  companies views. Switch between the business map and an income map of entry
+  discount versus premium return. Cards explain why a stock surfaced and what
+  to investigate, with on-demand put previews. Every stock remains searchable.
+- **Saved ideas:** persistent buy-price ceilings and ownership theses, with put
+  comparisons against your prices. Ideas live in `data/user/watchlist.sqlite3`,
+  survive scan refreshes, and are shared by users of this dashboard instance.
+- **Company:** a business/valuation/concern brief and a focused put/call income calculator. New
   charts read cached SEC filings for revenue, operating profit, operating cash,
   capital spending, debt, cash reserves, and stock compensation. They respect the
   saved scan's filing-date cutoff; no full rescan is needed to view them.
@@ -25,16 +31,38 @@ Compare up to six stocks' puts at a target duration of 7–90 days, an entry
 price discount, and a cash budget. Each result shows its actual expiration,
 positive bid premium, premium/share-price ratio, return on committed cash,
 net entry price, earnings flag and fetch time. Quotes load only on request,
-with a 90-second cache. Share-price comparisons use the clearly dated scan
-price. Missing or crossed bids are not presented as collectible income.
+with a 90-second cache. Comparisons prefer a shared expiration; when none exists,
+the nearest individual dates are explicitly labeled. Share-price comparisons use
+the underlying quote from the same chain response, with both its market timestamp
+and the fetch time displayed. Missing underlying quotes pause these comparisons;
+missing or crossed bids are not presented as collectible income. Saved buy prices
+are strike ceilings: the chosen strike never rounds above them.
 
-The growth lane is a **research filter**, not a quality endorsement: positive
-5-year revenue growth, positive cash before estimated growth investment, and
-higher cash under the depreciation-as-upkeep proxy than after all capex.
+The growth lane is a **research filter**, not a quality endorsement: at least 5%
+annual revenue growth over five years, positive cash under the depreciation-as-upkeep
+proxy, and a proxy-versus-reported cash gap of at least 2% of revenue. Its map shows
+revenue growth versus operating margin, with leverage colors and investment-gap
+marker sizes. The company workspace separates Price & value, Growth & margins,
+Cash & investment, and Debt & dilution into focused chart views.
 Reported and proxy cash remain separate; the conservative shortlist and scanner
 methodology are unchanged. Covered-call comparisons use the user's original
 share cost and distinguish today's quote from a hypothetical future trade.
 
+
+Scores marked **\*** are research estimates, with their input limitations available
+on hover and in the company's always-visible valuation/data panel. They are stored
+in separate display columns; the original scanner scores, gates and shortlist are
+unchanged. Quality estimates require at least 70% of core category weight,
+profitability and observed stability. Cheapness estimates require at least 60%
+of component weight and renormalize the available components. Insufficient inputs
+remain unavailable with an explanation. This lets companies such as ORCL be
+researched despite the scan's broad 80% coverage exclusion, without inventing
+missing cash-flow history or confusing an estimate with shortlist eligibility.
+
+The draggable chart serves the installed Plotly bundle locally (copied to the
+ignored `dashboard/components/hunt_map/plotly.min.js` at runtime). It needs no CDN.
+Drag a dotted line or its handle; release to update the shortlist. Keyboard arrows
+adjust a focused handle, Home/End reach its limits, and Escape cancels a drag.
 
 ## Quick start
 

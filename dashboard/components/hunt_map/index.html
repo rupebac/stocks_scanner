@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body { margin:0; background:white; font-family:Arial,sans-serif; overflow:hidden; }
+#wrap { position:relative; width:100%; height:615px; }
+#plot { width:100%; height:100%; }
+.cut { position:absolute; z-index:10; touch-action:none; outline:none; }
+#quality-line { height:18px; cursor:ns-resize; }
+#valuation-line { width:18px; cursor:ew-resize; }
+.cut .handle { position:absolute; box-sizing:border-box; border:1px solid #aac0df; background:#fff; color:#3569b0;
+               border-radius:5px; font-size:11px; padding:4px 7px; white-space:nowrap; user-select:none; }
+#quality-line .handle { right:0; top:-4px; }
+#valuation-line .handle { top:0; left:2px; }
+.cut:hover .handle,.cut:focus-visible .handle,.cut.dragging .handle { background:#edf3fc; border-color:#3569b0; box-shadow:0 0 0 2px #3569b022; }
+.cut:focus-visible { outline:2px solid #3569b066; outline-offset:1px; }
+#status { position:absolute; left:-10000px; }
+#error { display:none; padding:16px; color:#68717e; font-size:14px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="plot"></div>
+  <div id="quality-line" class="cut" tabindex="0" role="slider" aria-label="Minimum business quality" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100"><span class="handle"></span></div>
+  <div id="valuation-line" class="cut" tabindex="0" role="slider" aria-label="Minimum valuation advantage" aria-orientation="horizontal" aria-valuemin="-2" aria-valuemax="2"><span class="handle"></span></div>
+  <div id="status" role="status" aria-live="polite"></div>
+  <div id="error">Unable to load the interactive chart. The hunt-zone sliders above remain available.</div>
+</div>
+<script src="plotly.min.js"></script>
+<script src="interaction.js"></script>
+</body>
+</html>

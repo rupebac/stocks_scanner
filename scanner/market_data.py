@@ -456,8 +456,17 @@ def fetch_option_chain(ticker: str, expiry: dt.date) -> dict | None:
         return out
 
     try:
+        underlying = getattr(oc, "underlying", None) or {}
+        from .opportunities import number
+        spot = number(underlying.get("regularMarketPrice"))
+        timestamp = number(underlying.get("regularMarketTime"))
+        quote_time = (dt.datetime.fromtimestamp(timestamp, dt.timezone.utc).isoformat(timespec="seconds")
+                      if timestamp is not None else None)
         return {"puts": _prep(getattr(oc, "puts", None), "put"),
-                "calls": _prep(getattr(oc, "calls", None), "call")}
+                "calls": _prep(getattr(oc, "calls", None), "call"),
+                "underlying_price": spot if spot is not None and spot > 0 else None,
+                "underlying_time": quote_time,
+                "underlying_currency": underlying.get("currency")}
     except Exception:
         return None
 
