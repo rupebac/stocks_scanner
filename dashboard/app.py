@@ -478,6 +478,16 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
         "Paid and Paid/odds compare names at this expiry. "
         "The other two describe this put. " + year_bit
     )
+    with st.expander("Greeks"):
+        g1, g2, g3, g4 = st.columns(4)
+        g1.metric("Delta", _fmt(stats.get("delta"), "{:.2f}"))
+        g2.metric("Gamma", _fmt(stats.get("gamma"), "{:.3f}"))
+        g3.metric("Theta / day", _fmt(stats.get("theta"), "{:.3f}"))
+        g4.metric("Vega", _fmt(stats.get("vega"), "{:.3f}"))
+        st.caption(
+            f"Strike vs spot {_fmt(stats.get('strike_vs_spot'), '{:.1%}')} · "
+            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}."
+        )
 
     sq = _quote_from_side(puts, spot, target_pct, expiry, today)
     stand = f"Standing put (nearest {target_pct:.0%} of spot): {_put_one_liner(sq)}"
@@ -526,16 +536,6 @@ def _options_section(sel: str, spot, gs10, ov_row, mrow=None) -> None:
     )
     st.caption("Click a row to inspect it. Orange = already in the money. "
                "The suggested row is preselected.")
-    with st.expander("Greeks"):
-        g1, g2, g3, g4 = st.columns(4)
-        g1.metric("Delta", _fmt(stats.get("delta"), "{:.2f}"))
-        g2.metric("Gamma", _fmt(stats.get("gamma"), "{:.3f}"))
-        g3.metric("Theta / day", _fmt(stats.get("theta"), "{:.3f}"))
-        g4.metric("Vega", _fmt(stats.get("vega"), "{:.3f}"))
-        st.caption(
-            f"Strike vs spot {_fmt(stats.get('strike_vs_spot'), '{:.1%}')} · "
-            f"IV {_fmt(MD._n(crow.get('iv')), '{:.1%}')}."
-        )
 
 
 def _fmt(v, spec: str) -> str:
