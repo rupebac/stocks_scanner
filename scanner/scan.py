@@ -35,8 +35,8 @@ def _gates(df: pd.DataFrame, asof: dt.date, universe="sp500") -> pd.DataFrame:
             r.append("mktcap n/a")
         elif not mc >= config.GATE_MKTCAP_USD:
             r.append(f"mktcap<{config.GATE_MKTCAP_USD/1e9:.0f}B")
-        tenure_label = "trading history" if universe == "nasdaq100" else "tenure"
-        ten = row.get("trading_history_y" if universe == "nasdaq100" else "index_tenure_y")
+        tenure_label = "trading history" if universe in ("nasdaq100", "all_nyse") else "tenure"
+        ten = row.get("trading_history_y" if universe in ("nasdaq100", "all_nyse") else "index_tenure_y")
         if ten is None or pd.isna(ten):
             r.append(f"{tenure_label} n/a")
         elif ten < config.MIN_INDEX_TENURE_YEARS:
@@ -289,7 +289,7 @@ def run_scan(
         "asof": asof.isoformat(), "spec": "v0.5 (search frozen v0.4)",
         "financial_version": config.FINANCIAL_VERSION,
         "universe": universe,
-        "maturity_basis": "observed trading history >=1y" if universe == "nasdaq100" else "index tenure >=1y",
+        "maturity_basis": "observed trading history >=1y" if universe in ("nasdaq100", "all_nyse") else "index tenure >=1y",
         "subset": {"limit": limit, "tickers": tickers},
         "gs10": gs10,
         "universe_version": (
@@ -358,7 +358,7 @@ def run_scan(
 
 def main():
     ap = argparse.ArgumentParser(description="Stock quality/price-divergence scan")
-    ap.add_argument("--universe", choices=["sp500", "nasdaq100"], default="sp500")
+    ap.add_argument("--universe", choices=["sp500", "nasdaq100", "all_nyse"], default="sp500")
     ap.add_argument("--limit", type=int, default=None, help="first N standard-group names (smoke runs)")
     ap.add_argument("--tickers", type=str, default=None, help="comma-separated symbols subset")
     ap.add_argument("--skip-options", action="store_true", help="skip put overlay (no options/earnings calls)")

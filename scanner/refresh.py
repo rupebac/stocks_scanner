@@ -9,10 +9,15 @@ from . import config, company_lookup as CL
 from .scan import run_scan
 from .universe_selection import UNIVERSES, available_scans
 
+# the nightly 'tracked' scope: the two indices only — All NYSE is a heavy
+# on-demand universe, refreshed explicitly via its own scope
+TRACKED = [u for u in ("sp500", "nasdaq100") if u in UNIVERSES]
+
 SCOPES = {
     "tracked": "Both indices + researched companies",
     "sp500": "S&P 500",
     "nasdaq100": "Nasdaq-100",
+    "all_nyse": "All NYSE",
     "researched": "Researched companies",
     "all": "All NYSE & Nasdaq companies",
 }
@@ -43,7 +48,7 @@ def refresh(scope="tracked", force=True):
     if scope not in SCOPES:
         raise ValueError("Unknown refresh scope")
     failures, completed = [], []
-    indices = list(UNIVERSES) if scope in {"tracked", "all"} else [scope] if scope in UNIVERSES else []
+    indices = TRACKED if scope == "tracked" else list(UNIVERSES) if scope == "all" else [scope] if scope in UNIVERSES else []
     for universe in indices:
         try:
             print(f"[refresh] Updating {UNIVERSES[universe]} and scores", flush=True)

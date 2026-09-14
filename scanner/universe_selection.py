@@ -2,7 +2,7 @@
 import json
 from . import config
 
-UNIVERSES = {"sp500": "S&P 500", "nasdaq100": "Nasdaq-100"}
+UNIVERSES = {"sp500": "S&P 500", "nasdaq100": "Nasdaq-100", "all_nyse": "All NYSE"}
 
 
 def scan_directory(asof, universe):

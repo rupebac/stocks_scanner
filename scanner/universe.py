@@ -120,6 +120,8 @@ def normalize_nasdaq(table, sec_tickers, sp500):
 def fetch_universe(universe="sp500", refresh=False):
     if universe == "sp500":
         return fetch_constituents(refresh=refresh)
+    if universe == "all_nyse":
+        return fetch_all_nyse(refresh=refresh)
     if universe != "nasdaq100":
         raise ValueError(f"Unknown universe: {universe}")
     path = config.DERIVED / "universe_nasdaq100.csv"
@@ -145,3 +147,60 @@ def fetch_universe(universe="sp500", refresh=False):
     history.to_csv(history_path, index=False)
     table.to_csv(path, index=False)
     return table
+
+
+# All-NYSE universe (doc 01 extension): the exchange has no GICS source, so
+# sector comes from the SEC's own SIC code — mapped ONLY where the restricted-
+# sector exclusion depends on it (financials/RE 6000-6999, utilities 4900-4999);
+# everything else is "Unknown" and falls down the §2 ladder to the market group.
+def _sic_sector(sic: int | None) -> str:
+    if sic is None:
+        return "Unknown"
+    if 6000 <= sic <= 6999:
+        return "Financials"
+    if 4900 <= sic <= 4999:
+        return "Utilities"
+    return "Unknown"
+
+
+def fetch_all_nyse(refresh: bool = False) -> pd.DataFrame:
+    """Every NYSE-listed filer from the SEC exchange directory, with SIC-derived
+    sectors. Cached 7 days like the index universes; the per-CIK submissions
+    index (which carries the SIC) is fetched politely and reused by the scan."""
+    from .sec_edgar import sic_for_cik
+
+    path = config.DERIVED / "universe_all_nyse.csv"
+    if not refresh and path.exists() and time.time() - path.stat().st_mtime < 7 * 86400:
+        cached = pd.read_csv(path)
+        if len(cached) >= 500:
+            return cached
+
+    from .company_lookup import company_directory
+    directory = company_directory()
+    nyse = directory[directory.exchange == "NYSE"].copy()
+    if len(nyse) < 500:
+        raise ValueError("NYSE directory looks incomplete")
+
+    sics = [sic_for_cik(int(cik)) for cik in nyse["cik"]]
+    nyse = nyse.assign(
+        sector=[_sic_sector(s) for s, _ in sics],
+        sub_industry=[desc or "" for _, desc in sics],
+        date_added=pd.NaT,
+        fetched_at=dt.date.today(),
+    ).rename(columns={"ticker": "symbol"})
+    # restricted sectors excluded at scan time like every universe; drop filers
+    # with no SIC at all (shell/blank-check 6770s land in Financials anyway)
+    nyse = nyse[["symbol", "name", "sector", "sub_industry", "date_added", "cik", "fetched_at"]]
+    nyse = nyse.dropna(subset=["cik"]).drop_duplicates("symbol")
+    nyse["sub_industry_norm"] = nyse.sub_industry.map(_norm_name)
+    if len(nyse) < 500:
+        raise ValueError(f"All-NYSE universe too small after SIC lookup: {len(nyse)}")
+
+    history_path = config.DERIVED / "membership_history_all_nyse.csv"
+    history = nyse.copy()
+    if history_path.exists():
+        old = pd.read_csv(history_path)
+        history = pd.concat([old[old.fetched_at.astype(str) != str(dt.date.today())], history], ignore_index=True)
+    history.to_csv(history_path, index=False)
+    nyse.to_csv(path, index=False)
+    return nyse

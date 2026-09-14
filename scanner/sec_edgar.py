@@ -139,6 +139,36 @@ def _latest_filing_date(cik: int) -> dt.date | None:
         return None
 
 
+def sic_for_cik(cik: int) -> tuple[int | None, str | None]:
+    """(sic, sicDescription) from the same cached submissions index; fetches it
+    when absent. Best-effort: (None, None) on any failure."""
+    path = _submissions_path(cik)
+    data = None
+    if path.exists():
+        try:
+            data = json.loads(path.read_text())
+        except Exception:
+            data = None
+    if data is None:
+        try:
+            r = requests.get(
+                f"https://data.sec.gov/api/xbrl/submissions/CIK{int(cik):010d}.json",
+                headers=config.SEC_HEADERS, timeout=30,
+            )
+            time.sleep(config.SEC_RATE_SLEEP)
+            if r.status_code == 404:
+                return (None, None)
+            r.raise_for_status()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(r.text)
+            data = json.loads(r.text)
+        except Exception:
+            return (None, None)
+    sic = data.get("sic")
+    return (int(sic) if isinstance(sic, int) else None,
+            data.get("sicDescription"))
+
+
 def _cached_max_filed(facts: dict) -> dt.date | None:
     """Latest `filed` date inside a cached companyfacts payload (any taxonomy)."""
     best = None
