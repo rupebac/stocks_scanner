@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import html
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,6 +13,19 @@ import plotly.graph_objects as go
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
+_APP_VERSION = (ROOT / "VERSION").read_text().strip() if (ROOT / "VERSION").exists() else "0.0.0"
+
+
+@st.cache_resource(show_spinner=False)
+def _git_commit() -> str:
+    """Short commit hash rendered with the version, so the deployed app can be
+    compared to origin/main at a glance. 'dev' when git isn't available."""
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                             cwd=ROOT, capture_output=True, text=True, timeout=5)
+        return out.stdout.strip() or "dev"
+    except Exception:
+        return "dev"
 sys.path.insert(0, str(ROOT))
 from scanner import market_data as MD, scoring as SC, opportunities as OP
 from dashboard import hunt_chart, browser_ideas as WL
@@ -593,6 +607,8 @@ def main():
         st.markdown('<div class="sidebar-note"><b>A stock-first approach</b><br><br>01 &nbsp; Find a business worth owning.<br><br>'
                     '02 &nbsp; Choose your price. Sell a put.<br><br>03 &nbsp; If assigned, hold or sell calls.</div>', unsafe_allow_html=True)
         st.caption("Research workspace · 0–90 day options")
+        st.markdown(f'<div class="sidebar-version">v{_APP_VERSION} · {_git_commit()}</div>',
+                    unsafe_allow_html=True)
     if page == "Data & refresh":
         from scanner.refresh import SCOPES
         selected_universe = st.selectbox("What to refresh", list(SCOPES), format_func=SCOPES.get, key="refresh_universe")
