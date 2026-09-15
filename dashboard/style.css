@@ -79,8 +79,10 @@ button:focus-visible, input:focus-visible { outline:2px solid #3569b0 !important
 .card-facts [title] { cursor:help; }
 .card-facts [title]:focus-visible { outline:2px solid #3569b0; outline-offset:3px; border-radius:3px; }
 
-/* version stamp at the bottom of the sidebar */
+/* version stamp pinned to the very bottom of the sidebar */
+section[data-testid="stSidebar"] { position: relative; }
+section[data-testid="stSidebar"] [data-testid="stElementContainer"] { position: static; }
 .sidebar-version {
-  margin-top: 2.5rem; padding-top: .6rem; border-top: 1px solid rgba(148, 163, 184, .25);
+  position: absolute; bottom: .55rem; left: 0; right: 0; margin: 0;
   font-size: .72rem; letter-spacing: .04em; color: #8da8ca; text-align: center;
 }
