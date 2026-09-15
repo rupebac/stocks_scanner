@@ -1,48 +1,53 @@
 {
-  "asof": "2026-09-13",
+  "asof": "2026-09-16",
   "spec": "v0.5 (search frozen v0.4)",
+  "financial_version": "2026-09-14.2",
+  "universe": "sp500",
+  "maturity_basis": "index tenure >=1y",
   "subset": {
     "limit": null,
     "tickers": null
   },
   "gs10": 0.0495,
-  "universe_version": "2026-09-13",
+  "universe_version": "2026-09-14",
   "quality_floor_threshold": 60.0,
   "residual_fit": {
-    "n": 219,
-    "slope_log_roic": 0.022502747900770417,
+    "n": 218,
+    "slope_log_roic": 0.004585007585349844,
     "dummies": {
-      "ig:Commercial and Professional Services": -0.14100213850047363,
-      "ig:Consumer Services": -0.14237739162695737,
-      "ig:Energy": -0.21787339786377374,
-      "ig:Food Beverage and Tobacco": -0.3525268433141948,
-      "ig:Health Care Equipment and Services": -0.0746689569952764,
-      "ig:Materials": 0.06237140966323705,
-      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.1927659686940262,
-      "ig:Semiconductors and Semiconductor Equipment": 0.6634038999713194,
-      "ig:Software and Services": 0.1988290577886715,
-      "ig:Technology Hardware and Equipment": 0.258608665140715,
-      "ig:Transportation": 0.004164900256031548,
-      "sector:Communication Services": 0.07752805541619001,
-      "sector:Consumer Discretionary": 0.03678501731459057,
-      "sector:Consumer Staples": -0.025694097258410504
+      "ig:Commercial and Professional Services": -0.13621942695719358,
+      "ig:Consumer Services": -0.1313337963425518,
+      "ig:Energy": -0.3165778482908582,
+      "ig:Food Beverage and Tobacco": -0.29258507761518004,
+      "ig:Health Care Equipment and Services": -0.06792748457823848,
+      "ig:Materials": 0.05462166815000052,
+      "ig:Media and Entertainment": 0.2551807271114595,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.1988774964426335,
+      "ig:Semiconductors and Semiconductor Equipment": 0.6216284775265672,
+      "ig:Software and Services": 0.22230466456482714,
+      "ig:Technology Hardware and Equipment": 0.2198945659555197,
+      "ig:Transportation": 0.002434055847739437,
+      "sector:Communication Services": -0.49481433348774334,
+      "sector:Consumer Discretionary": 0.03923731130396558,
+      "sector:Consumer Staples": -0.0288147212663401
     },
     "groups": {
-      "ig:Capital Goods": 35,
+      "ig:Capital Goods": 34,
       "ig:Health Care Equipment and Services": 26,
       "ig:Technology Hardware and Equipment": 20,
       "ig:Software and Services": 18,
       "ig:Semiconductors and Semiconductor Equipment": 14,
       "sector:Consumer Discretionary": 14,
-      "ig:Food Beverage and Tobacco": 13,
       "sector:Consumer Staples": 12,
+      "ig:Food Beverage and Tobacco": 11,
       "ig:Transportation": 11,
       "ig:Materials": 11,
       "ig:Pharmaceuticals Biotechnology and Life Sciences": 10,
       "ig:Commercial and Professional Services": 10,
-      "sector:Communication Services": 9,
-      "ig:Energy": 8,
-      "ig:Consumer Services": 8
+      "ig:Energy": 9,
+      "ig:Media and Entertainment": 8,
+      "ig:Consumer Services": 8,
+      "sector:Communication Services": 2
     }
   },
   "presets": {
@@ -70,6 +75,7 @@
     "MIN_SCORE_INPUT_COVERAGE": 0.8,
     "QUALITY_FLOOR_MIN": 60.0,
     "QUALITY_FLOOR_ROIC_MIN": 0.1,
+    "QUALITY_FLOOR_ROIC_MAX": 1.0,
     "QUALITY_STABILITY_WEIGHTS": {
       "revenue": 0.5,
       "gm": 0.25,
@@ -84,5 +90,5 @@
     "FLAG_BRAKE_FCF_MARGIN": 0.95,
     "FLAG_BRAKE_ROIC": 0.9
   },
-  "config_hash": "f07e5f57bb4f"
+  "config_hash": "3cde628e1414"
 }
