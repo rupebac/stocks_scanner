@@ -1,7 +1,7 @@
 ticker,reasons
-FDXF,young listing (17 wks of prices; needs 60)
-HONA,young listing (14 wks of prices; needs 60)
-Q,young listing (47 wks of prices; needs 60)
+FDXF,young listing (18 wks of prices; needs 60)
+HONA,young listing (15 wks of prices; needs 60)
+Q,young listing (48 wks of prices; needs 60)
 NVDA,fcf_cagr5 gate
 TSLA,fcf_cagr5 gate
 MRVL,tenure<1y
@@ -9,96 +9,96 @@ WDC,rev_cagr5 gate
 NFLX,fcf_cagr5 gate
 WMT,fcf_cagr5 gate
 GEV,rev_cagr5 gate; fcf_cagr5 gate
-APP,tenure<1y; fcf_cagr5 gate
 XOM,rev_cagr5 gate; fcf_cagr5 gate
+APP,fcf_cagr5 gate
 UNH,fcf_cagr5 gate
-TXN,fcf_cagr5 gate
 COST,fcf_cagr5 gate
+TXN,fcf_cagr5 gate
 VRT,tenure<1y; fcf_cagr5 gate
 KO,fcf_cagr5 gate
 T,rev_cagr5 gate
 HD,fcf_cagr5 gate
-TER,fcf_cagr5 gate
 BA,fcf_cagr5 gate
+TER,fcf_cagr5 gate
 HPE,fcf_cagr5 gate
 APH,fcf_cagr5 gate
-DIS,fcf_cagr5 gate
-CIEN,tenure<1y
 VLO,fcf_cagr5 gate
+DIS,fcf_cagr5 gate
+MPC,fcf_cagr5 gate
 TMUS,fcf_cagr5 gate
+CIEN,tenure<1y
 MCK,fcf_cagr5 gate
 MCHP,rev_cagr5 gate; fcf_cagr5 gate
-HWM,fcf_cagr5 gate
-MPC,fcf_cagr5 gate
-FIX,tenure<1y; rev_cagr5 gate
-PWR,fcf_cagr5 gate
 WDAY,fcf_cagr5 gate
+HWM,fcf_cagr5 gate
 CVS,fcf_cagr5 gate
+FIX,tenure<1y; rev_cagr5 gate
 SBUX,fcf_cagr5 gate
 F,fcf_cagr5 gate
-LOW,rev_cagr5 gate
+PWR,fcf_cagr5 gate
 RCL,fcf_cagr5 gate
+LOW,rev_cagr5 gate
 TGT,fcf_cagr5 gate
 ORLY,fcf_cagr5 gate
 MO,rev_cagr5 gate
 CSX,fcf_cagr5 gate
 FERG,tenure<1y; rev_cagr5 gate; fcf_cagr5 gate
-FDX,fcf_cagr5 gate
+ILMN,tenure<1y
 MMM,rev_cagr5 gate; fcf_cagr5 gate
 AXON,fcf_cagr5 gate
 WMB,fcf_cagr5 gate
-FLEX,tenure<1y; fcf_cagr5 gate
 DAL,fcf_cagr5 gate
+FDX,fcf_cagr5 gate
 ELV,fcf_cagr5 gate
-UAL,fcf_cagr5 gate
-HUM,fcf_cagr5 gate
 FSLR,fcf_cagr5 gate
-CAH,fcf_cagr5 gate
-KMB,rev_cagr5 gate; fcf_cagr5 gate
 EBAY,fcf_cagr5 gate
-COR,fcf_cagr5 gate
-CRH,tenure<1y; rev_cagr5 gate
+FLEX,tenure<1y; fcf_cagr5 gate
+HUM,fcf_cagr5 gate
+CAH,fcf_cagr5 gate
+UAL,fcf_cagr5 gate
 HPQ,rev_cagr5 gate; fcf_cagr5 gate
-KVUE,rev_cagr5 gate; fcf_cagr5 gate
-KR,fcf_cagr5 gate
+COR,fcf_cagr5 gate
 CHTR,rev_cagr5 gate; fcf_cagr5 gate
+CRH,tenure<1y; rev_cagr5 gate
+P,tenure<1y
+KMB,rev_cagr5 gate; fcf_cagr5 gate
+KR,fcf_cagr5 gate
+KVUE,rev_cagr5 gate; fcf_cagr5 gate
 KDP,fcf_cagr5 gate
-GWW,fcf_cagr5 gate
-JBL,fcf_cagr5 gate
 LYV,fcf_cagr5 gate
+GWW,fcf_cagr5 gate
 DLTR,rev_cagr5 gate; fcf_cagr5 gate
-TSCO,fcf_cagr5 gate
+JBL,fcf_cagr5 gate
 TRGP,fcf_cagr5 gate
 OKE,fcf_cagr5 gate
-EME,tenure<1y; fcf_cagr5 gate
-TTD,mktcap<10B
+TSCO,fcf_cagr5 gate
 BBY,rev_cagr5 gate; fcf_cagr5 gate
+EME,fcf_cagr5 gate
+SYY,fcf_cagr5 gate
 ALB,fcf_cagr5 gate
 DPZ,mktcap<10B
 CHRW,fcf_cagr5 gate
-SYY,fcf_cagr5 gate
 GEHC,rev_cagr5 gate
 STLD,fcf_cagr5 gate
-NCLH,mktcap<10B; fcf_cagr5 gate
 EL,rev_cagr5 gate; fcf_cagr5 gate
 JBHT,fcf_cagr5 gate
+NCLH,mktcap<10B; fcf_cagr5 gate
 LYB,fcf_cagr5 gate
 CDW,fcf_cagr5 gate
-PODD,mktcap<10B; fcf_cagr5 gate
 GNRC,fcf_cagr5 gate
-SW,rev_cagr5 gate; fcf_cagr5 gate
+PODD,mktcap<10B; fcf_cagr5 gate
 LVS,fcf_cagr5 gate
-PNR,mktcap<10B
+SW,rev_cagr5 gate; fcf_cagr5 gate
 LH,rev_cagr5 gate; fcf_cagr5 gate
 APA,rev_cagr5 gate; fcf_cagr5 gate
-PPG,fcf_cagr5 gate
+PNR,mktcap<10B
 RVTY,fcf_cagr5 gate
 APTV,mktcap<10B; fcf_cagr5 gate
+PPG,fcf_cagr5 gate
 TSN,fcf_cagr5 gate
 TRMB,fcf_cagr5 gate
-VLTO,rev_cagr5 gate
 HAS,rev_cagr5 gate
-BLDR,mktcap<10B; fcf_cagr5 gate
+VLTO,rev_cagr5 gate
 AMCR,fcf_cagr5 gate
 WYNN,mktcap<10B; fcf_cagr5 gate
 FTV,rev_cagr5 gate; fcf_cagr5 gate
@@ -112,100 +112,100 @@ AOS,mktcap<10B
 SOLV,rev_cagr5 gate; fcf_cagr5 gate
 MU,fcf_cagr5 gate; coverage<80%
 SNDK,tenure<1y; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
-AMZN,fcf_cagr5 gate; coverage<80%
 INTC,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+AMZN,fcf_cagr5 gate; coverage<80%
 ORCL,fcf_cagr5 gate; coverage<80%
 LITE,tenure<1y; fcf_cagr5 gate; coverage<80%
+BE,tenure<1y; fcf_cagr5 gate; coverage<80%
 LLY,fcf_cagr5 gate; coverage<80%
 CAT,coverage<80%
 KLAC,coverage<80%
-GLW,fcf_cagr5 gate; coverage<80%
+MRNA,fcf_cagr5 gate; coverage<80%
 CRWD,coverage<80%
 IBM,coverage<80%
-MRNA,fcf_cagr5 gate; coverage<80%
-JNJ,coverage<80%
 COHR,tenure<1y; fcf_cagr5 gate; coverage<80%
-SMCI,fcf_cagr5 gate; coverage<80%
+GLW,fcf_cagr5 gate; coverage<80%
+JNJ,coverage<80%
 CVX,fcf_cagr5 gate; coverage<80%
+SMCI,fcf_cagr5 gate; coverage<80%
 GE,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
-UBER,fcf_cagr5 gate; coverage<80%
 MRK,coverage<80%
-BKNG,coverage<80%
+UBER,fcf_cagr5 gate; coverage<80%
 MCD,coverage<80%
+BKNG,coverage<80%
 VZ,coverage<80%
 NKE,fcf_cagr5 gate; coverage<80%
-PFE,fcf_cagr5 gate; coverage<80%
 LIN,coverage<80%
-FCX,fcf_cagr5 gate; coverage<80%
+PFE,fcf_cagr5 gate; coverage<80%
 TJX,coverage<80%
 RDDT,tenure<1y; rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+FCX,fcf_cagr5 gate; coverage<80%
 ETN,coverage<80%
 NEM,coverage<80%
 DASH,fcf_cagr5 gate; coverage<80%
 COP,coverage<80%
 DE,coverage<80%
 ABNB,fcf_cagr5 gate; coverage<80%
-SLB,coverage<80%
-BMY,coverage<80%
-CVNA,tenure<1y; fcf_cagr5 gate; coverage<80%
-ADP,fcf_cagr5 gate; coverage<80%
-PSX,fcf_cagr5 gate; coverage<80%
-HCA,coverage<80%
-TTWO,fcf_cagr5 gate; coverage<80%
 WBD,coverage<80%
+BMY,coverage<80%
+PSX,fcf_cagr5 gate; coverage<80%
+SLB,coverage<80%
+HCA,coverage<80%
+ADP,fcf_cagr5 gate; coverage<80%
+CVNA,tenure<1y; fcf_cagr5 gate; coverage<80%
+TTWO,fcf_cagr5 gate; coverage<80%
+DVN,coverage<80%
 JCI,coverage<80%
 CCL,fcf_cagr5 gate; coverage<80%
-DVN,coverage<80%
-URI,fcf_cagr5 gate; coverage<80%
 BKR,coverage<80%
 OXY,coverage<80%
-CI,fcf_cagr5 gate; coverage<80%
-CTSH,coverage<80%
-ECHO,tenure<1y; fcf_cagr5 gate; coverage<80%
-EOG,fcf_cagr5 gate; coverage<80%
-ZTS,coverage<80%
+URI,fcf_cagr5 gate; coverage<80%
 FANG,fcf_cagr5 gate; coverage<80%
-KHC,rev_cagr5 gate; coverage<80%
+CI,fcf_cagr5 gate; coverage<80%
+EOG,fcf_cagr5 gate; coverage<80%
+CTSH,coverage<80%
+ZTS,coverage<80%
 VEEV,tenure<1y; fcf_cagr5 gate; coverage<80%
-EMR,coverage<80%
+KHC,rev_cagr5 gate; coverage<80%
 PCAR,coverage<80%
-CTVA,coverage<80%
-CASY,tenure<1y; fcf_cagr5 gate; coverage<80%
+ECHO,tenure<1y; fcf_cagr5 gate; coverage<80%
+EMR,coverage<80%
 GIS,fcf_cagr5 gate; coverage<80%
+CTVA,coverage<80%
 ITW,coverage<80%
+IQV,coverage<80%
+CASY,tenure<1y; fcf_cagr5 gate; coverage<80%
+DHI,fcf_cagr5 gate; coverage<80%
 NUE,fcf_cagr5 gate; coverage<80%
 APD,fcf_cagr5 gate; coverage<80%
-DHI,fcf_cagr5 gate; coverage<80%
 FOXA,fcf_cagr5 gate; coverage<80%
-IQV,coverage<80%
 ROP,coverage<80%
 WAT,fcf_cagr5 gate; coverage<80%
 ADM,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 CNC,fcf_cagr5 gate; coverage<80%
 DOW,fcf_cagr5 gate; coverage<80%
-CLX,fcf_cagr5 gate; coverage<80%
+CLX,mktcap<10B; fcf_cagr5 gate; coverage<80%
 MTD,coverage<80%
-LUV,fcf_cagr5 gate; coverage<80%
 LEN,fcf_cagr5 gate; coverage<80%
+LUV,fcf_cagr5 gate; coverage<80%
+DGX,coverage<80%
 BIIB,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 IT,fcf_cagr5 gate; coverage<80%
-DGX,coverage<80%
 TKO,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 NVR,coverage<80%
 PHM,coverage<80%
-DD,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 INCY,fcf_cagr5 gate; coverage<80%
+DD,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 IP,fcf_cagr5 gate; coverage<80%
-GPC,fcf_cagr5 gate; coverage<80%
 MOS,mktcap<10B; fcf_cagr5 gate; coverage<80%
+GPC,fcf_cagr5 gate; coverage<80%
 BG,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 SWK,fcf_cagr5 gate; coverage<80%
 BAX,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
 AVY,coverage<80%
 TXT,fcf_cagr5 gate; coverage<80%
 TPL,coverage<80%
-BALL,fcf_cagr5 gate; coverage<80%
-SNA,fcf_cagr5 gate; coverage<80%
-TAP,mktcap<10B; coverage<80%
-NWSA,rev_cagr5 gate; coverage<80%
 PSKY,rev_cagr5 gate; fcf_cagr5 gate; coverage<80%
+SNA,fcf_cagr5 gate; coverage<80%
+NWSA,rev_cagr5 gate; coverage<80%
+BALL,fcf_cagr5 gate; coverage<80%
