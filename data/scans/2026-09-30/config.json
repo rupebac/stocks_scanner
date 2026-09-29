@@ -1,5 +1,5 @@
 {
-  "asof": "2026-09-23",
+  "asof": "2026-09-30",
   "spec": "v0.5 (search frozen v0.4)",
   "financial_version": "2026-09-14.2",
   "universe": "sp500",
@@ -9,26 +9,26 @@
     "tickers": null
   },
   "gs10": 0.0495,
-  "universe_version": "2026-09-22",
+  "universe_version": "2026-09-30",
   "quality_floor_threshold": 60.0,
   "residual_fit": {
     "n": 217,
-    "slope_log_roic": 0.019789146124761604,
+    "slope_log_roic": 0.021260431794166826,
     "dummies": {
-      "ig:Commercial and Professional Services": -0.1900327284330829,
-      "ig:Consumer Services": -0.16180561611160824,
-      "ig:Energy": -0.35946106240836107,
-      "ig:Food Beverage and Tobacco": -0.3159878646464296,
-      "ig:Health Care Equipment and Services": -0.08150405321273518,
-      "ig:Materials": 0.028630262612566168,
-      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.22151841966716737,
-      "ig:Semiconductors and Semiconductor Equipment": 0.6834672084522011,
-      "ig:Software and Services": 0.1879279989645491,
-      "ig:Technology Hardware and Equipment": 0.24300872723129072,
-      "ig:Transportation": -0.0418776071651391,
-      "sector:Communication Services": 0.15638487811265211,
-      "sector:Consumer Discretionary": 0.02962323634042573,
-      "sector:Consumer Staples": -0.025709650286589943
+      "ig:Commercial and Professional Services": -0.20263775934859365,
+      "ig:Consumer Services": -0.18480442528419094,
+      "ig:Energy": -0.3736387183419704,
+      "ig:Food Beverage and Tobacco": -0.3342632938924952,
+      "ig:Health Care Equipment and Services": -0.08622270206213416,
+      "ig:Materials": 0.010470276574177028,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.23128576876064977,
+      "ig:Semiconductors and Semiconductor Equipment": 0.6797892529382847,
+      "ig:Software and Services": 0.14647333498544202,
+      "ig:Technology Hardware and Equipment": 0.2373309027860757,
+      "ig:Transportation": -0.04734671275743791,
+      "sector:Communication Services": 0.14623010496455613,
+      "sector:Consumer Discretionary": 0.015921207881760466,
+      "sector:Consumer Staples": -0.030521297264236587
     },
     "groups": {
       "ig:Capital Goods": 34,
@@ -88,5 +88,5 @@
     "FLAG_BRAKE_FCF_MARGIN": 0.95,
     "FLAG_BRAKE_ROIC": 0.9
   },
-  "config_hash": "6944b78b623b"
+  "config_hash": "487028a08164"
 }
