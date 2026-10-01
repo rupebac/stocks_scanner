@@ -1,0 +1,26 @@
+{
+  "asof": "2026-10-02",
+  "gs10": 0.0495,
+  "universe_rows": 363,
+  "scored": 261,
+  "floor_threshold": 60.0,
+  "floor_pass": 41,
+  "flag_derated_quality": 2,
+  "flag_beaten": 5,
+  "flagship": [
+    {
+      "ticker": "ADBE",
+      "residual": -1.1756071930455612,
+      "fcf_yield": 0.09245558165145513,
+      "ev_fcf_self_pct": 3.076923076923077
+    },
+    {
+      "ticker": "ADSK",
+      "residual": -0.5251660842362131,
+      "fcf_yield": 0.0487946715418103,
+      "ev_fcf_self_pct": 1.5384615384615385
+    }
+  ],
+  "unmapped_subindustries": 0,
+  "scan_dir": "/home/rperez/workspaces/stocks_scanner/data/scans/2026-10-02"
+}
