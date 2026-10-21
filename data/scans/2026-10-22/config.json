@@ -1,5 +1,5 @@
 {
-  "asof": "2026-10-15",
+  "asof": "2026-10-22",
   "spec": "v0.5 (search frozen v0.4)",
   "financial_version": "2026-09-14.2",
   "universe": "sp500",
@@ -13,22 +13,22 @@
   "quality_floor_threshold": 60.0,
   "residual_fit": {
     "n": 217,
-    "slope_log_roic": 0.029397267728368346,
+    "slope_log_roic": 0.01629086835151486,
     "dummies": {
-      "ig:Commercial and Professional Services": -0.17154197704178228,
-      "ig:Consumer Services": -0.172492289595588,
-      "ig:Energy": -0.2917802277116379,
-      "ig:Food Beverage and Tobacco": -0.3044428949861753,
-      "ig:Health Care Equipment and Services": -0.05653754191415765,
-      "ig:Materials": 0.022415881292678783,
-      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.24175616670961844,
-      "ig:Semiconductors and Semiconductor Equipment": 0.6168416801651521,
-      "ig:Software and Services": 0.2382848002891171,
-      "ig:Technology Hardware and Equipment": 0.21687225872412408,
-      "ig:Transportation": -0.04366506399306305,
-      "sector:Communication Services": 0.1504780607581491,
-      "sector:Consumer Discretionary": 0.03863406611435471,
-      "sector:Consumer Staples": 0.0058482844013363925
+      "ig:Commercial and Professional Services": -0.14444596157086553,
+      "ig:Consumer Services": -0.17888188364297908,
+      "ig:Energy": -0.3066172160640326,
+      "ig:Food Beverage and Tobacco": -0.3077739590498118,
+      "ig:Health Care Equipment and Services": -0.06927182736078866,
+      "ig:Materials": 0.0322073748896011,
+      "ig:Pharmaceuticals Biotechnology and Life Sciences": 0.2439556478505278,
+      "ig:Semiconductors and Semiconductor Equipment": 0.5963801705311699,
+      "ig:Software and Services": 0.24855852769294934,
+      "ig:Technology Hardware and Equipment": 0.18141208495752206,
+      "ig:Transportation": 0.011243152413049646,
+      "sector:Communication Services": 0.10895371453632277,
+      "sector:Consumer Discretionary": 0.05055519339825124,
+      "sector:Consumer Staples": -0.0010833085506779855
     },
     "groups": {
       "ig:Capital Goods": 34,
@@ -88,5 +88,5 @@
     "FLAG_BRAKE_FCF_MARGIN": 0.95,
     "FLAG_BRAKE_ROIC": 0.9
   },
-  "config_hash": "e3ff4ef8e360"
+  "config_hash": "c17ef04dd8ef"
 }
