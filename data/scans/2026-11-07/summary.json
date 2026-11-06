@@ -1,0 +1,32 @@
+{
+  "asof": "2026-11-07",
+  "gs10": 0.0495,
+  "universe_rows": 363,
+  "scored": 262,
+  "floor_threshold": 60.0,
+  "floor_pass": 41,
+  "flag_derated_quality": 3,
+  "flag_beaten": 4,
+  "flagship": [
+    {
+      "ticker": "ADBE",
+      "residual": -1.0817878451747616,
+      "fcf_yield": 0.09323515928715079,
+      "ev_fcf_self_pct": 3.4615384615384617
+    },
+    {
+      "ticker": "ACN",
+      "residual": -0.7313558796197719,
+      "fcf_yield": 0.06374728264264315,
+      "ev_fcf_self_pct": 15.384615384615385
+    },
+    {
+      "ticker": "FFIV",
+      "residual": -0.25247942655242595,
+      "fcf_yield": 0.044238420302839046,
+      "ev_fcf_self_pct": 13.076923076923078
+    }
+  ],
+  "unmapped_subindustries": 0,
+  "scan_dir": "/home/rperez/workspaces/stocks_scanner/data/scans/2026-11-07"
+}
